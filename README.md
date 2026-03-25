@@ -313,7 +313,7 @@ docker-compose up -d --build
 
 ### 5. 초기 계정
 
-- **Superadmin**: `admin@ready.talk` / 환경변수에서 설정
+- **Superadmin**: `admin@academy.ready.talk` / 환경변수에서 설정
 
 ### 6. 초기 설정 순서
 
