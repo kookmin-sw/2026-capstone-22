@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: readytalk-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-readytalk_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-readytalk_password}
+      POSTGRES_DB: ${POSTGRES_DB:-readytalk_db}
+    command: postgres -c max_connections=200 -c shared_buffers=256MB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-readytalk_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: readytalk-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-readytalk_user}:${POSTGRES_PASSWORD:-readytalk_password}@postgres:5432/${POSTGRES_DB:-readytalk_db}
+      - SECRET_KEY=${SECRET_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-gemini-2.5-flash}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-50}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-30}
+      - DB_POOL_RECYCLE=1800
+      - DB_POOL_PRE_PING=true
+      - FEEDBACK_EMAIL=${FEEDBACK_EMAIL:-}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - API_ENCRYPTION_KEY=${API_ENCRYPTION_KEY:-}
+      - GOOGLE_CALENDAR_CLIENT_ID=${GOOGLE_CALENDAR_CLIENT_ID:-}
+      - GOOGLE_CALENDAR_CLIENT_SECRET=${GOOGLE_CALENDAR_CLIENT_SECRET:-}
+      - GOOGLE_CALENDAR_REDIRECT_URI=${GOOGLE_CALENDAR_REDIRECT_URI:-}
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8888}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/readytalk-kmu-credentials.json
+    volumes:
+      - ./uploads:/app/uploads
+      - ./backend/credentials:/app/credentials:ro
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             gunicorn app.main:app -w ${GUNICORN_WORKERS:-17} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --graceful-timeout 30 --forwarded-allow-ips='*' --access-logfile - --error-logfile -"
+
+  webhook-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: readytalk-webhook-worker
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-readytalk_user}:${POSTGRES_PASSWORD:-readytalk_password}@postgres:5432/${POSTGRES_DB:-readytalk_db}
+      - SECRET_KEY=${SECRET_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-gemini-2.5-flash}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - GDRIVE_WEBHOOK_URL=${GDRIVE_WEBHOOK_URL}
+      - ENABLE_GDRIVE_WATCH=true
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/app/credentials/service-account.json}
+    volumes:
+      - ./uploads:/app/uploads
+    ports:
+      - "8889:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "gunicorn app.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --graceful-timeout 30 --access-logfile - --error-logfile -"
+
+  nginx:
+    image: nginx:alpine
+    container_name: readytalk-nginx
+    restart: always
+    volumes:
+      - ./nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8888:80"
+    depends_on:
+      - backend
+      - frontend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost}
+    container_name: readytalk-frontend
+    restart: always
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

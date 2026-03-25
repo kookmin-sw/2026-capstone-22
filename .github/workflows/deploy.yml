@@ -1,0 +1,55 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: readytalk-kmu-dev
+    defaults:
+      run:
+        working-directory: /home/runner/readytalk-kmu
+    steps:
+      - name: Pull latest changes
+        run: |
+          git checkout -- .
+          git clean -fd
+          git pull origin main
+
+      - name: Create .env file
+        run: |
+          cat > .env << 'EOF'
+          ${{ secrets.ENV_FILE }}
+          EOF
+
+      - name: Create GCP credentials
+        run: |
+          mkdir -p backend/credentials
+          echo '${{ secrets.GCP_CREDENTIALS_JSON }}' > backend/credentials/readytalk-kmu-credentials.json
+
+      - name: Deploy
+        run: |
+          # Docker Compose 배포
+          docker compose -f docker-compose.dev.yml down || true
+          docker compose -f docker-compose.dev.yml --env-file .env up --build -d
+
+          # DB 마이그레이션
+          sleep 10
+          docker compose -f docker-compose.dev.yml exec -T backend alembic upgrade head || echo "Migration skipped or failed"
+
+      - name: Verify Deployment
+        run: |
+          docker compose -f docker-compose.dev.yml ps
+          echo "--- Backend logs (last 50 lines) ---"
+          docker compose -f docker-compose.dev.yml logs --tail=50 backend
+
+      - name: Clean up Docker resources
+        run: |
+          # 사용하지 않는 이미지 삭제 (현재 사용 중인 것 제외)
+          docker image prune -a -f

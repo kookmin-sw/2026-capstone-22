@@ -1,0 +1,121 @@
+/* 그라데이션 각도를 애니메이션하기 위한 CSS 변수 정의 */
+@property --gradient-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* 입력창 테두리 애니메이션 */
+.animated-border-input {
+  position: relative;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: visible; /* 테두리가 박스 바깥으로 나갈 수 있게 */
+}
+
+.animated-border-input::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px; /* 테두리를 박스 바깥에 배치 */
+  border-radius: 20px;
+  padding: 1.5px; /* 테두리 두께를 1.5px로 설정 */
+  background: conic-gradient(
+    from var(--gradient-angle),
+    rgba(167, 139, 250, 0.8) 0deg,
+    rgba(236, 72, 153, 0.8) 90deg,
+    rgba(139, 92, 246, 0.8) 180deg,
+    rgba(59, 130, 246, 0.8) 270deg,
+    rgba(167, 139, 250, 0.8) 360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotateGradient 4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes rotateGradient {
+  0% {
+    --gradient-angle: 0deg;
+  }
+  100% {
+    --gradient-angle: 360deg;
+  }
+}
+
+/* 비활성화 상태에서는 애니메이션 테두리 숨김 */
+.animated-border-input.inactive::before {
+  display: none;
+}
+
+/* 마크다운 표 스타일 - 전역 적용 */
+table,
+div table,
+* table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+thead,
+table thead,
+* thead {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}
+
+th,
+table th,
+thead th,
+* th {
+  padding: 12px 16px !important;
+  text-align: left !important;
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}
+
+td,
+table td,
+tbody td,
+* td {
+  padding: 14px 16px !important;
+  color: #e2e8f0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  border: 1px solid rgba(148, 163, 184, 0.1) !important;
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+}
+
+tr,
+table tr,
+* tr {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+  background: transparent !important;
+}
+
+tbody,
+table tbody,
+* tbody {
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+}
+
+tbody tr:hover td,
+table tbody tr:hover td {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}

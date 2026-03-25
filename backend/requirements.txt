@@ -1,0 +1,46 @@
+# FastAPI and Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+gunicorn==21.2.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-dotenv==1.0.1
+
+# Google Gemini AI (latest SDK with File Search support)
+google-genai>=1.52.0
+google-generativeai>=0.8.0
+
+# Google Drive (Optional)
+google-auth>=2.47.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.116.0
+
+# Google Cloud Storage
+google-cloud-storage>=2.14.0
+
+# Vertex AI (RAG Engine)
+google-cloud-aiplatform>=1.140.0
+
+# Vertex AI Search (Discovery Engine)
+google-cloud-discoveryengine>=0.13.0
+
+# HTTP Client (for external API calls)
+httpx>=0.25.0
+
+# Utilities
+pydantic>=2.9.0
+pydantic-settings>=2.1.0
+email-validator==2.1.0
+
+# Scheduler
+apscheduler>=3.10.0
