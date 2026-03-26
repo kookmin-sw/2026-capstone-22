@@ -181,7 +181,7 @@ class RagService:
                     ),
                     max_embedding_requests_per_min=900,
                 )
-                logger.info(f"Import completed for: {display_name}")
+                logger.info(f"Import completed for: {display_name}, response type: {type(response)}, response: {response}")
 
                 # Find the imported file in corpus to get its resource name
                 doc_info = None
