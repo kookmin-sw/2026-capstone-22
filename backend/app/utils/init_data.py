@@ -81,66 +81,11 @@ def init_groups(db: Session, tenant: Tenant):
 
 
 def init_database():
-    """Initialize database with default data"""
+    """Initialize database with default data (superadmin only)"""
     db = SessionLocal()
     try:
-        # 1. Create superadmin
+        # Create superadmin
         init_superadmin(db)
-
-        # 2. Create default tenant
-        tenant = init_default_tenant(db)
-
-        # 3. Create default groups for tenant
-        init_groups(db, tenant)
-
-        # 4. Create tenant admin user (former admin)
-        admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
-        if not admin_user:
-            admin_user = User(
-                email=settings.ADMIN_EMAIL,
-                username="Admin",
-                password_hash=get_password_hash(settings.ADMIN_PASSWORD),
-                is_admin=True,
-                tenant_id=tenant.id,
-                preferred_model=settings.DEFAULT_MODEL
-            )
-            db.add(admin_user)
-            db.commit()
-            logger.info(f"Tenant admin created: {settings.ADMIN_EMAIL}")
-        else:
-            # Ensure existing admin is assigned to tenant
-            if admin_user.tenant_id is None and not admin_user.is_superadmin:
-                admin_user.tenant_id = tenant.id
-                db.commit()
-            logger.info(f"Tenant admin already exists: {settings.ADMIN_EMAIL}")
-
-        # 5. Create guest user
-        guest_user = db.query(User).filter(User.email == "guest@system.internal").first()
-        if not guest_user:
-            try:
-                general_group = db.query(Group).filter(
-                    Group.name == "일반", Group.tenant_id == tenant.id
-                ).first()
-                guest_user = User(
-                    email="guest@system.internal",
-                    username="Guest",
-                    password_hash="",
-                    is_admin=False,
-                    group_id=general_group.id if general_group else None,
-                    tenant_id=tenant.id,
-                    auth_provider="guest"
-                )
-                db.add(guest_user)
-                db.commit()
-                logger.info("Guest user created: guest@system.internal")
-            except Exception:
-                db.rollback()
-                logger.info("Guest user already created by another worker")
-        else:
-            if guest_user.tenant_id is None:
-                guest_user.tenant_id = tenant.id
-                db.commit()
-            logger.info("Guest user already exists: guest@system.internal")
 
         db.commit()
         logger.info("Database initialization completed")
