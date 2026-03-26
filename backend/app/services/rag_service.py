@@ -181,19 +181,7 @@ class RagService:
                     ),
                     max_embedding_requests_per_min=900,
                 )
-                logger.info(f"Import completed for: {display_name}, response: {response}")
-                if hasattr(response, 'failed_rag_files_count') and response.failed_rag_files_count > 0:
-                    logger.error(f"RAG import FAILED for: {display_name}, failed_count={response.failed_rag_files_count}")
-                    logger.error(f"  Full response attrs: {dir(response)}")
-                    logger.error(f"  Full response repr: {repr(response)}")
-                    for attr in dir(response):
-                        if not attr.startswith('_'):
-                            try:
-                                val = getattr(response, attr)
-                                if not callable(val):
-                                    logger.error(f"  {attr}: {val}")
-                            except:
-                                pass
+                logger.info(f"Import completed for: {display_name}")
 
                 # Find the imported file in corpus to get its resource name
                 doc_info = None
