@@ -181,7 +181,15 @@ class RagService:
                     ),
                     max_embedding_requests_per_min=900,
                 )
-                logger.info(f"Import completed for: {display_name}, response type: {type(response)}, response: {response}")
+                logger.info(f"Import completed for: {display_name}, response: {response}")
+                if hasattr(response, 'failed_rag_files_count') and response.failed_rag_files_count > 0:
+                    logger.error(f"RAG import FAILED for: {display_name}, failed_count={response.failed_rag_files_count}")
+                    # Try to get detailed error from skipped_rag_files
+                    if hasattr(response, 'skipped_rag_files'):
+                        for sf in response.skipped_rag_files:
+                            logger.error(f"  Skipped file: {sf}")
+                    if hasattr(response, 'imported_rag_files_count'):
+                        logger.error(f"  Imported count: {response.imported_rag_files_count}")
 
                 # Find the imported file in corpus to get its resource name
                 doc_info = None
