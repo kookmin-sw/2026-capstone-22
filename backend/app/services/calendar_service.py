@@ -341,7 +341,7 @@ def delete_event(
 CALENDAR_FUNCTION_DECLARATIONS = [
     {
         "name": "list_calendar_events",
-        "description": "Google 캘린더에서 일정을 조회합니다. 특정 날짜, 기간, 키워드로 검색할 수 있습니다.",
+        "description": "Google 캘린더에서 일정을 조회합니다. 특정 날짜, 기간, 키워드로 검색할 수 있습니다. '이번 주'는 반드시 월요일부터 일요일까지(한 주 전체)를 의미합니다.",
         "parameters": {
             "type": "object",
             "properties": {
