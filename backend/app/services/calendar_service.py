@@ -30,6 +30,9 @@ def _get_client_config() -> dict:
     }
 
 
+_code_verifiers = {}
+
+
 def create_auth_url(tenant_id: int) -> str:
     """Generate Google OAuth 2.0 authorization URL"""
     flow = Flow.from_client_config(
@@ -37,11 +40,14 @@ def create_auth_url(tenant_id: int) -> str:
         scopes=SCOPES,
         redirect_uri=settings.GOOGLE_CALENDAR_REDIRECT_URI,
     )
-    auth_url, _ = flow.authorization_url(
+    auth_url, state = flow.authorization_url(
         access_type="offline",
         prompt="consent",
         state=str(tenant_id),
     )
+    # Save code_verifier for PKCE
+    if hasattr(flow, 'code_verifier') and flow.code_verifier:
+        _code_verifiers[state] = flow.code_verifier
     return auth_url
 
 
@@ -55,6 +61,10 @@ def exchange_code(code: str, db: Session, tenant_id: int) -> TenantCalendarConfi
         scopes=SCOPES,
         redirect_uri=settings.GOOGLE_CALENDAR_REDIRECT_URI,
     )
+    # Restore code_verifier for PKCE
+    state = str(tenant_id)
+    if state in _code_verifiers:
+        flow.code_verifier = _code_verifiers.pop(state)
     flow.fetch_token(code=code)
     creds = flow.credentials
 
