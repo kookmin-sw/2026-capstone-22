@@ -6,7 +6,7 @@ services:
     container_name: readytalk-backend
     restart: always
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-readytalk_user}:${POSTGRES_PASSWORD:-readytalk_password}@${POSTGRES_HOST:-34.22.107.36}:5432/${POSTGRES_DB:-readytalk_db}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-readytalk_user}:${POSTGRES_PASSWORD:-readytalk_password}@${POSTGRES_HOST:-34.64.204.33}:5432/${POSTGRES_DB:-readytalk_db}
       - SECRET_KEY=${SECRET_KEY}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
@@ -45,25 +45,6 @@ services:
       - backend
       - frontend
 
-  weaviate:
-    image: semitechnologies/weaviate:1.28.4
-    container_name: readytalk-weaviate
-    restart: always
-    ports:
-      - "8081:8080"
-      - "50052:50051"
-    environment:
-      QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_APIKEY_ENABLED: 'true'
-      AUTHENTICATION_APIKEY_ALLOWED_KEYS: '${WEAVIATE_API_KEY:-readytalk-weaviate-local-key}'
-      AUTHENTICATION_APIKEY_USERS: 'admin@readytalk.com'
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'none'
-      CLUSTER_HOSTNAME: 'node1'
-    volumes:
-      - weaviate_data:/var/lib/weaviate
-
   frontend:
     build:
       context: ./frontend
@@ -82,5 +63,3 @@ services:
     stdin_open: true
     tty: true
 
-volumes:
-  weaviate_data:
