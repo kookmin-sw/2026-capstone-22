@@ -33,6 +33,7 @@ class ChatService:
         "balanced": "적절한 분량으로 핵심 내용과 간단한 설명을 포함하세요.",
     }
 
+
     @staticmethod
     def build_system_instruction(
         tenant_name: str,
@@ -68,6 +69,21 @@ class ChatService:
 
         tone_text = ChatService.TONE_INSTRUCTIONS.get(tone, ChatService.TONE_INSTRUCTIONS["polite"])
         style_text = ChatService.STYLE_INSTRUCTIONS.get(style, ChatService.STYLE_INSTRUCTIONS["concise"])
+
+        # 유미 코드 수정 부분 START
+        # Custom instructions
+        custom_section = ""
+        if chatbot_settings and chatbot_settings.custom_instructions:
+            custom_section = f"\n## 추가 지시사항\n{chatbot_settings.custom_instructions}\n"
+        
+        # 상담 전용 규칙 추가
+        consultation_rules = """
+        ## 상담 및 동적 유도 규칙
+        - 모든 답변은 반드시 업로드된 상담 매뉴얼(admission_manual.txt)을 우선 검색(search_documents)하여 작성하세요.
+        - 매뉴얼에 없는 질문은 "담당 선생님의 확인이 필요합니다. 실시간 상담을 연결해 드릴까요?"라고 안내하세요.
+        - 수강료나 위치 문의가 완료되면 반드시 "정확한 레벨 파악을 위해 '레벨 테스트'가 필요한데, 안내해 드릴까요?"라고 제안하세요.
+        """
+        # 수정 끝
 
         # Greeting instruction
         greeting_section = ""
@@ -137,6 +153,7 @@ class ChatService:
 5. 자기소개 요청 시 {bot_name}임을 밝히고, {tenant_name}의 자료를 기반으로 답변할 수 있다고 안내하세요.
 {rule6}
 {function_rules}{calendar_section}
+{consultation_rules} 
 ## 답변 형식
 1. 한국어로 답변하세요.
 2. 출처 파일명이나 경로를 본문에 언급하지 마세요. 출처는 시스템이 별도 표시합니다.
