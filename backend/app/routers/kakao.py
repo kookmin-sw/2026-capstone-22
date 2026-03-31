@@ -21,12 +21,18 @@ def _get_default_model(db: Session) -> str:
     """Get DEFAULT_MODEL from platform_settings DB, fallback to config."""
     try:
         from ..models.platform_setting import PlatformSetting
-        row = db.query(PlatformSetting).filter(PlatformSetting.key == "DEFAULT_MODEL").first()
+
+        row = (
+            db.query(PlatformSetting)
+            .filter(PlatformSetting.key == "DEFAULT_MODEL")
+            .first()
+        )
         if row and row.value:
             return row.value
     except Exception:
         pass
     return settings.DEFAULT_MODEL
+
 
 router = APIRouter()
 
@@ -40,17 +46,25 @@ def _get_or_create_kakao_user(db: Session, kakao_user_id: str, tenant_id: int) -
 
     email = f"kakao_{kakao_user_id[:16]}@kakao.internal"
 
-    user = db.query(User).filter(
-        User.email == email,
-        User.tenant_id == tenant_id,
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.email == email,
+            User.tenant_id == tenant_id,
+        )
+        .first()
+    )
 
     if not user:
         # Find or create "일반" group for this tenant
-        default_group = db.query(Group).filter(
-            Group.name == "일반",
-            Group.tenant_id == tenant_id,
-        ).first()
+        default_group = (
+            db.query(Group)
+            .filter(
+                Group.name == "일반",
+                Group.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not default_group:
             default_group = Group(
                 name="일반",
@@ -73,17 +87,24 @@ def _get_or_create_kakao_user(db: Session, kakao_user_id: str, tenant_id: int) -
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Created KakaoTalk user: {email} for tenant {tenant_id} (group: 일반)")
+        logger.info(
+            f"Created KakaoTalk user: {email} for tenant {tenant_id} (group: 일반)"
+        )
 
     return user
 
 
 def _get_or_create_session(db: Session, user: User, tenant_id: int) -> ChatSession:
     """Get the persistent kakao session or create one. One session per user, always reused."""
-    session = db.query(ChatSession).filter(
-        ChatSession.user_id == user.id,
-        ChatSession.tenant_id == tenant_id,
-    ).order_by(desc(ChatSession.updated_at)).first()
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.user_id == user.id,
+            ChatSession.tenant_id == tenant_id,
+        )
+        .order_by(desc(ChatSession.updated_at))
+        .first()
+    )
 
     if session:
         return session
@@ -101,7 +122,13 @@ def _get_or_create_session(db: Session, user: User, tenant_id: int) -> ChatSessi
     return new_session
 
 
-def _save_messages(db: Session, session_id: int, tenant_id: int, user_message: str, assistant_message: str):
+def _save_messages(
+    db: Session,
+    session_id: int,
+    tenant_id: int,
+    user_message: str,
+    assistant_message: str,
+):
     """Save assistant message to the session (user message is saved before history load)"""
     assistant_msg = Message(
         session_id=session_id,
@@ -143,11 +170,11 @@ def _resolve_source_links(db: Session, filenames: list) -> list:
         return sources
 
     for fname in filenames[:3]:  # max 3 for Kakao buttons
-        doc = db.query(Document).filter(
-            Document.display_name == fname
-        ).first()
+        doc = db.query(Document).filter(Document.display_name == fname).first()
         if doc and doc.gcs_path:
-            signed_url = gcs_service.generate_signed_url(doc.gcs_path, expiration_minutes=60)
+            signed_url = gcs_service.generate_signed_url(
+                doc.gcs_path, expiration_minutes=60
+            )
             if signed_url:
                 sources.append({"title": fname, "uri": signed_url})
                 logger.info(f"KakaoTalk source link: {fname}")
@@ -156,22 +183,22 @@ def _resolve_source_links(db: Session, filenames: list) -> list:
 
 def _strip_markdown(text: str) -> str:
     """Convert markdown to clean plain text for KakaoTalk"""
-    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
-    text = re.sub(r'__(.+?)__', r'\1', text)
-    text = re.sub(r'\*(.+?)\*', r'\1', text)
-    text = re.sub(r'_(.+?)_', r'\1', text)
-    text = re.sub(r'~~(.+?)~~', r'\1', text)
-    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'\1 (\2)', text)
-    text = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'(\1)', text)
-    text = re.sub(r'^[\s]*[-*]\s+', '• ', text, flags=re.MULTILINE)
-    text = re.sub(r'^(\s*\d+)\.\s+', r'\1) ', text, flags=re.MULTILINE)
-    text = re.sub(r'```\w*\n?', '', text)
-    text = re.sub(r'`(.+?)`', r'\1', text)
-    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"__(.+?)__", r"\1", text)
+    text = re.sub(r"\*(.+?)\*", r"\1", text)
+    text = re.sub(r"_(.+?)_", r"\1", text)
+    text = re.sub(r"~~(.+?)~~", r"\1", text)
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
+    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"(\1)", text)
+    text = re.sub(r"^[\s]*[-*]\s+", "• ", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*\d+)\.\s+", r"\1) ", text, flags=re.MULTILINE)
+    text = re.sub(r"```\w*\n?", "", text)
+    text = re.sub(r"`(.+?)`", r"\1", text)
+    text = re.sub(r"^[-*_]{3,}\s*$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     # Remove [cite: "..."] markers (sources shown as buttons instead)
-    text = re.sub(r'\s*\[cite:\s*"[^"]*"\]', '', text)
+    text = re.sub(r'\s*\[cite:\s*"[^"]*"\]', "", text)
     return text.strip()
 
 
@@ -197,20 +224,24 @@ def _build_kakao_outputs(text_chunks: list, sources: list = None) -> list:
         uri = src.get("uri")
         if not uri:
             continue
-        buttons.append({
-            "action": "webLink",
-            "label": "📄 원본 문서 보기",
-            "webLinkUrl": uri,
-        })
+        buttons.append(
+            {
+                "action": "webLink",
+                "label": "📄 원본 문서 보기",
+                "webLinkUrl": uri,
+            }
+        )
 
     if buttons:
-        outputs.append({
-            "textCard": {
-                "title": "📚 참고 문서",
-                "description": "답변에 참고된 원본 문서입니다.",
-                "buttons": buttons,
+        outputs.append(
+            {
+                "textCard": {
+                    "title": "📚 참고 문서",
+                    "description": "답변에 참고된 원본 문서입니다.",
+                    "buttons": buttons,
+                }
             }
-        })
+        )
 
     return outputs
 
@@ -228,26 +259,26 @@ def _split_text(text: str, max_length: int = KAKAO_MAX_LENGTH) -> list:
             chunks.append(remaining)
             break
 
-        split_pos = remaining.rfind('\n\n', 0, max_length)
+        split_pos = remaining.rfind("\n\n", 0, max_length)
         if split_pos > max_length * 0.3:
             chunks.append(remaining[:split_pos].rstrip())
-            remaining = remaining[split_pos:].lstrip('\n')
+            remaining = remaining[split_pos:].lstrip("\n")
             continue
 
-        split_pos = remaining.rfind('\n', 0, max_length)
+        split_pos = remaining.rfind("\n", 0, max_length)
         if split_pos > max_length * 0.3:
             chunks.append(remaining[:split_pos].rstrip())
-            remaining = remaining[split_pos:].lstrip('\n')
+            remaining = remaining[split_pos:].lstrip("\n")
             continue
 
         split_pos = max(
-            remaining.rfind('. ', 0, max_length),
-            remaining.rfind('! ', 0, max_length),
-            remaining.rfind('? ', 0, max_length),
+            remaining.rfind(". ", 0, max_length),
+            remaining.rfind("! ", 0, max_length),
+            remaining.rfind("? ", 0, max_length),
         )
         if split_pos > max_length * 0.3:
-            chunks.append(remaining[:split_pos + 1].rstrip())
-            remaining = remaining[split_pos + 1:].lstrip()
+            chunks.append(remaining[: split_pos + 1].rstrip())
+            remaining = remaining[split_pos + 1 :].lstrip()
             continue
 
         chunks.append(remaining[:max_length])
@@ -272,7 +303,12 @@ async def _process_kakao_callback(
     try:
         # Re-load chatbot_settings in this DB session (avoids detached instance error)
         from ..models.chatbot_settings import ChatbotSettings
-        cb_settings = db.query(ChatbotSettings).filter(ChatbotSettings.tenant_id == tenant_id).first()
+
+        cb_settings = (
+            db.query(ChatbotSettings)
+            .filter(ChatbotSettings.tenant_id == tenant_id)
+            .first()
+        )
 
         loop = asyncio.get_event_loop()
 
@@ -321,32 +357,35 @@ async def _process_kakao_callback(
             _tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
             if _tenant:
                 from ..config import settings
-                base_url = settings.REACT_APP_API_URL.rstrip('/')
+
+                base_url = settings.REACT_APP_API_URL.rstrip("/")
                 calendar_url = f"{base_url}/{_tenant.slug}/calendar"
-                outputs.append({
-                    "textCard": {
-                        "title": "캘린더",
-                        "description": "캘린더에서 전체 일정을 확인하세요.",
-                        "buttons": [
-                            {
-                                "action": "webLink",
-                                "label": "일정 보기",
-                                "webLinkUrl": calendar_url,
-                            }
-                        ],
+                outputs.append(
+                    {
+                        "textCard": {
+                            "title": "캘린더",
+                            "description": "캘린더에서 전체 일정을 확인하세요.",
+                            "buttons": [
+                                {
+                                    "action": "webLink",
+                                    "label": "일정 보기",
+                                    "webLinkUrl": calendar_url,
+                                }
+                            ],
+                        }
                     }
-                })
+                )
 
         callback_body = {
             "version": "2.0",
-            "template": {
-                "outputs": outputs
-            },
+            "template": {"outputs": outputs},
         }
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(callback_url, json=callback_body)
             if resp.status_code != 200:
-                logger.warning(f"Kakao callback returned {resp.status_code}: {resp.text}")
+                logger.warning(
+                    f"Kakao callback returned {resp.status_code}: {resp.text}"
+                )
 
     except Exception as e:
         logger.error(f"KakaoTalk callback failed: {e}", exc_info=True)
@@ -388,39 +427,71 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
         # Find tenant and user, then delete session messages
         _kc = None
         if bot_id:
-            _kc = db.query(TenantKakaoConfig).filter(TenantKakaoConfig.bot_id == bot_id).first()
+            _kc = (
+                db.query(TenantKakaoConfig)
+                .filter(TenantKakaoConfig.bot_id == bot_id)
+                .first()
+            )
         if not _kc and channel_id:
-            _kc = db.query(TenantKakaoConfig).filter(TenantKakaoConfig.channel_id == channel_id).first()
+            _kc = (
+                db.query(TenantKakaoConfig)
+                .filter(TenantKakaoConfig.channel_id == channel_id)
+                .first()
+            )
         if _kc and kakao_user_id:
             _user = _get_or_create_kakao_user(db, kakao_user_id, _kc.tenant_id)
             if _user:
                 # Delete all sessions and messages for this user
-                sessions = db.query(ChatSession).filter(
-                    ChatSession.user_id == _user.id,
-                    ChatSession.tenant_id == _kc.tenant_id,
-                ).all()
+                sessions = (
+                    db.query(ChatSession)
+                    .filter(
+                        ChatSession.user_id == _user.id,
+                        ChatSession.tenant_id == _kc.tenant_id,
+                    )
+                    .all()
+                )
                 for s in sessions:
                     db.query(Message).filter(Message.session_id == s.id).delete()
                     db.delete(s)
                 db.commit()
-                logger.info(f"Cleared conversation history for kakao user {kakao_user_id} in tenant {_kc.tenant_id}")
-        return _kakao_simple_response("대화 내역이 초기화되었습니다. 새롭게 대화를 시작해 주세요!")
+                logger.info(
+                    f"Cleared conversation history for kakao user {kakao_user_id} in tenant {_kc.tenant_id}"
+                )
+        return _kakao_simple_response(
+            "대화 내역이 초기화되었습니다. 새롭게 대화를 시작해 주세요!"
+        )
 
     # 1-2. Check for admin/document keyword commands
     ADMIN_KEYWORDS = {"관리자", "어드민", "admin", "대시보드", "dashboard"}
-    DOC_KEYWORDS = {"문서 업로드", "문서업로드", "문서 관리", "문서관리", "파일 업로드", "파일업로드"}
+    DOC_KEYWORDS = {
+        "문서 업로드",
+        "문서업로드",
+        "문서 관리",
+        "문서관리",
+        "파일 업로드",
+        "파일업로드",
+    }
     stripped = utterance.strip()
     if stripped in ADMIN_KEYWORDS or stripped in DOC_KEYWORDS:
         _kc = None
         if bot_id:
-            _kc = db.query(TenantKakaoConfig).filter(TenantKakaoConfig.bot_id == bot_id).first()
+            _kc = (
+                db.query(TenantKakaoConfig)
+                .filter(TenantKakaoConfig.bot_id == bot_id)
+                .first()
+            )
         if not _kc and channel_id:
-            _kc = db.query(TenantKakaoConfig).filter(TenantKakaoConfig.channel_id == channel_id).first()
+            _kc = (
+                db.query(TenantKakaoConfig)
+                .filter(TenantKakaoConfig.channel_id == channel_id)
+                .first()
+            )
         if _kc:
             _tenant = db.query(Tenant).filter(Tenant.id == _kc.tenant_id).first()
             if _tenant:
                 from ..config import settings
-                base_url = settings.REACT_APP_API_URL.rstrip('/')
+
+                base_url = settings.REACT_APP_API_URL.rstrip("/")
                 if stripped in DOC_KEYWORDS:
                     target_url = f"{base_url}/{_tenant.slug}/admin/stores"
                     title = "문서 관리"
@@ -454,10 +525,20 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
                         ]
                     },
                 }
-        return _kakao_simple_response("관리자 페이지를 찾을 수 없습니다. 관리자에게 문의해 주세요.")
+        return _kakao_simple_response(
+            "관리자 페이지를 찾을 수 없습니다. 관리자에게 문의해 주세요."
+        )
 
     # 1-3. Check for counselor/agent keyword commands
-    COUNSELOR_KEYWORDS = {"상담원", "상담원 연결", "상담사 연결", "상담 연결", "상담원연결", "담당자 연결", "담당자연결"}
+    COUNSELOR_KEYWORDS = {
+        "상담원",
+        "상담원 연결",
+        "상담사 연결",
+        "상담 연결",
+        "상담원연결",
+        "담당자 연결",
+        "담당자연결",
+    }
     if utterance.strip() in COUNSELOR_KEYWORDS:
         return {
             "version": "2.0",
@@ -482,13 +563,17 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
     # 2. Find tenant by bot_id first, then channel_id
     kakao_config = None
     if bot_id:
-        kakao_config = db.query(TenantKakaoConfig).filter(
-            TenantKakaoConfig.bot_id == bot_id
-        ).first()
+        kakao_config = (
+            db.query(TenantKakaoConfig)
+            .filter(TenantKakaoConfig.bot_id == bot_id)
+            .first()
+        )
     if not kakao_config and channel_id:
-        kakao_config = db.query(TenantKakaoConfig).filter(
-            TenantKakaoConfig.channel_id == channel_id
-        ).first()
+        kakao_config = (
+            db.query(TenantKakaoConfig)
+            .filter(TenantKakaoConfig.channel_id == channel_id)
+            .first()
+        )
 
     if not kakao_config:
         logger.warning(f"Unknown KakaoTalk bot_id: {bot_id}, channel_id: {channel_id}")
@@ -499,12 +584,17 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
     tenant_name = _tenant_obj.name if _tenant_obj else "ReadyTalk"
 
     from ..models.chatbot_settings import ChatbotSettings
-    chatbot_settings = db.query(ChatbotSettings).filter(
-        ChatbotSettings.tenant_id == tenant_id
-    ).first()
+
+    chatbot_settings = (
+        db.query(ChatbotSettings).filter(ChatbotSettings.tenant_id == tenant_id).first()
+    )
 
     # 3. Get or create kakao user & session
-    user = _get_or_create_kakao_user(db, kakao_user_id, tenant_id) if kakao_user_id else None
+    user = (
+        _get_or_create_kakao_user(db, kakao_user_id, tenant_id)
+        if kakao_user_id
+        else None
+    )
     session = _get_or_create_session(db, user, tenant_id) if user else None
 
     # Save user message first so it's included in history (matches web chat behavior)
@@ -522,17 +612,26 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
 
     # 4. Get accessible corpus names (group-based access control)
     from ..utils.store_access import get_accessible_stores
+
     corpus_names = get_accessible_stores(user, db) if user else []
     if not corpus_names:
         # Fallback: if user has no group or no permissions, show message
-        return _kakao_simple_response("접근 가능한 문서가 없습니다. 관리자에게 문의해 주세요.")
+        return _kakao_simple_response(
+            "접근 가능한 문서가 없습니다. 관리자에게 문의해 주세요."
+        )
 
     # 4-1. Check if tenant has calendar connected
     from ..models.tenant import TenantCalendarConfig
-    has_calendar = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == tenant_id,
-        TenantCalendarConfig.refresh_token.isnot(None),
-    ).first() is not None
+
+    has_calendar = (
+        db.query(TenantCalendarConfig)
+        .filter(
+            TenantCalendarConfig.tenant_id == tenant_id,
+            TenantCalendarConfig.refresh_token.isnot(None),
+        )
+        .first()
+        is not None
+    )
 
     # 5. Use callback for async response
     if callback_url:
@@ -595,48 +694,40 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
             _tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
             if _tenant:
                 from ..config import settings
-                base_url = settings.REACT_APP_API_URL.rstrip('/')
+
+                base_url = settings.REACT_APP_API_URL.rstrip("/")
                 calendar_url = f"{base_url}/{_tenant.slug}/calendar"
-                outputs.append({
-                    "textCard": {
-                        "title": "캘린더",
-                        "description": "캘린더에서 전체 일정을 확인하세요.",
-                        "buttons": [
-                            {
-                                "action": "webLink",
-                                "label": "일정 보기",
-                                "webLinkUrl": calendar_url,
-                            }
-                        ],
+                outputs.append(
+                    {
+                        "textCard": {
+                            "title": "캘린더",
+                            "description": "캘린더에서 전체 일정을 확인하세요.",
+                            "buttons": [
+                                {
+                                    "action": "webLink",
+                                    "label": "일정 보기",
+                                    "webLinkUrl": calendar_url,
+                                }
+                            ],
+                        }
                     }
-                })
+                )
 
         return {
             "version": "2.0",
-            "template": {
-                "outputs": outputs
-            },
+            "template": {"outputs": outputs},
         }
 
     except Exception as e:
         logger.error(f"KakaoTalk query failed for tenant {tenant_id}: {e}")
-        return _kakao_error_response("답변을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")
+        return _kakao_error_response(
+            "답변을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        )
 
 
 def _kakao_simple_response(text: str) -> dict:
     """카카오 오픈빌더 simpleText 응답 포맷"""
-    return {
-        "version": "2.0",
-        "template": {
-            "outputs": [
-                {
-                    "simpleText": {
-                        "text": text
-                    }
-                }
-            ]
-        }
-    }
+    return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": text}}]}}
 
 
 def _kakao_error_response(text: str) -> dict:

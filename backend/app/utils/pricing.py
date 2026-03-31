@@ -62,5 +62,5 @@ def estimate_retrieval_cost(request_count: int) -> float:
 
 def estimate_storage_cost(bytes_used: int) -> float:
     """Estimate monthly GCS storage cost in USD."""
-    gb_used = bytes_used / (1024 ** 3)
+    gb_used = bytes_used / (1024**3)
     return round(gb_used * GCS_PRICE_PER_GB_MONTH, 6)

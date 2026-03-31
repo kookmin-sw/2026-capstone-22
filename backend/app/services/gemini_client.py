@@ -1,4 +1,5 @@
 """Gemini/Vertex AI client initialization and shared utilities"""
+
 from google import genai
 from google.genai import types
 from typing import Optional
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # metadata.json 파일 패턴 (정규식)
-METADATA_JSON_PATTERN = re.compile(r'metadata.*\.json$', re.IGNORECASE)
+METADATA_JSON_PATTERN = re.compile(r"metadata.*\.json$", re.IGNORECASE)
 
 
 def _is_metadata_file(filename: str) -> bool:
@@ -22,6 +23,7 @@ def _is_metadata_file(filename: str) -> bool:
 
 
 # --- Platform settings helper (DB > env fallback) ---
+
 
 def _get_platform_setting(key: str) -> str:
     """Get platform setting value: DB first, then env var fallback.
@@ -33,6 +35,7 @@ def _get_platform_setting(key: str) -> str:
     try:
         from ..database import SessionLocal
         from ..models.platform_setting import PlatformSetting
+
         db = SessionLocal()
         try:
             row = db.query(PlatformSetting).filter(PlatformSetting.key == key).first()

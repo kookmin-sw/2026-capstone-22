@@ -1,4 +1,5 @@
 """Vertex AI RAG corpus/document CRUD operations"""
+
 from typing import List, Optional, Dict, Any
 import logging
 import time
@@ -13,16 +14,22 @@ logger = logging.getLogger(__name__)
 def _is_not_found_error(e: Exception) -> bool:
     """Check if an exception indicates a resource was already deleted / not found"""
     error_str = str(e)
-    return ("404" in error_str
-            or "not found" in error_str.lower()
-            or "NOT_FOUND" in error_str)
+    return (
+        "404" in error_str
+        or "not found" in error_str.lower()
+        or "NOT_FOUND" in error_str
+    )
 
 
 class RagService:
     """Service for managing RAG corpora and documents in Vertex AI"""
 
     @staticmethod
-    def create_corpus(display_name: str, description: Optional[str] = None, weaviate_config: Optional[Dict] = None) -> dict:
+    def create_corpus(
+        display_name: str,
+        description: Optional[str] = None,
+        weaviate_config: Optional[Dict] = None,
+    ) -> dict:
         """Create a new RAG corpus in Vertex AI
 
         Args:
@@ -70,7 +77,9 @@ class RagService:
             raise
 
     @staticmethod
-    def _create_corpus_rest(display_name: str, description: Optional[str], weaviate_config: Dict) -> str:
+    def _create_corpus_rest(
+        display_name: str, description: Optional[str], weaviate_config: Dict
+    ) -> str:
         """Create a Weaviate-backed RAG corpus via REST API (workaround for SDK bug)"""
         import google.auth
         import google.auth.transport.requests
@@ -81,7 +90,9 @@ class RagService:
         project = _get_vertex_project()
         location = _get_vertex_location()
 
-        credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        credentials, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
         auth_req = google.auth.transport.requests.Request()
         credentials.refresh(auth_req)
 
@@ -101,19 +112,28 @@ class RagService:
                 },
                 "api_auth": {
                     "api_key_config": {
-                        "api_key_secret_version": weaviate_config["api_key_secret_version"]
+                        "api_key_secret_version": weaviate_config[
+                            "api_key_secret_version"
+                        ]
                     }
-                }
-            }
+                },
+            },
         }
 
-        resp = http_requests.post(url, headers={
-            "Authorization": f"Bearer {credentials.token}",
-            "Content-Type": "application/json",
-        }, json=body, timeout=60)
+        resp = http_requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {credentials.token}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=60,
+        )
 
         if resp.status_code != 200:
-            raise RuntimeError(f"Failed to create Weaviate corpus: {resp.status_code} {resp.text}")
+            raise RuntimeError(
+                f"Failed to create Weaviate corpus: {resp.status_code} {resp.text}"
+            )
 
         operation = resp.json()
         operation_name = operation.get("name")
@@ -153,7 +173,14 @@ class RagService:
             raise
 
     @staticmethod
-    def upload_document(corpus_name: str, file_path: str, display_name: str, mime_type: str, custom_metadata: list = None, gcs_uri: Optional[str] = None) -> dict:
+    def upload_document(
+        corpus_name: str,
+        file_path: str,
+        display_name: str,
+        mime_type: str,
+        custom_metadata: list = None,
+        gcs_uri: Optional[str] = None,
+    ) -> dict:
         """Upload a document to a RAG corpus via GCS URI or direct upload
 
         Args:
@@ -189,17 +216,17 @@ class RagService:
                     files = list(rag.list_files(corpus_name=corpus_name))
                     # Match by display_name or use the last file
                     for f in files:
-                        if getattr(f, 'display_name', '') == display_name:
+                        if getattr(f, "display_name", "") == display_name:
                             doc_info = {
                                 "name": f.name,
-                                "displayName": getattr(f, 'display_name', display_name),
+                                "displayName": getattr(f, "display_name", display_name),
                             }
                             break
                     if not doc_info and files:
                         f = files[-1]
                         doc_info = {
                             "name": f.name,
-                            "displayName": getattr(f, 'display_name', display_name),
+                            "displayName": getattr(f, "display_name", display_name),
                         }
                     logger.info(f"Retrieved imported file info: {doc_info}")
                 except Exception as e:
@@ -225,7 +252,9 @@ class RagService:
                         ),
                     ),
                 )
-                logger.info(f"Upload completed for: {display_name}, rag_file: {rag_file.name}")
+                logger.info(
+                    f"Upload completed for: {display_name}, rag_file: {rag_file.name}"
+                )
 
                 return {
                     "operation_name": f"upload-{display_name}",
@@ -235,7 +264,7 @@ class RagService:
                     "document": {
                         "name": rag_file.name,
                         "displayName": display_name,
-                    }
+                    },
                 }
         except Exception as e:
             logger.error(f"Error uploading {display_name} to RAG corpus: {e}")
@@ -271,7 +300,9 @@ class RagService:
             raise
 
     @staticmethod
-    def bulk_delete_documents(corpus_name: str, display_names: List[str], db: Session) -> Dict[str, Any]:
+    def bulk_delete_documents(
+        corpus_name: str, display_names: List[str], db: Session
+    ) -> Dict[str, Any]:
         """로컬 DB를 사용한 일괄 삭제
 
         Args:
@@ -287,19 +318,20 @@ class RagService:
         """
         from ..models.corpus import Document, Corpus
 
-        result = {
-            "deleted": [],
-            "not_found": [],
-            "errors": []
-        }
+        result = {"deleted": [], "not_found": [], "errors": []}
 
         for display_name in display_names:
             try:
                 # 로컬 DB에서 조회
-                doc = db.query(Document).join(Corpus).filter(
-                    Corpus.corpus_name == corpus_name,
-                    Document.display_name == display_name
-                ).first()
+                doc = (
+                    db.query(Document)
+                    .join(Corpus)
+                    .filter(
+                        Corpus.corpus_name == corpus_name,
+                        Document.display_name == display_name,
+                    )
+                    .first()
+                )
 
                 if not doc:
                     result["not_found"].append(display_name)
@@ -309,26 +341,30 @@ class RagService:
                 try:
                     RagService.delete_document(doc.document_name)
                 except Exception as rag_err:
-                    logger.warning(f"RAG delete failed for {display_name} (continuing with DB cleanup): {rag_err}")
+                    logger.warning(
+                        f"RAG delete failed for {display_name} (continuing with DB cleanup): {rag_err}"
+                    )
 
                 # GCS에서 삭제 (실패해도 DB 삭제는 진행)
                 if doc.gcs_path:
                     try:
                         from ..services import gcs_service
+
                         if gcs_service.is_configured(tenant_id=doc.tenant_id, db=db):
-                            gcs_service.delete_file(doc.gcs_path, tenant_id=doc.tenant_id, db=db)
+                            gcs_service.delete_file(
+                                doc.gcs_path, tenant_id=doc.tenant_id, db=db
+                            )
                     except Exception as gcs_err:
-                        logger.warning(f"GCS delete failed for {display_name}: {gcs_err}")
+                        logger.warning(
+                            f"GCS delete failed for {display_name}: {gcs_err}"
+                        )
 
                 # 로컬 DB에서 삭제 (반드시 실행)
                 db.delete(doc)
                 result["deleted"].append(display_name)
 
             except Exception as e:
-                result["errors"].append({
-                    "name": display_name,
-                    "error": str(e)
-                })
+                result["errors"].append({"name": display_name, "error": str(e)})
                 logger.error(f"Error bulk deleting {display_name}: {e}")
 
         # 모든 삭제 완료 후 커밋
@@ -346,7 +382,9 @@ class RagService:
         return result
 
     @staticmethod
-    def _batch_delete_all_documents(corpus_name: str, batch_size: int = 20, db: Session = None) -> int:
+    def _batch_delete_all_documents(
+        corpus_name: str, batch_size: int = 20, db: Session = None
+    ) -> int:
         """Corpus의 모든 문서를 배치로 삭제"""
         deleted_count = 0
 
@@ -370,9 +408,12 @@ class RagService:
                 # 로컬 DB에서도 삭제 (RAG 삭제 성공/실패와 무관하게)
                 if db:
                     from ..models.corpus import Document
-                    db_doc = db.query(Document).filter(
-                        Document.document_name == f.name
-                    ).first()
+
+                    db_doc = (
+                        db.query(Document)
+                        .filter(Document.document_name == f.name)
+                        .first()
+                    )
                     if db_doc:
                         db.delete(db_doc)
 
@@ -382,7 +423,9 @@ class RagService:
 
         except Exception as e:
             if _is_not_found_error(e):
-                logger.warning(f"Corpus already deleted, skipping file listing: {corpus_name}")
+                logger.warning(
+                    f"Corpus already deleted, skipping file listing: {corpus_name}"
+                )
             else:
                 logger.error(f"Error listing files for batch deletion: {e}")
 
@@ -408,7 +451,9 @@ class RagService:
         except Exception as e:
             error_str = str(e)
             if _is_not_found_error(e):
-                logger.warning(f"Corpus already deleted (not found), proceeding with DB cleanup: {corpus_name}")
+                logger.warning(
+                    f"Corpus already deleted (not found), proceeding with DB cleanup: {corpus_name}"
+                )
             elif "503" in error_str or "Service Unavailable" in error_str:
                 logger.warning(
                     f"Direct deletion failed with 503, falling back to batch deletion: {corpus_name}"
@@ -422,6 +467,7 @@ class RagService:
 
                 # 빈 Corpus 삭제 재시도
                 try:
+
                     @CORPUS_DELETION_RETRY
                     def _delete_empty_corpus():
                         _init_vertex_ai()
@@ -431,9 +477,13 @@ class RagService:
                     logger.info(f"Successfully deleted empty corpus: {corpus_name}")
                 except Exception as retry_err:
                     if _is_not_found_error(retry_err):
-                        logger.warning(f"Corpus already gone after batch delete: {corpus_name}")
+                        logger.warning(
+                            f"Corpus already gone after batch delete: {corpus_name}"
+                        )
                     else:
-                        logger.error(f"Failed to delete empty corpus after batch delete: {retry_err}")
+                        logger.error(
+                            f"Failed to delete empty corpus after batch delete: {retry_err}"
+                        )
                         raise
             else:
                 raise
@@ -441,9 +491,8 @@ class RagService:
         # 로컬 DB에서도 삭제 (외부 리소스 삭제 결과와 무관하게 항상 실행)
         if db:
             from ..models.corpus import Corpus
-            corpus = db.query(Corpus).filter(
-                Corpus.corpus_name == corpus_name
-            ).first()
+
+            corpus = db.query(Corpus).filter(Corpus.corpus_name == corpus_name).first()
             if corpus:
                 db.delete(corpus)
                 db.commit()
@@ -456,12 +505,14 @@ class RagService:
             corpora = rag.list_corpora()
             result = []
             for c in corpora:
-                result.append({
-                    "corpus_name": c.name,
-                    "display_name": getattr(c, 'display_name', c.name),
-                    "description": getattr(c, 'description', None),
-                    "document_count": 0,
-                })
+                result.append(
+                    {
+                        "corpus_name": c.name,
+                        "display_name": getattr(c, "display_name", c.name),
+                        "description": getattr(c, "description", None),
+                        "document_count": 0,
+                    }
+                )
             logger.info(f"Listed {len(result)} RAG corpora")
             return result
         except Exception as e:
@@ -469,7 +520,9 @@ class RagService:
             raise
 
     @staticmethod
-    def get_corpus(corpus_name: str, page_size: int = 10, page_token: Optional[str] = None) -> dict:
+    def get_corpus(
+        corpus_name: str, page_size: int = 10, page_token: Optional[str] = None
+    ) -> dict:
         """Get a single RAG corpus details with files"""
         try:
             _init_vertex_ai()
@@ -492,25 +545,29 @@ class RagService:
 
             doc_list = []
             for f in page_files:
-                doc_list.append({
-                    "document_name": f.name,
-                    "display_name": getattr(f, 'display_name', f.name),
-                    "file_size": getattr(f, 'size_bytes', None),
-                    "mime_type": getattr(f, 'mime_type', None),
-                    "uploaded_at": getattr(f, 'create_time', None),
-                })
+                doc_list.append(
+                    {
+                        "document_name": f.name,
+                        "display_name": getattr(f, "display_name", f.name),
+                        "file_size": getattr(f, "size_bytes", None),
+                        "mime_type": getattr(f, "mime_type", None),
+                        "uploaded_at": getattr(f, "create_time", None),
+                    }
+                )
 
             result = {
                 "corpus_name": corpus.name,
-                "display_name": getattr(corpus, 'display_name', corpus.name),
-                "description": getattr(corpus, 'description', None),
+                "display_name": getattr(corpus, "display_name", corpus.name),
+                "description": getattr(corpus, "description", None),
                 "total_count": total_count,
                 "documents": doc_list,
                 "has_next_page": has_next_page,
                 "next_page_token": next_token,
             }
 
-            logger.info(f"Loaded {len(doc_list)} files (total: {total_count}, has_next: {has_next_page})")
+            logger.info(
+                f"Loaded {len(doc_list)} files (total: {total_count}, has_next: {has_next_page})"
+            )
             return result
         except Exception as e:
             logger.error(f"Error getting RAG corpus: {e}")

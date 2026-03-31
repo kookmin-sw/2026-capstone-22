@@ -80,6 +80,7 @@ class TenantStatsResponse(BaseModel):
 
 class TenantPublicInfo(BaseModel):
     """Public tenant info for login page"""
+
     id: int
     name: str
     slug: str

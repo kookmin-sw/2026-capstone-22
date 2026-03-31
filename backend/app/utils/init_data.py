@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 def init_superadmin(db: Session):
     """Create superadmin user (no tenant)"""
-    superadmin_email = getattr(settings, 'SUPERADMIN_EMAIL', 'admin@academy.ready.talk')
-    superadmin_password = getattr(settings, 'SUPERADMIN_PASSWORD', 'readytalk2026!')
+    superadmin_email = getattr(settings, "SUPERADMIN_EMAIL", "admin@academy.ready.talk")
+    superadmin_password = getattr(settings, "SUPERADMIN_PASSWORD", "readytalk2026!")
 
     existing = db.query(User).filter(User.email == superadmin_email).first()
     if not existing:
@@ -64,14 +64,15 @@ def init_groups(db: Session, tenant: Tenant):
     """Create default groups for tenant"""
     default_groups = [
         {"name": "관리자", "description": "관리자 그룹"},
-        {"name": "일반", "description": "일반 사용자 그룹"}
+        {"name": "일반", "description": "일반 사용자 그룹"},
     ]
 
     for group_data in default_groups:
-        existing = db.query(Group).filter(
-            Group.name == group_data["name"],
-            Group.tenant_id == tenant.id
-        ).first()
+        existing = (
+            db.query(Group)
+            .filter(Group.name == group_data["name"], Group.tenant_id == tenant.id)
+            .first()
+        )
         if not existing:
             group = Group(**group_data, tenant_id=tenant.id)
             db.add(group)

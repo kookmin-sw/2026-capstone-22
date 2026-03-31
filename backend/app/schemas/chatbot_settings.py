@@ -6,7 +6,7 @@ from datetime import datetime
 class ChatbotSettingsUpdate(BaseModel):
     chatbot_name: Optional[str] = None
     greeting_message: Optional[str] = None
-    tone: Optional[str] = "polite"          # friendly|polite|professional|formal
+    tone: Optional[str] = "polite"  # friendly|polite|professional|formal
     response_style: Optional[str] = "concise"  # concise|detailed|balanced
     custom_instructions: Optional[str] = None
     preset_id: Optional[str] = None

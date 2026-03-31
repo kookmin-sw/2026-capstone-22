@@ -46,7 +46,7 @@ def create_auth_url(tenant_id: int) -> str:
         state=str(tenant_id),
     )
     # Save code_verifier for PKCE
-    if hasattr(flow, 'code_verifier') and flow.code_verifier:
+    if hasattr(flow, "code_verifier") and flow.code_verifier:
         _code_verifiers[state] = flow.code_verifier
     return auth_url
 
@@ -54,6 +54,7 @@ def create_auth_url(tenant_id: int) -> str:
 def exchange_code(code: str, db: Session, tenant_id: int) -> TenantCalendarConfig:
     """Exchange authorization code for tokens and save to DB"""
     import os
+
     os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
     flow = Flow.from_client_config(
@@ -74,9 +75,11 @@ def exchange_code(code: str, db: Session, tenant_id: int) -> TenantCalendarConfi
     connected_email = user_info.get("email", "")
 
     # Save or update config
-    config = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == tenant_id
-    ).first()
+    config = (
+        db.query(TenantCalendarConfig)
+        .filter(TenantCalendarConfig.tenant_id == tenant_id)
+        .first()
+    )
 
     if not config:
         config = TenantCalendarConfig(tenant_id=tenant_id)
@@ -84,7 +87,9 @@ def exchange_code(code: str, db: Session, tenant_id: int) -> TenantCalendarConfi
 
     config.access_token = creds.token
     config.refresh_token = creds.refresh_token
-    config.token_expiry = creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None
+    config.token_expiry = (
+        creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None
+    )
     config.connected_email = connected_email
     config.calendar_id = "primary"
 
@@ -94,7 +99,9 @@ def exchange_code(code: str, db: Session, tenant_id: int) -> TenantCalendarConfi
     return config
 
 
-def _get_credentials(config: TenantCalendarConfig, db: Session) -> Optional[Credentials]:
+def _get_credentials(
+    config: TenantCalendarConfig, db: Session
+) -> Optional[Credentials]:
     """Build Credentials from DB config, auto-refresh if expired"""
     if not config.access_token:
         return None
@@ -105,15 +112,20 @@ def _get_credentials(config: TenantCalendarConfig, db: Session) -> Optional[Cred
         token_uri="https://oauth2.googleapis.com/token",
         client_id=settings.GOOGLE_CALENDAR_CLIENT_ID,
         client_secret=settings.GOOGLE_CALENDAR_CLIENT_SECRET,
-        expiry=config.token_expiry.replace(tzinfo=None) if config.token_expiry else None,
+        expiry=(
+            config.token_expiry.replace(tzinfo=None) if config.token_expiry else None
+        ),
     )
 
     if creds.expired and creds.refresh_token:
         from google.auth.transport.requests import Request
+
         creds.refresh(Request())
         # Update tokens in DB
         config.access_token = creds.token
-        config.token_expiry = creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None
+        config.token_expiry = (
+            creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None
+        )
         db.commit()
         logger.info(f"Calendar token refreshed for tenant {config.tenant_id}")
 
@@ -122,9 +134,11 @@ def _get_credentials(config: TenantCalendarConfig, db: Session) -> Optional[Cred
 
 def _get_calendar_service(tenant_id: int, db: Session):
     """Get authenticated Google Calendar service for a tenant"""
-    config = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == tenant_id
-    ).first()
+    config = (
+        db.query(TenantCalendarConfig)
+        .filter(TenantCalendarConfig.tenant_id == tenant_id)
+        .first()
+    )
 
     if not config:
         return None, "캘린더가 연동되지 않았습니다."
@@ -158,15 +172,19 @@ def list_events(
         time_max = (now + timedelta(days=30)).isoformat()
 
     try:
-        events_result = service.events().list(
-            calendarId=calendar_id,
-            timeMin=time_min,
-            timeMax=time_max,
-            maxResults=max_results,
-            singleEvents=True,
-            orderBy="startTime",
-            q=query,
-        ).execute()
+        events_result = (
+            service.events()
+            .list(
+                calendarId=calendar_id,
+                timeMin=time_min,
+                timeMax=time_max,
+                maxResults=max_results,
+                singleEvents=True,
+                orderBy="startTime",
+                q=query,
+            )
+            .execute()
+        )
 
         events = events_result.get("items", [])
         return {
@@ -176,8 +194,10 @@ def list_events(
                     "summary": e.get("summary", "(제목 없음)"),
                     "description": e.get("description", ""),
                     "location": e.get("location", ""),
-                    "start": e.get("start", {}).get("dateTime") or e.get("start", {}).get("date"),
-                    "end": e.get("end", {}).get("dateTime") or e.get("end", {}).get("date"),
+                    "start": e.get("start", {}).get("dateTime")
+                    or e.get("start", {}).get("date"),
+                    "end": e.get("end", {}).get("dateTime")
+                    or e.get("end", {}).get("date"),
                     "status": e.get("status"),
                 }
                 for e in events
@@ -218,22 +238,30 @@ def create_event(
             parsed = datetime.fromisoformat(start_time)
             check_max = (parsed + timedelta(minutes=1)).isoformat()
 
-        existing = service.events().list(
-            calendarId=calendar_id,
-            timeMin=check_min,
-            timeMax=check_max,
-            singleEvents=True,
-            q=summary,
-        ).execute()
+        existing = (
+            service.events()
+            .list(
+                calendarId=calendar_id,
+                timeMin=check_min,
+                timeMax=check_max,
+                singleEvents=True,
+                q=summary,
+            )
+            .execute()
+        )
 
         for e in existing.get("items", []):
             if e.get("summary", "").strip() == summary.strip():
-                logger.info(f"Duplicate calendar event detected: '{summary}' at {start_time}")
+                logger.info(
+                    f"Duplicate calendar event detected: '{summary}' at {start_time}"
+                )
                 return {
                     "id": e.get("id"),
                     "summary": e.get("summary"),
-                    "start": e.get("start", {}).get("dateTime") or e.get("start", {}).get("date"),
-                    "end": e.get("end", {}).get("dateTime") or e.get("end", {}).get("date"),
+                    "start": e.get("start", {}).get("dateTime")
+                    or e.get("start", {}).get("date"),
+                    "end": e.get("end", {}).get("dateTime")
+                    or e.get("end", {}).get("date"),
                     "htmlLink": e.get("htmlLink"),
                     "message": "동일한 일정이 이미 존재합니다.",
                     "duplicate": True,
@@ -255,12 +283,16 @@ def create_event(
         event_body["end"] = {"dateTime": end_time, "timeZone": "Asia/Seoul"}
 
     try:
-        event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
+        event = (
+            service.events().insert(calendarId=calendar_id, body=event_body).execute()
+        )
         return {
             "id": event.get("id"),
             "summary": event.get("summary"),
-            "start": event.get("start", {}).get("dateTime") or event.get("start", {}).get("date"),
-            "end": event.get("end", {}).get("dateTime") or event.get("end", {}).get("date"),
+            "start": event.get("start", {}).get("dateTime")
+            or event.get("start", {}).get("date"),
+            "end": event.get("end", {}).get("dateTime")
+            or event.get("end", {}).get("date"),
             "htmlLink": event.get("htmlLink"),
             "message": "일정이 생성되었습니다.",
         }
@@ -286,7 +318,9 @@ def update_event(
     service, calendar_id = result
 
     try:
-        existing = service.events().get(calendarId=calendar_id, eventId=event_id).execute()
+        existing = (
+            service.events().get(calendarId=calendar_id, eventId=event_id).execute()
+        )
 
         if summary is not None:
             existing["summary"] = summary
@@ -296,20 +330,32 @@ def update_event(
             existing["location"] = location
         if start_time:
             is_all_day = len(start_time) == 10
-            existing["start"] = {"date": start_time} if is_all_day else {"dateTime": start_time, "timeZone": "Asia/Seoul"}
+            existing["start"] = (
+                {"date": start_time}
+                if is_all_day
+                else {"dateTime": start_time, "timeZone": "Asia/Seoul"}
+            )
         if end_time:
             is_all_day = len(end_time) == 10
-            existing["end"] = {"date": end_time} if is_all_day else {"dateTime": end_time, "timeZone": "Asia/Seoul"}
+            existing["end"] = (
+                {"date": end_time}
+                if is_all_day
+                else {"dateTime": end_time, "timeZone": "Asia/Seoul"}
+            )
 
-        updated = service.events().update(
-            calendarId=calendar_id, eventId=event_id, body=existing
-        ).execute()
+        updated = (
+            service.events()
+            .update(calendarId=calendar_id, eventId=event_id, body=existing)
+            .execute()
+        )
 
         return {
             "id": updated.get("id"),
             "summary": updated.get("summary"),
-            "start": updated.get("start", {}).get("dateTime") or updated.get("start", {}).get("date"),
-            "end": updated.get("end", {}).get("dateTime") or updated.get("end", {}).get("date"),
+            "start": updated.get("start", {}).get("dateTime")
+            or updated.get("start", {}).get("date"),
+            "end": updated.get("end", {}).get("dateTime")
+            or updated.get("end", {}).get("date"),
             "message": "일정이 수정되었습니다.",
         }
     except Exception as e:

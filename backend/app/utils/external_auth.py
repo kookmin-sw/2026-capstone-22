@@ -30,14 +30,14 @@ async def validate_external_token(token: str) -> Optional[dict]:
             response = await client.get(
                 EXTERNAL_VALIDATE_URL,
                 headers={"Authorization": f"Bearer {token}"},
-                timeout=10.0
+                timeout=10.0,
             )
 
             # HTTP 상태 코드 확인
             if response.status_code != 200:
                 try:
                     result = response.json()
-                    error_msg = result.get('error', result.get('message', str(result)))
+                    error_msg = result.get("error", result.get("message", str(result)))
                 except Exception:
                     error_msg = response.text
                 logger.warning(f"External token validation failed: {error_msg}")
@@ -47,12 +47,16 @@ async def validate_external_token(token: str) -> Optional[dict]:
 
             # 검증 실패: {"error": "토큰이 유효하지 않습니다."}
             if "error" in result:
-                logger.warning(f"External token validation failed: {result.get('error')}")
+                logger.warning(
+                    f"External token validation failed: {result.get('error')}"
+                )
                 return None
 
             # 검증 성공: {"status": "success", "message": "정상적인 토큰입니다."}
             if result.get("status") != "success":
-                logger.warning(f"External token validation failed: unexpected response {result}")
+                logger.warning(
+                    f"External token validation failed: unexpected response {result}"
+                )
                 return None
 
             logger.info("External token validated successfully")
@@ -73,7 +77,11 @@ async def validate_external_token(token: str) -> Optional[dict]:
         payload = jwt.decode(
             token,
             key="",  # 서명 검증 안 함
-            options={"verify_signature": False, "verify_aud": False, "verify_iss": False}
+            options={
+                "verify_signature": False,
+                "verify_aud": False,
+                "verify_iss": False,
+            },
         )
         logger.info(f"External token decoded for user: {payload.get('userid')}")
         return payload

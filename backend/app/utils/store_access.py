@@ -4,7 +4,9 @@ from ..models.user import User
 from ..models.store_permission import StoreGroupPermission
 
 
-def get_accessible_stores(user: User, db: Session, api_key: Optional[str] = None) -> List[str]:
+def get_accessible_stores(
+    user: User, db: Session, api_key: Optional[str] = None
+) -> List[str]:
     """
     Get list of RAG corpus names that the user has access to.
 
@@ -26,8 +28,11 @@ def get_accessible_stores(user: User, db: Session, api_key: Optional[str] = None
     if not user.group_id:
         if user.is_superadmin or user.is_admin:
             from ..models.corpus import Corpus
+
             if user.tenant_id is not None:
-                corpora = db.query(Corpus).filter(Corpus.tenant_id == user.tenant_id).all()
+                corpora = (
+                    db.query(Corpus).filter(Corpus.tenant_id == user.tenant_id).all()
+                )
             else:
                 corpora = db.query(Corpus).all()
             return [c.corpus_name for c in corpora]
@@ -36,7 +41,7 @@ def get_accessible_stores(user: User, db: Session, api_key: Optional[str] = None
     # Get all stores the user's group has permission to access (filtered by tenant)
     query = db.query(StoreGroupPermission).filter(
         StoreGroupPermission.group_id == user.group_id,
-        StoreGroupPermission.can_read == True
+        StoreGroupPermission.can_read == True,
     )
     if user.tenant_id is not None:
         query = query.filter(StoreGroupPermission.tenant_id == user.tenant_id)

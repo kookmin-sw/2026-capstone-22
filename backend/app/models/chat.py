@@ -15,7 +15,9 @@ class ChatSession(Base):
     __tablename__ = "chat_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     title = Column(String, default="New Chat", nullable=False)
     model_used = Column(String, default="models/gemini-2.0-flash-exp", nullable=False)
@@ -24,14 +26,21 @@ class ChatSession(Base):
 
     # Relationships
     user = relationship("User", back_populates="chat_sessions")
-    messages = relationship("Message", back_populates="session", cascade="all, delete-orphan", order_by="Message.timestamp")
+    messages = relationship(
+        "Message",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="Message.timestamp",
+    )
 
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False)
+    session_id = Column(
+        Integer, ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False
+    )
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     role = Column(Enum(MessageRole), nullable=False)
     content = Column(Text, nullable=False)

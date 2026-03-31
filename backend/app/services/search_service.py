@@ -1,4 +1,5 @@
 """Vertex AI Search (Discovery Engine) service for hybrid search"""
+
 import logging
 import time
 from typing import List, Optional, Dict, Any
@@ -11,9 +12,11 @@ logger = logging.getLogger(__name__)
 def _is_not_found_error(e: Exception) -> bool:
     """Check if an exception indicates a resource was already deleted / not found"""
     error_str = str(e)
-    return ("404" in error_str
-            or "not found" in error_str.lower()
-            or "NOT_FOUND" in error_str)
+    return (
+        "404" in error_str
+        or "not found" in error_str.lower()
+        or "NOT_FOUND" in error_str
+    )
 
 
 class SearchService:
@@ -24,11 +27,14 @@ class SearchService:
     @staticmethod
     def _get_project_id() -> str:
         from .gemini_client import _get_vertex_project
+
         return _get_vertex_project()
 
     @staticmethod
     def _get_client_options():
-        return ClientOptions(api_endpoint=f"{SearchService.LOCATION}-discoveryengine.googleapis.com")
+        return ClientOptions(
+            api_endpoint=f"{SearchService.LOCATION}-discoveryengine.googleapis.com"
+        )
 
     @staticmethod
     def _get_parent():
@@ -38,10 +44,13 @@ class SearchService:
     # ─── Data Store (Corpus) CRUD ───
 
     @staticmethod
-    def create_data_store(data_store_id: str, display_name: str, description: Optional[str] = None) -> dict:
+    def create_data_store(
+        data_store_id: str, display_name: str, description: Optional[str] = None
+    ) -> dict:
         """Create a new data store (equivalent to RAG corpus)"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.DataStoreServiceClient(
@@ -90,10 +99,13 @@ class SearchService:
             raise
 
     @staticmethod
-    def create_engine(engine_id: str, display_name: str, data_store_names: List[str]) -> dict:
+    def create_engine(
+        engine_id: str, display_name: str, data_store_names: List[str]
+    ) -> dict:
         """Create a search engine linked to one or more data stores"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.EngineServiceClient(
@@ -133,20 +145,28 @@ class SearchService:
         """Add a data store to the shared search engine via platform settings"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             # Get engine name from platform settings
             from ..database import SessionLocal
             from ..models.platform_setting import PlatformSetting
+
             db = SessionLocal()
             try:
-                row = db.query(PlatformSetting).filter(PlatformSetting.key == "VERTEX_AI_SEARCH_ENGINE").first()
+                row = (
+                    db.query(PlatformSetting)
+                    .filter(PlatformSetting.key == "VERTEX_AI_SEARCH_ENGINE")
+                    .first()
+                )
                 engine_name = row.value if row else None
             finally:
                 db.close()
 
             if not engine_name:
-                logger.warning("VERTEX_AI_SEARCH_ENGINE not configured, skipping engine link")
+                logger.warning(
+                    "VERTEX_AI_SEARCH_ENGINE not configured, skipping engine link"
+                )
                 return
 
             client = discoveryengine.EngineServiceClient(
@@ -162,6 +182,7 @@ class SearchService:
 
                 # Update engine with new data store list
                 from google.protobuf import field_mask_pb2
+
                 engine.data_store_ids = current_ids
                 request = discoveryengine.UpdateEngineRequest(
                     engine=engine,
@@ -184,6 +205,7 @@ class SearchService:
         Engine deletion failure does not block data store deletion.
         """
         from .gemini_client import _ensure_credentials
+
         _ensure_credentials()
 
         # Delete engine first (1:1 mapping: engine ID = data store ID)
@@ -196,12 +218,15 @@ class SearchService:
             logger.info(f"Engine delete requested: {engine_name}")
             # Wait for engine deletion to propagate
             import time as _time
+
             _time.sleep(5)
         except Exception as eng_err:
             if _is_not_found_error(eng_err):
                 logger.warning(f"Engine already deleted (not found): {engine_name}")
             else:
-                logger.warning(f"Engine delete failed (continuing with data store deletion): {eng_err}")
+                logger.warning(
+                    f"Engine delete failed (continuing with data store deletion): {eng_err}"
+                )
 
         # Then delete data store
         try:
@@ -213,7 +238,9 @@ class SearchService:
             logger.info(f"Data store delete requested: {data_store_name}")
         except Exception as e:
             if _is_not_found_error(e):
-                logger.warning(f"Data store already deleted (not found): {data_store_name}")
+                logger.warning(
+                    f"Data store already deleted (not found): {data_store_name}"
+                )
             else:
                 logger.error(f"Error deleting data store: {e}")
                 raise
@@ -221,10 +248,13 @@ class SearchService:
     # ─── Document Upload ───
 
     @staticmethod
-    def import_document_from_gcs(data_store_name: str, gcs_uri: str, document_id: str) -> dict:
+    def import_document_from_gcs(
+        data_store_name: str, gcs_uri: str, document_id: str
+    ) -> dict:
         """Import a document from GCS into the data store"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.DocumentServiceClient(
@@ -263,13 +293,16 @@ class SearchService:
         """
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.DocumentServiceClient(
                 client_options=SearchService._get_client_options()
             )
 
-            doc_name = f"{data_store_name}/branches/default_branch/documents/{document_id}"
+            doc_name = (
+                f"{data_store_name}/branches/default_branch/documents/{document_id}"
+            )
 
             request = discoveryengine.DeleteDocumentRequest(name=doc_name)
             client.delete_document(request=request)
@@ -277,7 +310,9 @@ class SearchService:
             logger.info(f"Deleted document: {doc_name}")
         except Exception as e:
             if _is_not_found_error(e):
-                logger.warning(f"Document already deleted (not found): {data_store_name}/documents/{document_id}")
+                logger.warning(
+                    f"Document already deleted (not found): {data_store_name}/documents/{document_id}"
+                )
                 return
             logger.error(f"Error deleting document: {e}")
             raise
@@ -285,7 +320,12 @@ class SearchService:
     # ─── Search ───
 
     @staticmethod
-    def search(engine_name: str = None, query: str = "", top_k: int = 10, data_store_names: List[str] = None) -> List[dict]:
+    def search(
+        engine_name: str = None,
+        query: str = "",
+        top_k: int = 10,
+        data_store_names: List[str] = None,
+    ) -> List[dict]:
         """Search using Vertex AI Search engines (hybrid search: semantic + keyword)
 
         Each data store has its own dedicated engine (1:1 mapping).
@@ -302,6 +342,7 @@ class SearchService:
         """
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.SearchServiceClient(
@@ -368,19 +409,29 @@ class SearchService:
                         # Strip HTML tags from snippets
                         if chunk_text:
                             import re
-                            chunk_text = re.sub(r'<[^>]+>', '', chunk_text)
-                            chunk_text = chunk_text.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+
+                            chunk_text = re.sub(r"<[^>]+>", "", chunk_text)
+                            chunk_text = (
+                                chunk_text.replace("&nbsp;", " ")
+                                .replace("&amp;", "&")
+                                .replace("&lt;", "<")
+                                .replace("&gt;", ">")
+                            )
                         if chunk_text:
-                            all_results.append({
-                                "text": chunk_text,
-                                "source": doc_id,
-                                "score": getattr(result, "relevance_score", 0) or 0,
-                            })
+                            all_results.append(
+                                {
+                                    "text": chunk_text,
+                                    "source": doc_id,
+                                    "score": getattr(result, "relevance_score", 0) or 0,
+                                }
+                            )
 
                 except Exception as eng_err:
                     logger.warning(f"Search error for engine {eng}: {eng_err}")
 
-            logger.info(f"Vertex AI Search: {len(all_results)} results across {len(engine_names)} engines for: {query[:50]}")
+            logger.info(
+                f"Vertex AI Search: {len(all_results)} results across {len(engine_names)} engines for: {query[:50]}"
+            )
             return all_results[:top_k]
 
         except Exception as e:
@@ -394,6 +445,7 @@ class SearchService:
         """List all data stores"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.DataStoreServiceClient(
@@ -406,10 +458,12 @@ class SearchService:
 
             result = []
             for store in client.list_data_stores(request=request):
-                result.append({
-                    "data_store_name": store.name,
-                    "display_name": store.display_name,
-                })
+                result.append(
+                    {
+                        "data_store_name": store.name,
+                        "display_name": store.display_name,
+                    }
+                )
 
             return result
         except Exception as e:
@@ -421,6 +475,7 @@ class SearchService:
         """List documents in a data store"""
         try:
             from .gemini_client import _ensure_credentials
+
             _ensure_credentials()
 
             client = discoveryengine.DocumentServiceClient(
@@ -432,10 +487,12 @@ class SearchService:
 
             result = []
             for doc in client.list_documents(request=request):
-                result.append({
-                    "document_id": doc.id,
-                    "document_name": doc.name,
-                })
+                result.append(
+                    {
+                        "document_id": doc.id,
+                        "document_name": doc.name,
+                    }
+                )
 
             return result
         except Exception as e:

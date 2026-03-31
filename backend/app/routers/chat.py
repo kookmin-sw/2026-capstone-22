@@ -9,11 +9,21 @@ from ..models.user import User
 from ..models.chat import ChatSession, Message, MessageRole
 from ..models.prompt_template import PromptTemplate
 from ..schemas.chat import (
-    ChatSessionCreate, ChatSessionResponse, ChatSessionListResponse,
-    ChatRequest, ChatResponse, MessageResponse, TemplateMessageRequest,
-    FeedbackRequest, FeedbackResponse
+    ChatSessionCreate,
+    ChatSessionResponse,
+    ChatSessionListResponse,
+    ChatRequest,
+    ChatResponse,
+    MessageResponse,
+    TemplateMessageRequest,
+    FeedbackRequest,
+    FeedbackResponse,
 )
-from ..utils.dependencies import get_current_user, get_optional_current_user, get_or_create_guest_user
+from ..utils.dependencies import (
+    get_current_user,
+    get_optional_current_user,
+    get_or_create_guest_user,
+)
 from ..services.chat_service import ChatService as GeminiService
 from ..utils.chat_history import get_conversation_history, should_use_caching
 from ..config import settings
@@ -25,7 +35,12 @@ def _get_default_model(db: Session) -> str:
     """Get DEFAULT_MODEL from platform_settings DB, fallback to config."""
     try:
         from ..models.platform_setting import PlatformSetting
-        row = db.query(PlatformSetting).filter(PlatformSetting.key == "DEFAULT_MODEL").first()
+
+        row = (
+            db.query(PlatformSetting)
+            .filter(PlatformSetting.key == "DEFAULT_MODEL")
+            .first()
+        )
         if row and row.value:
             return row.value
     except Exception:
@@ -33,11 +48,13 @@ def _get_default_model(db: Session) -> str:
     return settings.DEFAULT_MODEL
 
 
-@router.post("/sessions", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sessions", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_session(
     session_data: ChatSessionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new chat session"""
     model = session_data.model or current_user.preferred_model or _get_default_model(db)
@@ -46,7 +63,7 @@ async def create_session(
         user_id=current_user.id,
         tenant_id=current_user.tenant_id,
         title=session_data.title or "New Chat",
-        model_used=model
+        model_used=model,
     )
 
     db.add(new_session)
@@ -58,24 +75,20 @@ async def create_session(
 
 @router.get("/sessions", response_model=List[ChatSessionListResponse])
 async def list_sessions(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """List all chat sessions for current user (filtered by tenant)"""
-    query = db.query(ChatSession).filter(
-        ChatSession.user_id == current_user.id
-    )
+    query = db.query(ChatSession).filter(ChatSession.user_id == current_user.id)
     if current_user.tenant_id is not None:
         query = query.filter(ChatSession.tenant_id == current_user.tenant_id)
     sessions = query.order_by(ChatSession.updated_at.desc()).all()
 
     result = []
     for session in sessions:
-        message_count = db.query(Message).filter(Message.session_id == session.id).count()
-        result.append({
-            **session.__dict__,
-            "message_count": message_count
-        })
+        message_count = (
+            db.query(Message).filter(Message.session_id == session.id).count()
+        )
+        result.append({**session.__dict__, "message_count": message_count})
 
     return result
 
@@ -84,12 +97,11 @@ async def list_sessions(
 async def get_session(
     session_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Get chat session with messages"""
     query = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+        ChatSession.id == session_id, ChatSession.user_id == current_user.id
     )
     if current_user.tenant_id is not None:
         query = query.filter(ChatSession.tenant_id == current_user.tenant_id)
@@ -105,12 +117,11 @@ async def get_session(
 async def delete_session(
     session_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a chat session"""
     query = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+        ChatSession.id == session_id, ChatSession.user_id == current_user.id
     )
     if current_user.tenant_id is not None:
         query = query.filter(ChatSession.tenant_id == current_user.tenant_id)
@@ -131,7 +142,7 @@ async def send_message(
     web_search_enabled: bool = Form(False),
     files: List[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """Send a message with optional file attachments and get AI response"""
     # 비로그인 사용자는 guest 유저로 처리
@@ -143,15 +154,18 @@ async def send_message(
     if is_guest and files:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="File upload requires authentication"
+            detail="File upload requires authentication",
         )
 
     # Get or create session
     if session_id:
-        session = db.query(ChatSession).filter(
-            ChatSession.id == session_id,
-            ChatSession.user_id == current_user.id
-        ).first()
+        session = (
+            db.query(ChatSession)
+            .filter(
+                ChatSession.id == session_id, ChatSession.user_id == current_user.id
+            )
+            .first()
+        )
 
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -162,7 +176,7 @@ async def send_message(
             user_id=current_user.id,
             tenant_id=current_user.tenant_id,
             title="New Chat",
-            model_used=model_to_use
+            model_used=model_to_use,
         )
         db.add(session)
         db.commit()
@@ -173,7 +187,7 @@ async def send_message(
         session_id=session.id,
         tenant_id=current_user.tenant_id,
         role=MessageRole.USER,
-        content=message
+        content=message,
     )
     db.add(user_message)
     db.commit()
@@ -185,14 +199,13 @@ async def send_message(
     try:
         accessible_stores = get_accessible_stores(current_user, db)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching accessible stores: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching accessible stores: {str(e)}"
+        )
 
     # Load conversation history for this session (excluding current message)
     conversation_history = get_conversation_history(
-        session_id=session.id,
-        db=db,
-        max_messages=20,
-        max_tokens=8000
+        session_id=session.id, db=db, max_messages=20, max_tokens=8000
     )
 
     # Handle file uploads if any
@@ -219,7 +232,7 @@ async def send_message(
                 uploaded_file = GeminiService.upload_file_for_chat(
                     file_path=file_path,
                     display_name=file.filename,
-                    mime_type=file.content_type or "application/octet-stream"
+                    mime_type=file.content_type or "application/octet-stream",
                 )
 
                 file_uris.append(uploaded_file["uri"])
@@ -229,7 +242,9 @@ async def send_message(
                 for temp_path in temp_file_paths:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
-                raise HTTPException(status_code=500, detail=f"Error uploading file to Gemini: {str(e)}")
+                raise HTTPException(
+                    status_code=500, detail=f"Error uploading file to Gemini: {str(e)}"
+                )
 
     # Check if tenant has calendar connected & get tenant name & chatbot settings
     has_calendar = False
@@ -238,17 +253,24 @@ async def send_message(
     if current_user.tenant_id:
         from ..models.tenant import TenantCalendarConfig, Tenant
         from ..models.chatbot_settings import ChatbotSettings
+
         _tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
         if _tenant:
             tenant_name = _tenant.name
-        cal_config = db.query(TenantCalendarConfig).filter(
-            TenantCalendarConfig.tenant_id == current_user.tenant_id,
-            TenantCalendarConfig.refresh_token.isnot(None),
-        ).first()
+        cal_config = (
+            db.query(TenantCalendarConfig)
+            .filter(
+                TenantCalendarConfig.tenant_id == current_user.tenant_id,
+                TenantCalendarConfig.refresh_token.isnot(None),
+            )
+            .first()
+        )
         has_calendar = cal_config is not None
-        chatbot_settings = db.query(ChatbotSettings).filter(
-            ChatbotSettings.tenant_id == current_user.tenant_id
-        ).first()
+        chatbot_settings = (
+            db.query(ChatbotSettings)
+            .filter(ChatbotSettings.tenant_id == current_user.tenant_id)
+            .first()
+        )
 
     # Query Gemini with conversation history
     cited_sources = []
@@ -306,8 +328,7 @@ async def send_message(
     cited_sources_for_db = None
     if cited_sources:
         cited_sources_for_db = [
-            {"uri": src.get("uri"), "title": src.get("title")}
-            for src in cited_sources
+            {"uri": src.get("uri"), "title": src.get("title")} for src in cited_sources
         ]
 
     # Save assistant message with cited_sources if available
@@ -316,7 +337,7 @@ async def send_message(
         tenant_id=current_user.tenant_id,
         role=MessageRole.ASSISTANT,
         content=response_text,
-        cited_sources_json=cited_sources_for_db
+        cited_sources_json=cited_sources_for_db,
     )
     db.add(assistant_message)
     db.commit()
@@ -340,7 +361,7 @@ async def send_message(
 async def send_template_message(
     request: TemplateMessageRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """템플릿 ID를 받아서 해당 프롬프트를 바로 채팅 메시지로 전송
 
@@ -351,10 +372,13 @@ async def send_template_message(
         current_user = get_or_create_guest_user(db)
 
     # 1. 템플릿 조회
-    template = db.query(PromptTemplate).filter(
-        PromptTemplate.id == request.template_id,
-        PromptTemplate.is_active == True
-    ).first()
+    template = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.id == request.template_id, PromptTemplate.is_active == True
+        )
+        .first()
+    )
 
     if not template:
         raise HTTPException(status_code=404, detail="Template not found or inactive")
@@ -363,21 +387,27 @@ async def send_template_message(
 
     # 2. 세션 가져오기 또는 생성
     if request.session_id:
-        session = db.query(ChatSession).filter(
-            ChatSession.id == request.session_id,
-            ChatSession.user_id == current_user.id
-        ).first()
+        session = (
+            db.query(ChatSession)
+            .filter(
+                ChatSession.id == request.session_id,
+                ChatSession.user_id == current_user.id,
+            )
+            .first()
+        )
 
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
     else:
         # 새 세션 생성
-        model_to_use = request.model or current_user.preferred_model or _get_default_model(db)
+        model_to_use = (
+            request.model or current_user.preferred_model or _get_default_model(db)
+        )
         session = ChatSession(
             user_id=current_user.id,
             tenant_id=current_user.tenant_id,
             title=template.title,
-            model_used=model_to_use
+            model_used=model_to_use,
         )
         db.add(session)
         db.commit()
@@ -388,7 +418,7 @@ async def send_template_message(
         session_id=session.id,
         tenant_id=current_user.tenant_id,
         role=MessageRole.USER,
-        content=message
+        content=message,
     )
     db.add(user_message)
     db.commit()
@@ -400,14 +430,13 @@ async def send_template_message(
     try:
         accessible_stores = get_accessible_stores(current_user, db)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching accessible stores: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching accessible stores: {str(e)}"
+        )
 
     # 5-1. 대화 기록 로드
     conversation_history = get_conversation_history(
-        session_id=session.id,
-        db=db,
-        max_messages=20,
-        max_tokens=8000
+        session_id=session.id, db=db, max_messages=20, max_tokens=8000
     )
 
     # 5-2. Check if tenant has calendar connected & get tenant name & chatbot settings
@@ -417,17 +446,24 @@ async def send_template_message(
     if current_user.tenant_id:
         from ..models.tenant import TenantCalendarConfig, Tenant
         from ..models.chatbot_settings import ChatbotSettings
+
         _tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
         if _tenant:
             tenant_name = _tenant.name
-        cal_config = db.query(TenantCalendarConfig).filter(
-            TenantCalendarConfig.tenant_id == current_user.tenant_id,
-            TenantCalendarConfig.refresh_token.isnot(None),
-        ).first()
+        cal_config = (
+            db.query(TenantCalendarConfig)
+            .filter(
+                TenantCalendarConfig.tenant_id == current_user.tenant_id,
+                TenantCalendarConfig.refresh_token.isnot(None),
+            )
+            .first()
+        )
         has_calendar = cal_config is not None
-        chatbot_settings = db.query(ChatbotSettings).filter(
-            ChatbotSettings.tenant_id == current_user.tenant_id
-        ).first()
+        chatbot_settings = (
+            db.query(ChatbotSettings)
+            .filter(ChatbotSettings.tenant_id == current_user.tenant_id)
+            .first()
+        )
 
     # 6. Gemini 쿼리
     cited_sources = []
@@ -459,8 +495,7 @@ async def send_template_message(
     cited_sources_for_db = None
     if cited_sources:
         cited_sources_for_db = [
-            {"uri": src.get("uri"), "title": src.get("title")}
-            for src in cited_sources
+            {"uri": src.get("uri"), "title": src.get("title")} for src in cited_sources
         ]
 
     # 8. AI 응답 저장
@@ -470,7 +505,7 @@ async def send_template_message(
         role=MessageRole.ASSISTANT,
         content=response_text,
         realtime_file_list_json=None,
-        cited_sources_json=cited_sources_for_db
+        cited_sources_json=cited_sources_for_db,
     )
     db.add(assistant_message)
     db.commit()
@@ -494,7 +529,11 @@ async def send_feedback(
     import asyncio
     from ..utils.email import send_feedback_email
 
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD or not settings.FEEDBACK_EMAIL:
+    if (
+        not settings.SMTP_USER
+        or not settings.SMTP_PASSWORD
+        or not settings.FEEDBACK_EMAIL
+    ):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="피드백 이메일 설정이 되어 있지 않습니다. 관리자에게 문의하세요.",
@@ -538,4 +577,6 @@ async def send_feedback(
             detail=f"이메일 전송 실패: {str(e)}",
         )
 
-    return FeedbackResponse(success=True, message="피드백이 전송되었습니다. 감사합니다!")
+    return FeedbackResponse(
+        success=True, message="피드백이 전송되었습니다. 감사합니다!"
+    )

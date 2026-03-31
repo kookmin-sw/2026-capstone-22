@@ -59,16 +59,19 @@ class TokenRefresh(BaseModel):
 
 class ExternalLoginRequest(BaseModel):
     """외부 SSO 토큰으로 로그인 요청"""
+
     external_token: str  # 외부 시스템에서 받은 JWT 토큰
 
 
 class AdminPasswordChange(BaseModel):
     """관리자가 유저 비밀번호 변경"""
+
     new_password: str
 
 
 class AdminUserUpdate(BaseModel):
     """관리자가 유저 정보 전체 수정"""
+
     username: Optional[str] = None
     email: Optional[str] = None
     preferred_model: Optional[str] = None
@@ -78,6 +81,7 @@ class AdminUserUpdate(BaseModel):
 
 class ExternalTokenPayload(BaseModel):
     """외부 JWT 토큰 페이로드"""
+
     userid: str
     name: str
     staff_no: Optional[int] = None

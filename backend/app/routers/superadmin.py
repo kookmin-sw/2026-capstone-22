@@ -12,12 +12,21 @@ from ..models.chat import ChatSession, Message
 from ..models.group import Group
 from ..models.usage import UsageRecord
 from ..schemas.tenant import (
-    TenantCreate, TenantUpdate, TenantResponse, TenantDetailResponse,
-    TenantStatsResponse, TenantKakaoConfigUpdate, TenantGcpConfigUpdate
+    TenantCreate,
+    TenantUpdate,
+    TenantResponse,
+    TenantDetailResponse,
+    TenantStatsResponse,
+    TenantKakaoConfigUpdate,
+    TenantGcpConfigUpdate,
 )
 from ..schemas.billing import (
-    BillingSummaryResponse, TenantUsageSummary, TenantBillingDetailResponse,
-    DailyUsage, CallTypeBreakdown, ModelBreakdown,
+    BillingSummaryResponse,
+    TenantUsageSummary,
+    TenantBillingDetailResponse,
+    DailyUsage,
+    CallTypeBreakdown,
+    ModelBreakdown,
 )
 from ..utils.pricing import estimate_storage_cost
 from datetime import datetime, timedelta, timezone
@@ -31,63 +40,118 @@ logger = logging.getLogger(__name__)
 
 # Platform settings definition: key -> (env_var_name, description, is_secret)
 PLATFORM_SETTINGS_SCHEMA = {
-    "VERTEX_AI_PROJECT_ID": ("VERTEX_AI_PROJECT_ID", "Vertex AI GCP 프로젝트 ID", False),
-    "VERTEX_AI_LOCATION": ("VERTEX_AI_LOCATION", "Vertex AI 리전 (예: asia-northeast3)", False),
-    "GCP_CREDENTIALS_PATH": ("GCP_CREDENTIALS_PATH", "GCP 서비스 계정 JSON 파일 경로 (Vertex AI + GCS 공용)", False),
+    "VERTEX_AI_PROJECT_ID": (
+        "VERTEX_AI_PROJECT_ID",
+        "Vertex AI GCP 프로젝트 ID",
+        False,
+    ),
+    "VERTEX_AI_LOCATION": (
+        "VERTEX_AI_LOCATION",
+        "Vertex AI 리전 (예: asia-northeast3)",
+        False,
+    ),
+    "GCP_CREDENTIALS_PATH": (
+        "GCP_CREDENTIALS_PATH",
+        "GCP 서비스 계정 JSON 파일 경로 (Vertex AI + GCS 공용)",
+        False,
+    ),
     "GCS_BUCKET_NAME": ("GCS_BUCKET_NAME", "Google Cloud Storage 버킷명", False),
-    "GEMINI_API_KEY": ("GEMINI_API_KEY", "Gemini API 키 (웹 검색, 파일 업로드용)", True),
+    "GEMINI_API_KEY": (
+        "GEMINI_API_KEY",
+        "Gemini API 키 (웹 검색, 파일 업로드용)",
+        True,
+    ),
     "DEFAULT_MODEL": ("DEFAULT_MODEL", "기본 AI 모델", False),
-    "MODEL_TEMPERATURE": ("MODEL_TEMPERATURE", "Temperature (창의성 조절, 0.0~2.0, 기본: 1.0)", False),
+    "MODEL_TEMPERATURE": (
+        "MODEL_TEMPERATURE",
+        "Temperature (창의성 조절, 0.0~2.0, 기본: 1.0)",
+        False,
+    ),
     "MODEL_TOP_K": ("MODEL_TOP_K", "Top K (토큰 선택 범위, 정수, 기본: 40)", False),
-    "MODEL_TOP_P": ("MODEL_TOP_P", "Top P (누적 확률 기반 샘플링, 0.0~1.0, 기본: 0.95)", False),
-    "MODEL_MAX_OUTPUT_TOKENS": ("MODEL_MAX_OUTPUT_TOKENS", "최대 출력 토큰 수 (기본: 8192)", False),
-    "MODEL_THINKING_BUDGET": ("MODEL_THINKING_BUDGET", "Thinking Budget (사고 토큰 수, 0=비활성, 기본: 0, 지원 모델만 적용)", False),
-    "WEAVIATE_HTTP_ENDPOINT": ("WEAVIATE_HTTP_ENDPOINT", "Weaviate HTTPS 엔드포인트 (하이브리드 검색용)", False),
-    "WEAVIATE_COLLECTION_NAME": ("WEAVIATE_COLLECTION_NAME", "Weaviate 컬렉션 이름", False),
-    "WEAVIATE_API_KEY_SECRET": ("WEAVIATE_API_KEY_SECRET", "Weaviate API 키 Secret Manager 리소스 (projects/.../secrets/.../versions/...)", False),
+    "MODEL_TOP_P": (
+        "MODEL_TOP_P",
+        "Top P (누적 확률 기반 샘플링, 0.0~1.0, 기본: 0.95)",
+        False,
+    ),
+    "MODEL_MAX_OUTPUT_TOKENS": (
+        "MODEL_MAX_OUTPUT_TOKENS",
+        "최대 출력 토큰 수 (기본: 8192)",
+        False,
+    ),
+    "MODEL_THINKING_BUDGET": (
+        "MODEL_THINKING_BUDGET",
+        "Thinking Budget (사고 토큰 수, 0=비활성, 기본: 0, 지원 모델만 적용)",
+        False,
+    ),
+    "WEAVIATE_HTTP_ENDPOINT": (
+        "WEAVIATE_HTTP_ENDPOINT",
+        "Weaviate HTTPS 엔드포인트 (하이브리드 검색용)",
+        False,
+    ),
+    "WEAVIATE_COLLECTION_NAME": (
+        "WEAVIATE_COLLECTION_NAME",
+        "Weaviate 컬렉션 이름",
+        False,
+    ),
+    "WEAVIATE_API_KEY_SECRET": (
+        "WEAVIATE_API_KEY_SECRET",
+        "Weaviate API 키 Secret Manager 리소스 (projects/.../secrets/.../versions/...)",
+        False,
+    ),
 }
 
 router = APIRouter()
 
-SLUG_PATTERN = re.compile(r'^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$')
+SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$")
 
 
 @router.get("/tenants", response_model=List[TenantResponse])
 async def list_tenants(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """List all tenants (Superadmin only)"""
     tenants = db.query(Tenant).order_by(Tenant.created_at.desc()).all()
     return tenants
 
 
-@router.post("/tenants", response_model=TenantDetailResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/tenants", response_model=TenantDetailResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_tenant(
     tenant_data: TenantCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Create a new tenant with GCP provisioning (Superadmin only)"""
     # Validate slug
     if not SLUG_PATTERN.match(tenant_data.slug):
         raise HTTPException(
             status_code=400,
-            detail="Slug must be 3-100 chars, lowercase alphanumeric with hyphens, no leading/trailing hyphens"
+            detail="Slug must be 3-100 chars, lowercase alphanumeric with hyphens, no leading/trailing hyphens",
         )
 
     # Check for duplicate slug
     existing = db.query(Tenant).filter(Tenant.slug == tenant_data.slug).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Tenant with this slug already exists")
+        raise HTTPException(
+            status_code=400, detail="Tenant with this slug already exists"
+        )
 
     # Validate search_backend
     if tenant_data.search_backend not in ("rag_engine", "vertex_ai_search"):
-        raise HTTPException(status_code=400, detail="search_backend must be 'rag_engine' or 'vertex_ai_search'")
+        raise HTTPException(
+            status_code=400,
+            detail="search_backend must be 'rag_engine' or 'vertex_ai_search'",
+        )
 
     # 1. Create tenant
-    tenant = Tenant(name=tenant_data.name, slug=tenant_data.slug, status="active", search_backend=tenant_data.search_backend)
+    tenant = Tenant(
+        name=tenant_data.name,
+        slug=tenant_data.slug,
+        status="active",
+        search_backend=tenant_data.search_backend,
+    )
     db.add(tenant)
     db.commit()
     db.refresh(tenant)
@@ -105,7 +169,7 @@ async def create_tenant(
     # 3. Create default groups for the tenant
     for group_data in [
         {"name": "관리자", "description": "관리자 그룹"},
-        {"name": "일반", "description": "일반 사용자 그룹"}
+        {"name": "일반", "description": "일반 사용자 그룹"},
     ]:
         group = Group(**group_data, tenant_id=tenant.id)
         db.add(group)
@@ -131,22 +195,29 @@ async def create_tenant(
     if shared_bucket:
         try:
             from ..services import gcs_service
+
             gcs_client, bucket_name = gcs_service._get_tenant_gcs(tenant.id, db)
             if bucket_name:
                 bucket = gcs_client.bucket(bucket_name)
                 blob = bucket.blob(f"tenants/{tenant_data.slug}/.keep")
                 blob.upload_from_string("")
-                logger.info(f"Created GCS folder: {bucket_name}/tenants/{tenant_data.slug}/")
+                logger.info(
+                    f"Created GCS folder: {bucket_name}/tenants/{tenant_data.slug}/"
+                )
         except Exception as gcs_err:
             logger.warning(f"Failed to create GCS tenant folder: {gcs_err}")
 
     # Kick off GCP provisioning in background if configured
     if TenantProvisioningService.is_configured():
+
         async def _run_provisioning(slug: str, tid: int):
             from ..database import SessionLocal
+
             provisioning_db = SessionLocal()
             try:
-                result = await TenantProvisioningService.provision_tenant(slug, tid, provisioning_db)
+                result = await TenantProvisioningService.provision_tenant(
+                    slug, tid, provisioning_db
+                )
                 logger.info(f"GCP provisioning result for {slug}: {result}")
             except Exception as e:
                 logger.error(f"GCP provisioning failed for {slug}: {e}")
@@ -176,16 +247,26 @@ async def create_tenant(
 async def get_tenant(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Get tenant details (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    user_count = db.query(func.count(User.id)).filter(User.tenant_id == tenant_id).scalar()
-    document_count = db.query(func.count(Document.id)).filter(Document.tenant_id == tenant_id).scalar()
-    session_count = db.query(func.count(ChatSession.id)).filter(ChatSession.tenant_id == tenant_id).scalar()
+    user_count = (
+        db.query(func.count(User.id)).filter(User.tenant_id == tenant_id).scalar()
+    )
+    document_count = (
+        db.query(func.count(Document.id))
+        .filter(Document.tenant_id == tenant_id)
+        .scalar()
+    )
+    session_count = (
+        db.query(func.count(ChatSession.id))
+        .filter(ChatSession.tenant_id == tenant_id)
+        .scalar()
+    )
 
     return TenantDetailResponse(
         id=tenant.id,
@@ -208,7 +289,7 @@ async def update_tenant(
     tenant_id: int,
     tenant_update: TenantUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Update tenant info (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -233,7 +314,7 @@ async def update_tenant(
 async def permanently_delete_tenant(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Permanently delete a tenant and all associated data (Superadmin only)
 
@@ -245,28 +326,37 @@ async def permanently_delete_tenant(
         raise HTTPException(status_code=404, detail="Tenant not found")
 
     tenant_slug = tenant.slug
-    logger.info(f"Starting permanent deletion of tenant: {tenant_slug} (id={tenant_id})")
+    logger.info(
+        f"Starting permanent deletion of tenant: {tenant_slug} (id={tenant_id})"
+    )
 
     # 1. Delete corpora (RAG Engine or Vertex AI Search based on tenant setting)
     # 외부 리소스 삭제 실패는 경고만 남기고, DB 삭제는 반드시 진행
     corpora = db.query(Corpus).filter(Corpus.tenant_id == tenant_id).all()
-    search_backend = getattr(tenant, 'search_backend', 'rag_engine') or 'rag_engine'
+    search_backend = getattr(tenant, "search_backend", "rag_engine") or "rag_engine"
     for corpus in corpora:
         try:
             if search_backend == "vertex_ai_search":
                 from ..services.search_service import SearchService
+
                 SearchService.delete_data_store(corpus.corpus_name)
-                logger.info(f"Deleted Vertex AI Search data store: {corpus.corpus_name}")
+                logger.info(
+                    f"Deleted Vertex AI Search data store: {corpus.corpus_name}"
+                )
             else:
                 from ..services.rag_service import RagService
+
                 RagService.delete_corpus(corpus.corpus_name)
                 logger.info(f"Deleted RAG corpus: {corpus.corpus_name}")
         except Exception as e:
-            logger.warning(f"Failed to delete corpus {corpus.corpus_name} (will still remove from DB): {e}")
+            logger.warning(
+                f"Failed to delete corpus {corpus.corpus_name} (will still remove from DB): {e}"
+            )
 
     # 2. Delete GCS tenant folder and all files
     try:
         from ..services import gcs_service
+
         if gcs_service.is_configured(tenant_id=tenant_id, db=db):
             gcs_client, bucket_name = gcs_service._get_tenant_gcs(tenant_id, db)
             if bucket_name:
@@ -274,18 +364,24 @@ async def permanently_delete_tenant(
                 prefix = f"tenants/{tenant_slug}/"
                 try:
                     blobs = list(bucket.list_blobs(prefix=prefix))
-                    logger.info(f"Found {len(blobs)} GCS objects under {bucket_name}/{prefix}")
+                    logger.info(
+                        f"Found {len(blobs)} GCS objects under {bucket_name}/{prefix}"
+                    )
                     if blobs:
                         for blob in blobs:
                             try:
                                 blob.delete()
                             except Exception as blob_err:
-                                logger.warning(f"Failed to delete GCS blob {blob.name}: {blob_err}")
+                                logger.warning(
+                                    f"Failed to delete GCS blob {blob.name}: {blob_err}"
+                                )
                         logger.info(f"Deleted GCS objects under {prefix}")
                     else:
                         logger.info(f"No GCS objects found under {prefix}")
                 except Exception as list_err:
-                    logger.warning(f"Failed to list/delete GCS blobs under {prefix}: {list_err}")
+                    logger.warning(
+                        f"Failed to list/delete GCS blobs under {prefix}: {list_err}"
+                    )
     except Exception as e:
         logger.warning(f"Failed to delete GCS files for tenant {tenant_slug}: {e}")
 
@@ -294,32 +390,60 @@ async def permanently_delete_tenant(
     from ..models.prompt_template import PromptTemplate
 
     # Usage records
-    db.query(UsageRecord).filter(UsageRecord.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(UsageRecord).filter(UsageRecord.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Documents
-    db.query(Document).filter(Document.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Document).filter(Document.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Corpora
-    db.query(Corpus).filter(Corpus.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Corpus).filter(Corpus.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Messages (via sessions)
-    session_ids = [s.id for s in db.query(ChatSession.id).filter(ChatSession.tenant_id == tenant_id).all()]
+    session_ids = [
+        s.id
+        for s in db.query(ChatSession.id)
+        .filter(ChatSession.tenant_id == tenant_id)
+        .all()
+    ]
     if session_ids:
-        db.query(Message).filter(Message.session_id.in_(session_ids)).delete(synchronize_session=False)
+        db.query(Message).filter(Message.session_id.in_(session_ids)).delete(
+            synchronize_session=False
+        )
     # Chat sessions
-    db.query(ChatSession).filter(ChatSession.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(ChatSession).filter(ChatSession.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Store permissions
-    db.query(StoreGroupPermission).filter(StoreGroupPermission.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(StoreGroupPermission).filter(
+        StoreGroupPermission.tenant_id == tenant_id
+    ).delete(synchronize_session=False)
     # Prompt templates
-    db.query(PromptTemplate).filter(PromptTemplate.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(PromptTemplate).filter(PromptTemplate.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Users
     db.query(User).filter(User.tenant_id == tenant_id).delete(synchronize_session=False)
     # Groups
-    db.query(Group).filter(Group.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Group).filter(Group.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # GCP config
-    db.query(TenantGcpConfig).filter(TenantGcpConfig.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(TenantGcpConfig).filter(TenantGcpConfig.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Kakao config
-    db.query(TenantKakaoConfig).filter(TenantKakaoConfig.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(TenantKakaoConfig).filter(TenantKakaoConfig.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # AI Models
     from ..models.model import AIModel
-    db.query(AIModel).filter(AIModel.tenant_id == tenant_id).delete(synchronize_session=False)
+
+    db.query(AIModel).filter(AIModel.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
     # Tenant itself
     db.delete(tenant)
 
@@ -331,7 +455,7 @@ async def permanently_delete_tenant(
 async def deactivate_tenant(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Deactivate a tenant (Superadmin only) - does not delete data"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -347,14 +471,18 @@ async def update_kakao_config(
     tenant_id: int,
     kakao_data: TenantKakaoConfigUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Update tenant's KakaoTalk config (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    kakao_config = db.query(TenantKakaoConfig).filter(TenantKakaoConfig.tenant_id == tenant_id).first()
+    kakao_config = (
+        db.query(TenantKakaoConfig)
+        .filter(TenantKakaoConfig.tenant_id == tenant_id)
+        .first()
+    )
     if not kakao_config:
         kakao_config = TenantKakaoConfig(tenant_id=tenant_id)
         db.add(kakao_config)
@@ -370,10 +498,13 @@ async def update_kakao_config(
     db.commit()
     db.refresh(kakao_config)
 
-    return {"message": "Kakao config updated", "config": {
-        "channel_id": kakao_config.channel_id,
-        "bot_id": kakao_config.bot_id,
-    }}
+    return {
+        "message": "Kakao config updated",
+        "config": {
+            "channel_id": kakao_config.channel_id,
+            "bot_id": kakao_config.bot_id,
+        },
+    }
 
 
 @router.post("/tenants/{tenant_id}/gcp")
@@ -381,7 +512,7 @@ async def update_gcp_config(
     tenant_id: int,
     gcp_data: TenantGcpConfigUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Update tenant's GCP config (Superadmin only)
 
@@ -392,7 +523,9 @@ async def update_gcp_config(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    gcp_config = db.query(TenantGcpConfig).filter(TenantGcpConfig.tenant_id == tenant_id).first()
+    gcp_config = (
+        db.query(TenantGcpConfig).filter(TenantGcpConfig.tenant_id == tenant_id).first()
+    )
     if not gcp_config:
         gcp_config = TenantGcpConfig(
             tenant_id=tenant_id,
@@ -414,7 +547,7 @@ async def update_gcp_config(
         "config": {
             "gcp_project_id": gcp_config.gcp_project_id,
             "gcs_bucket_name": gcp_config.gcs_bucket_name,
-        }
+        },
     }
 
 
@@ -422,7 +555,7 @@ async def update_gcp_config(
 async def get_tenant_stats(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Get tenant usage statistics (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -431,11 +564,21 @@ async def get_tenant_stats(
 
     return TenantStatsResponse(
         tenant_id=tenant_id,
-        user_count=db.query(func.count(User.id)).filter(User.tenant_id == tenant_id).scalar(),
-        document_count=db.query(func.count(Document.id)).filter(Document.tenant_id == tenant_id).scalar(),
-        corpus_count=db.query(func.count(Corpus.id)).filter(Corpus.tenant_id == tenant_id).scalar(),
-        session_count=db.query(func.count(ChatSession.id)).filter(ChatSession.tenant_id == tenant_id).scalar(),
-        message_count=db.query(func.count(Message.id)).filter(Message.tenant_id == tenant_id).scalar(),
+        user_count=db.query(func.count(User.id))
+        .filter(User.tenant_id == tenant_id)
+        .scalar(),
+        document_count=db.query(func.count(Document.id))
+        .filter(Document.tenant_id == tenant_id)
+        .scalar(),
+        corpus_count=db.query(func.count(Corpus.id))
+        .filter(Corpus.tenant_id == tenant_id)
+        .scalar(),
+        session_count=db.query(func.count(ChatSession.id))
+        .filter(ChatSession.tenant_id == tenant_id)
+        .scalar(),
+        message_count=db.query(func.count(Message.id))
+        .filter(Message.tenant_id == tenant_id)
+        .scalar(),
     )
 
 
@@ -443,7 +586,7 @@ async def get_tenant_stats(
 async def get_tenant_analytics(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Get tenant-specific time-series analytics (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -460,7 +603,11 @@ async def get_tenant_analytics(
             func.date(Message.timestamp).label("date"),
             func.count(Message.id).label("count"),
         )
-        .filter(Message.tenant_id == tenant_id, Message.timestamp >= days_14, Message.role == "assistant")
+        .filter(
+            Message.tenant_id == tenant_id,
+            Message.timestamp >= days_14,
+            Message.role == "assistant",
+        )
         .group_by(func.date(Message.timestamp))
         .order_by(func.date(Message.timestamp))
         .all()
@@ -495,32 +642,41 @@ async def get_tenant_analytics(
     kst_timestamp = Message.timestamp + text("INTERVAL '9 hours'")
     hourly_dist = (
         db.query(
-            func.extract('hour', kst_timestamp).label("hour"),
+            func.extract("hour", kst_timestamp).label("hour"),
             func.count(Message.id).label("count"),
         )
         .filter(Message.tenant_id == tenant_id, Message.timestamp >= days_30)
-        .group_by(func.extract('hour', kst_timestamp))
-        .order_by(func.extract('hour', kst_timestamp))
+        .group_by(func.extract("hour", kst_timestamp))
+        .order_by(func.extract("hour", kst_timestamp))
         .all()
     )
 
     return {
-        "daily_messages": [{"date": str(r.date), "count": r.count} for r in daily_messages],
-        "daily_sessions": [{"date": str(r.date), "count": r.count} for r in daily_sessions],
+        "daily_messages": [
+            {"date": str(r.date), "count": r.count} for r in daily_messages
+        ],
+        "daily_sessions": [
+            {"date": str(r.date), "count": r.count} for r in daily_sessions
+        ],
         "daily_users": [{"date": str(r.date), "count": r.count} for r in daily_users],
-        "hourly_distribution": [{"hour": int(r.hour), "count": r.count} for r in hourly_dist],
+        "hourly_distribution": [
+            {"hour": int(r.hour), "count": r.count} for r in hourly_dist
+        ],
     }
 
 
 @router.get("/dashboard")
 async def superadmin_dashboard(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """Get superadmin dashboard stats"""
     total_tenants = db.query(func.count(Tenant.id)).scalar()
-    active_tenants = db.query(func.count(Tenant.id)).filter(Tenant.status == "active").scalar()
-    total_users = db.query(func.count(User.id)).filter(User.is_superadmin == False).scalar()
+    active_tenants = (
+        db.query(func.count(Tenant.id)).filter(Tenant.status == "active").scalar()
+    )
+    total_users = (
+        db.query(func.count(User.id)).filter(User.is_superadmin == False).scalar()
+    )
     total_documents = db.query(func.count(Document.id)).scalar()
     total_sessions = db.query(func.count(ChatSession.id)).scalar()
 
@@ -534,16 +690,21 @@ async def superadmin_dashboard(
         "total_documents": total_documents,
         "total_sessions": total_sessions,
         "recent_tenants": [
-            {"id": t.id, "name": t.name, "slug": t.slug, "status": t.status, "created_at": t.created_at.isoformat()}
+            {
+                "id": t.id,
+                "name": t.name,
+                "slug": t.slug,
+                "status": t.status,
+                "created_at": t.created_at.isoformat(),
+            }
             for t in recent_tenants
-        ]
+        ],
     }
 
 
 @router.get("/dashboard/analytics")
 async def dashboard_analytics(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """Get time-series analytics for dashboard charts (Superadmin only)"""
     now = datetime.now(timezone.utc)
@@ -617,7 +778,7 @@ async def dashboard_analytics(
 async def impersonate_tenant(
     tenant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Generate a short-lived impersonation token for a tenant (Superadmin only)"""
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -637,7 +798,9 @@ async def impersonate_tenant(
         expires_delta=timedelta(minutes=30),
     )
 
-    logger.info(f"Superadmin {current_user.email} impersonating tenant {tenant.slug} (id={tenant.id})")
+    logger.info(
+        f"Superadmin {current_user.email} impersonating tenant {tenant.slug} (id={tenant.id})"
+    )
 
     return {
         "impersonation_token": impersonation_token,
@@ -669,8 +832,7 @@ def _mask_secret(value: str) -> str:
 
 @router.get("/settings")
 async def get_platform_settings(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """Get all platform settings (Superadmin only)"""
     settings_list = []
@@ -679,17 +841,21 @@ async def get_platform_settings(
         raw_value = _get_setting_value(key, db)
 
         # Check source (DB or ENV)
-        db_setting = db.query(PlatformSetting).filter(PlatformSetting.key == key).first()
+        db_setting = (
+            db.query(PlatformSetting).filter(PlatformSetting.key == key).first()
+        )
         source = "db" if (db_setting and db_setting.value) else "env"
 
-        settings_list.append({
-            "key": key,
-            "value": _mask_secret(raw_value) if is_secret else raw_value,
-            "description": description,
-            "is_secret": is_secret,
-            "source": source,
-            "has_value": bool(raw_value),
-        })
+        settings_list.append(
+            {
+                "key": key,
+                "value": _mask_secret(raw_value) if is_secret else raw_value,
+                "description": description,
+                "is_secret": is_secret,
+                "source": source,
+                "has_value": bool(raw_value),
+            }
+        )
 
     return {"settings": settings_list}
 
@@ -698,7 +864,7 @@ async def get_platform_settings(
 async def update_platform_settings(
     updates: dict,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    current_user: User = Depends(get_current_superadmin),
 ):
     """Update platform settings (Superadmin only)
 
@@ -720,7 +886,9 @@ async def update_platform_settings(
         if is_secret and "••••" in (value or ""):
             continue
 
-        db_setting = db.query(PlatformSetting).filter(PlatformSetting.key == key).first()
+        db_setting = (
+            db.query(PlatformSetting).filter(PlatformSetting.key == key).first()
+        )
         if not db_setting:
             db_setting = PlatformSetting(
                 key=key,
@@ -743,8 +911,7 @@ async def update_platform_settings(
 
 @router.get("/settings/models")
 async def list_gemini_models(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """List available Gemini models from API (Superadmin only)"""
     import httpx as _httpx
@@ -767,8 +934,15 @@ async def list_gemini_models(
 
         # Exclude non-chat models
         EXCLUDE_KEYWORDS = {
-            "tts", "image", "robotics", "computer-use", "customtools",
-            "banana", "latest", "embedding", "aqa",
+            "tts",
+            "image",
+            "robotics",
+            "computer-use",
+            "customtools",
+            "banana",
+            "latest",
+            "embedding",
+            "aqa",
         }
 
         for model in data.get("models", []):
@@ -792,17 +966,20 @@ async def list_gemini_models(
 
             # Skip models older than 2.5 (keep 2.5, 3, 3.1, etc.)
             import re as _re
-            version_match = _re.search(r'gemini-(\d+(?:\.\d+)?)', name)
+
+            version_match = _re.search(r"gemini-(\d+(?:\.\d+)?)", name)
             if version_match:
                 version = float(version_match.group(1))
                 if version < 2.5:
                     continue
 
             display_name = model.get("displayName", name)
-            models_list.append({
-                "model_id": name,
-                "display_name": display_name,
-            })
+            models_list.append(
+                {
+                    "model_id": name,
+                    "display_name": display_name,
+                }
+            )
 
         # Sort: latest first
         models_list.sort(key=lambda m: m["model_id"], reverse=True)
@@ -816,8 +993,7 @@ async def list_gemini_models(
 
 @router.post("/settings/test-vertex-ai")
 async def test_vertex_ai_connection(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_superadmin)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_superadmin)
 ):
     """Test Vertex AI connection with current settings (Superadmin only)"""
     try:
@@ -825,10 +1001,14 @@ async def test_vertex_ai_connection(
         location = _get_setting_value("VERTEX_AI_LOCATION", db)
 
         if not project_id:
-            return {"success": False, "message": "VERTEX_AI_PROJECT_ID가 설정되지 않았습니다"}
+            return {
+                "success": False,
+                "message": "VERTEX_AI_PROJECT_ID가 설정되지 않았습니다",
+            }
 
         from vertexai import rag
         from ..services.gemini_client import _init_vertex_ai
+
         _init_vertex_ai()
 
         corpora = list(rag.list_corpora())
@@ -862,9 +1042,15 @@ async def get_billing_summary(
         db.query(
             UsageRecord.tenant_id,
             func.count(UsageRecord.id).label("api_calls"),
-            func.coalesce(func.sum(UsageRecord.prompt_token_count), 0).label("prompt_tokens"),
-            func.coalesce(func.sum(UsageRecord.candidates_token_count), 0).label("completion_tokens"),
-            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label("total_tokens"),
+            func.coalesce(func.sum(UsageRecord.prompt_token_count), 0).label(
+                "prompt_tokens"
+            ),
+            func.coalesce(func.sum(UsageRecord.candidates_token_count), 0).label(
+                "completion_tokens"
+            ),
+            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label(
+                "total_tokens"
+            ),
             func.coalesce(func.sum(UsageRecord.estimated_cost_usd), 0).label("cost"),
         )
         .filter(UsageRecord.created_at >= start)
@@ -910,18 +1096,20 @@ async def get_billing_summary(
         tokens = int(r.total_tokens) if r else 0
         cost = round(float(r.cost), 6) if r else 0.0
 
-        tenant_summaries.append(TenantUsageSummary(
-            tenant_id=t.id,
-            tenant_name=t.name,
-            tenant_slug=t.slug,
-            total_api_calls=api_calls,
-            total_prompt_tokens=prompt_tokens,
-            total_completion_tokens=completion_tokens,
-            total_tokens=tokens,
-            estimated_cost_usd=cost,
-            storage_bytes=s_bytes,
-            storage_cost_usd=s_cost,
-        ))
+        tenant_summaries.append(
+            TenantUsageSummary(
+                tenant_id=t.id,
+                tenant_name=t.name,
+                tenant_slug=t.slug,
+                total_api_calls=api_calls,
+                total_prompt_tokens=prompt_tokens,
+                total_completion_tokens=completion_tokens,
+                total_tokens=tokens,
+                estimated_cost_usd=cost,
+                storage_bytes=s_bytes,
+                storage_cost_usd=s_cost,
+            )
+        )
         total_api_calls += api_calls
         total_tokens += tokens
         total_cost += cost
@@ -929,7 +1117,9 @@ async def get_billing_summary(
         total_storage_cost += s_cost
 
     # Sort by cost descending
-    tenant_summaries.sort(key=lambda x: x.estimated_cost_usd + x.storage_cost_usd, reverse=True)
+    tenant_summaries.sort(
+        key=lambda x: x.estimated_cost_usd + x.storage_cost_usd, reverse=True
+    )
 
     return BillingSummaryResponse(
         period_days=period,
@@ -968,9 +1158,15 @@ async def get_tenant_billing(
     totals = (
         db.query(
             func.count(UsageRecord.id).label("api_calls"),
-            func.coalesce(func.sum(UsageRecord.prompt_token_count), 0).label("prompt_tokens"),
-            func.coalesce(func.sum(UsageRecord.candidates_token_count), 0).label("completion_tokens"),
-            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label("total_tokens"),
+            func.coalesce(func.sum(UsageRecord.prompt_token_count), 0).label(
+                "prompt_tokens"
+            ),
+            func.coalesce(func.sum(UsageRecord.candidates_token_count), 0).label(
+                "completion_tokens"
+            ),
+            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label(
+                "total_tokens"
+            ),
             func.coalesce(func.sum(UsageRecord.estimated_cost_usd), 0).label("cost"),
         )
         .filter(
@@ -985,7 +1181,9 @@ async def get_tenant_billing(
         db.query(
             func.date(UsageRecord.created_at).label("date"),
             func.count(UsageRecord.id).label("api_calls"),
-            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label("total_tokens"),
+            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label(
+                "total_tokens"
+            ),
             func.coalesce(func.sum(UsageRecord.estimated_cost_usd), 0).label("cost"),
         )
         .filter(
@@ -1002,7 +1200,9 @@ async def get_tenant_billing(
         db.query(
             UsageRecord.call_type,
             func.count(UsageRecord.id).label("count"),
-            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label("total_tokens"),
+            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label(
+                "total_tokens"
+            ),
             func.coalesce(func.sum(UsageRecord.estimated_cost_usd), 0).label("cost"),
         )
         .filter(
@@ -1018,7 +1218,9 @@ async def get_tenant_billing(
         db.query(
             UsageRecord.model_name,
             func.count(UsageRecord.id).label("count"),
-            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label("total_tokens"),
+            func.coalesce(func.sum(UsageRecord.total_token_count), 0).label(
+                "total_tokens"
+            ),
             func.coalesce(func.sum(UsageRecord.estimated_cost_usd), 0).label("cost"),
         )
         .filter(

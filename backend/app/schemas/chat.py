@@ -23,23 +23,23 @@ class MessageResponse(MessageBase):
     class Config:
         from_attributes = True
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def map_json_fields(cls, data):
         """Map JSON fields from DB to response fields"""
-        if hasattr(data, '__dict__'):
+        if hasattr(data, "__dict__"):
             obj_dict = {
-                'id': data.id,
-                'session_id': data.session_id,
-                'role': data.role,
-                'content': data.content,
-                'timestamp': data.timestamp,
-                'cited_sources': getattr(data, 'cited_sources_json', None)
+                "id": data.id,
+                "session_id": data.session_id,
+                "role": data.role,
+                "content": data.content,
+                "timestamp": data.timestamp,
+                "cited_sources": getattr(data, "cited_sources_json", None),
             }
             return obj_dict
         elif isinstance(data, dict):
-            if 'cited_sources_json' in data and 'cited_sources' not in data:
-                data['cited_sources'] = data.pop('cited_sources_json')
+            if "cited_sources_json" in data and "cited_sources" not in data:
+                data["cited_sources"] = data.pop("cited_sources_json")
             return data
         return data
 
@@ -82,11 +82,14 @@ class ChatRequest(BaseModel):
     session_id: Optional[int] = None  # If None, create new session
     message: str
     model: Optional[str] = None  # If None, use user's preferred model
-    web_search_enabled: Optional[bool] = False  # If True, enable hybrid search (File Search + Web Search)
+    web_search_enabled: Optional[bool] = (
+        False  # If True, enable hybrid search (File Search + Web Search)
+    )
 
 
 class TemplateMessageRequest(BaseModel):
     """템플릿 기반 메시지 전송 요청"""
+
     template_id: int  # 전송할 프롬프트 템플릿 ID
     session_id: Optional[int] = None  # If None, create new session
     model: Optional[str] = None  # If None, use user's preferred model

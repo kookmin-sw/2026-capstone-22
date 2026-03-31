@@ -16,6 +16,7 @@ router = APIRouter()
 
 # ==================== OAuth Flow ====================
 
+
 @router.get("/auth")
 async def calendar_auth(
     db: Session = Depends(get_db),
@@ -23,10 +24,14 @@ async def calendar_auth(
 ):
     """Start Google Calendar OAuth flow (admin only)"""
     if not settings.GOOGLE_CALENDAR_CLIENT_ID:
-        raise HTTPException(status_code=503, detail="Google Calendar OAuth가 설정되지 않았습니다.")
+        raise HTTPException(
+            status_code=503, detail="Google Calendar OAuth가 설정되지 않았습니다."
+        )
 
     if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="테넌트에 소속되지 않은 사용자입니다.")
+        raise HTTPException(
+            status_code=400, detail="테넌트에 소속되지 않은 사용자입니다."
+        )
 
     auth_url = calendar_service.create_auth_url(current_user.tenant_id)
     return {"auth_url": auth_url}
@@ -63,6 +68,7 @@ async def calendar_callback(
 
 # ==================== Calendar Status ====================
 
+
 @router.get("/status")
 async def calendar_status(
     db: Session = Depends(get_db),
@@ -72,9 +78,11 @@ async def calendar_status(
     if not current_user.tenant_id:
         return {"connected": False}
 
-    config = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == current_user.tenant_id
-    ).first()
+    config = (
+        db.query(TenantCalendarConfig)
+        .filter(TenantCalendarConfig.tenant_id == current_user.tenant_id)
+        .first()
+    )
 
     if not config or not config.refresh_token:
         return {"connected": False}
@@ -93,11 +101,15 @@ async def calendar_disconnect(
 ):
     """Disconnect Google Calendar (admin only)"""
     if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="테넌트에 소속되지 않은 사용자입니다.")
+        raise HTTPException(
+            status_code=400, detail="테넌트에 소속되지 않은 사용자입니다."
+        )
 
-    config = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == current_user.tenant_id
-    ).first()
+    config = (
+        db.query(TenantCalendarConfig)
+        .filter(TenantCalendarConfig.tenant_id == current_user.tenant_id)
+        .first()
+    )
 
     if config:
         db.delete(config)
@@ -108,6 +120,7 @@ async def calendar_disconnect(
 
 
 # ==================== Calendar CRUD (REST API) ====================
+
 
 @router.get("/events")
 async def get_events(
@@ -120,7 +133,9 @@ async def get_events(
 ):
     """List calendar events"""
     if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="테넌트에 소속되지 않은 사용자입니다.")
+        raise HTTPException(
+            status_code=400, detail="테넌트에 소속되지 않은 사용자입니다."
+        )
 
     result = calendar_service.list_events(
         tenant_id=current_user.tenant_id,
@@ -139,6 +154,7 @@ async def get_events(
 
 # ==================== Public Calendar API (no auth) ====================
 
+
 @router.get("/public/{slug}/status")
 async def public_calendar_status(
     slug: str,
@@ -149,9 +165,11 @@ async def public_calendar_status(
     if not tenant:
         raise HTTPException(status_code=404, detail="테넌트를 찾을 수 없습니다.")
 
-    config = db.query(TenantCalendarConfig).filter(
-        TenantCalendarConfig.tenant_id == tenant.id
-    ).first()
+    config = (
+        db.query(TenantCalendarConfig)
+        .filter(TenantCalendarConfig.tenant_id == tenant.id)
+        .first()
+    )
 
     if not config or not config.refresh_token:
         return {"connected": False}
@@ -200,7 +218,9 @@ async def create_event(
 ):
     """Create a calendar event"""
     if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="테넌트에 소속되지 않은 사용자입니다.")
+        raise HTTPException(
+            status_code=400, detail="테넌트에 소속되지 않은 사용자입니다."
+        )
 
     result = calendar_service.create_event(
         tenant_id=current_user.tenant_id,

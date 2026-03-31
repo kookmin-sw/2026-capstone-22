@@ -13,8 +13,12 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     is_superadmin = Column(Boolean, default=False, nullable=False)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)  # NULL for superadmin
-    group_id = Column(Integer, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True)
+    tenant_id = Column(
+        Integer, ForeignKey("tenants.id"), nullable=True, index=True
+    )  # NULL for superadmin
+    group_id = Column(
+        Integer, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True
+    )
     preferred_model = Column(String, default="gemini-2.5-flash", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -30,5 +34,7 @@ class User(Base):
     # Relationships
     tenant = relationship("Tenant", back_populates="users")
     group = relationship("Group", back_populates="users")
-    chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
+    chat_sessions = relationship(
+        "ChatSession", back_populates="user", cascade="all, delete-orphan"
+    )
     corpora = relationship("Corpus", back_populates="creator")

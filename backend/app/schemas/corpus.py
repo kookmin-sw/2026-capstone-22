@@ -11,6 +11,7 @@ class CorpusCreate(BaseModel):
 
 class CorpusResponse(BaseModel):
     """Corpus response - primarily from Gemini API"""
+
     corpus_name: str  # Gemini file search store name
     display_name: str
     description: Optional[str] = None
@@ -27,6 +28,7 @@ class CorpusResponse(BaseModel):
 
 class DocumentResponse(BaseModel):
     """Document response - primarily from Gemini API"""
+
     document_name: str  # Gemini document name
     display_name: str
     # DB fields - optional
@@ -51,12 +53,14 @@ class DocumentUploadResponse(BaseModel):
 
 class CorpusUpdate(BaseModel):
     """Corpus 수정 요청"""
+
     is_public: Optional[bool] = None
     description: Optional[str] = None
 
 
 class CorpusDetailResponse(CorpusResponse):
     """Corpus 상세 응답 - DB 기반 페이지네이션 지원"""
+
     documents: List[DocumentResponse] = []
     total_count: Optional[int] = None
     has_next_page: Optional[bool] = None
@@ -71,16 +75,16 @@ class CorpusDeleteRequest(BaseModel):
 
 class BulkDeleteRequest(BaseModel):
     """일괄 삭제 요청"""
+
     display_names: List[str]  # 삭제할 파일명 목록
     password: str  # 보안을 위한 비밀번호 확인
 
 
 class BulkDeleteResponse(BaseModel):
     """일괄 삭제 응답"""
+
     deleted: List[str] = []  # 성공적으로 삭제된 파일명
     not_found: List[str] = []  # DB에서 찾을 수 없는 파일명
     errors: List[dict] = []  # 삭제 중 에러 발생한 파일 (name, error)
     total_requested: int
     total_deleted: int
-
-
