@@ -17,7 +17,7 @@ optional_security = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """Get current authenticated user from JWT token"""
     credentials_exception = HTTPException(
@@ -58,6 +58,7 @@ async def get_current_user(
         # Eagerly load relationships before detaching from session
         _ = user.group
         from sqlalchemy.orm import make_transient
+
         db.expunge(user)
         make_transient(user)
         user.tenant_id = impersonating_tenant_id
@@ -68,7 +69,7 @@ async def get_current_user(
 
 async def get_optional_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Optional[User]:
     """토큰 있으면 인증 유저 반환, 없으면 None 반환"""
     if credentials is None:
@@ -104,6 +105,7 @@ async def get_optional_current_user(
             return None
         _ = user.group
         from sqlalchemy.orm import make_transient
+
         db.expunge(user)
         make_transient(user)
         user.tenant_id = impersonating_tenant_id
@@ -126,7 +128,7 @@ def get_or_create_guest_user(db: Session, tenant_id: int = None) -> User:
         is_admin=False,
         group_id=general_group.id if general_group else None,
         tenant_id=tenant_id,
-        auth_provider="guest"
+        auth_provider="guest",
     )
     db.add(guest)
     db.commit()
@@ -136,24 +138,22 @@ def get_or_create_guest_user(db: Session, tenant_id: int = None) -> User:
 
 
 async def get_current_admin_user(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """Ensure current user is an admin (tenant admin or superadmin)"""
     if not current_user.is_admin and not current_user.is_superadmin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )
     return current_user
 
 
 async def get_current_superadmin(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """Ensure current user is a superadmin"""
     if not current_user.is_superadmin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Superadmin access required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Superadmin access required"
         )
     return current_user

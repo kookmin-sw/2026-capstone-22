@@ -15,10 +15,12 @@ class Group(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
-        UniqueConstraint('name', 'tenant_id', name='uq_group_name_tenant'),
+        UniqueConstraint("name", "tenant_id", name="uq_group_name_tenant"),
     )
 
     # Relationships
     tenant = relationship("Tenant", back_populates="groups")
     users = relationship("User", back_populates="group")
-    store_permissions = relationship("StoreGroupPermission", back_populates="group", cascade="all, delete-orphan")
+    store_permissions = relationship(
+        "StoreGroupPermission", back_populates="group", cascade="all, delete-orphan"
+    )

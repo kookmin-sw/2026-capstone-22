@@ -61,9 +61,9 @@ class Settings(BaseSettings):
     GOOGLE_CALENDAR_REDIRECT_URI: str = "http://localhost:8888/api/calendar/callback"
 
     # DB Connection Pool
-    DB_POOL_SIZE: int = 5          # 로컬: 5, 운영: 50
-    DB_MAX_OVERFLOW: int = 10      # 로컬: 10, 운영: 30
-    DB_POOL_RECYCLE: int = 1800    # 30분마다 커넥션 재생성
+    DB_POOL_SIZE: int = 5  # 로컬: 5, 운영: 50
+    DB_MAX_OVERFLOW: int = 10  # 로컬: 10, 운영: 30
+    DB_POOL_RECYCLE: int = 1800  # 30분마다 커넥션 재생성
     DB_POOL_PRE_PING: bool = True  # 사용 전 커넥션 유효성 검사
 
     class Config:

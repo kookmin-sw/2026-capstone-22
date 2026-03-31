@@ -23,11 +23,11 @@ def mask_phone_numbers(text: str) -> str:
     """
     # 하이픈, 점, 공백으로 구분된 휴대폰 번호
     # 010-XXXX-XXXX 또는 01X-XXX-XXXX
-    pattern1 = r'(01[016789])[-.\s]?(\d{3,4})[-.\s]?(\d{4})'
+    pattern1 = r"(01[016789])[-.\s]?(\d{3,4})[-.\s]?(\d{4})"
 
     def replace_phone(match):
         prefix = match.group(1)
-        return f'{prefix}-****-****'
+        return f"{prefix}-****-****"
 
     return re.sub(pattern1, replace_phone, text)
 
@@ -42,10 +42,10 @@ def mask_resident_registration_numbers(text: str) -> str:
     """
     # 주민번호: 생년월일(6자리) + 성별/출생년대(1자리) + 나머지(6자리)
     # YYMMDD-XXXXXXX 형식
-    pattern = r'(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[-.\s]?([1-4])(\d{6})'
+    pattern = r"(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[-.\s]?([1-4])(\d{6})"
 
     def replace_rrn(match):
-        return f'{match.group(1)}****-*******'
+        return f"{match.group(1)}****-*******"
 
     return re.sub(pattern, replace_rrn, text)
 
@@ -59,10 +59,10 @@ def mask_credit_card_numbers(text: str) -> str:
     - 1234567890123456
     """
     # 16자리 카드번호 (4자리씩 구분되거나 연속)
-    pattern = r'(\d{4})[-.\s]?(\d{4})[-.\s]?(\d{4})[-.\s]?(\d{4})'
+    pattern = r"(\d{4})[-.\s]?(\d{4})[-.\s]?(\d{4})[-.\s]?(\d{4})"
 
     def replace_card(match):
-        return f'{match.group(1)}-****-****-****'
+        return f"{match.group(1)}-****-****-****"
 
     return re.sub(pattern, replace_card, text)
 
@@ -73,16 +73,16 @@ def mask_email_addresses(text: str) -> str:
     패턴:
     - user@example.com → u***@example.com
     """
-    pattern = r'([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})'
+    pattern = r"([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"
 
     def replace_email(match):
         local = match.group(1)
         domain = match.group(2)
         if len(local) > 2:
-            masked_local = local[0] + '***'
+            masked_local = local[0] + "***"
         else:
-            masked_local = '***'
-        return f'{masked_local}@{domain}'
+            masked_local = "***"
+        return f"{masked_local}@{domain}"
 
     return re.sub(pattern, replace_email, text)
 

@@ -8,7 +8,7 @@ from ..schemas.prompt_template import (
     PromptTemplateResponse,
     PromptTemplateListItem,
     PromptTemplateCreate,
-    PromptTemplateUpdate
+    PromptTemplateUpdate,
 )
 from ..utils.dependencies import get_current_user, get_current_admin_user
 
@@ -17,16 +17,21 @@ router = APIRouter()
 
 # ==================== Public Endpoints (For ChatPage) ====================
 
+
 @router.get("", response_model=List[PromptTemplateListItem])
 async def list_active_templates(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """활성화된 프롬프트 템플릿 목록 조회 (버튼용)"""
-    templates = db.query(PromptTemplate).filter(
-        PromptTemplate.is_active == True,
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).order_by(PromptTemplate.display_order).all()
+    templates = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.is_active == True,
+            PromptTemplate.tenant_id == current_user.tenant_id,
+        )
+        .order_by(PromptTemplate.display_order)
+        .all()
+    )
     return templates
 
 
@@ -34,13 +39,17 @@ async def list_active_templates(
 async def get_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """프롬프트 템플릿 전문 조회"""
-    template = db.query(PromptTemplate).filter(
-        PromptTemplate.id == template_id,
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).first()
+    template = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.id == template_id,
+            PromptTemplate.tenant_id == current_user.tenant_id,
+        )
+        .first()
+    )
 
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -50,23 +59,28 @@ async def get_template(
 
 # ==================== Admin Endpoints ====================
 
+
 @router.get("/admin/all", response_model=List[PromptTemplateResponse])
 async def list_all_templates(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_admin_user)
 ):
     """모든 프롬프트 템플릿 목록 조회 (관리자용)"""
-    templates = db.query(PromptTemplate).filter(
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).order_by(PromptTemplate.display_order).all()
+    templates = (
+        db.query(PromptTemplate)
+        .filter(PromptTemplate.tenant_id == current_user.tenant_id)
+        .order_by(PromptTemplate.display_order)
+        .all()
+    )
     return templates
 
 
-@router.post("", response_model=PromptTemplateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=PromptTemplateResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_template(
     template: PromptTemplateCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_admin_user),
 ):
     """프롬프트 템플릿 생성 (관리자 전용)"""
     new_template = PromptTemplate(
@@ -76,7 +90,7 @@ async def create_template(
         icon=template.icon,
         is_active=template.is_active,
         display_order=template.display_order,
-        tenant_id=current_user.tenant_id
+        tenant_id=current_user.tenant_id,
     )
     db.add(new_template)
     db.commit()
@@ -89,13 +103,17 @@ async def update_template(
     template_id: int,
     template_update: PromptTemplateUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_admin_user),
 ):
     """프롬프트 템플릿 수정 (관리자 전용)"""
-    template = db.query(PromptTemplate).filter(
-        PromptTemplate.id == template_id,
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).first()
+    template = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.id == template_id,
+            PromptTemplate.tenant_id == current_user.tenant_id,
+        )
+        .first()
+    )
 
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -122,13 +140,17 @@ async def update_template(
 async def delete_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_admin_user),
 ):
     """프롬프트 템플릿 삭제 (관리자 전용)"""
-    template = db.query(PromptTemplate).filter(
-        PromptTemplate.id == template_id,
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).first()
+    template = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.id == template_id,
+            PromptTemplate.tenant_id == current_user.tenant_id,
+        )
+        .first()
+    )
 
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -141,16 +163,20 @@ async def delete_template(
 async def reorder_templates(
     order: List[int],
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_admin_user),
 ):
     """프롬프트 템플릿 순서 일괄 변경 (관리자 전용)
 
     order: 템플릿 ID 배열 (새로운 순서대로)
     """
-    templates = db.query(PromptTemplate).filter(
-        PromptTemplate.id.in_(order),
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).all()
+    templates = (
+        db.query(PromptTemplate)
+        .filter(
+            PromptTemplate.id.in_(order),
+            PromptTemplate.tenant_id == current_user.tenant_id,
+        )
+        .all()
+    )
 
     template_map = {t.id: t for t in templates}
 
@@ -161,9 +187,10 @@ async def reorder_templates(
     db.commit()
 
     # 업데이트된 템플릿 목록 반환
-    updated_templates = db.query(PromptTemplate).filter(
-        PromptTemplate.tenant_id == current_user.tenant_id
-    ).order_by(
-        PromptTemplate.display_order
-    ).all()
+    updated_templates = (
+        db.query(PromptTemplate)
+        .filter(PromptTemplate.tenant_id == current_user.tenant_id)
+        .order_by(PromptTemplate.display_order)
+        .all()
+    )
     return updated_templates

@@ -21,7 +21,11 @@ def send_feedback_email(
         conversation_history: Optional full conversation if user consented.
         user_email: Optional email of the user who sent feedback.
     """
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD or not settings.FEEDBACK_EMAIL:
+    if (
+        not settings.SMTP_USER
+        or not settings.SMTP_PASSWORD
+        or not settings.FEEDBACK_EMAIL
+    ):
         raise RuntimeError("SMTP settings are not configured")
 
     subject = f"[ReadyTalk] 사용자 피드백"
@@ -36,7 +40,7 @@ def send_feedback_email(
             content = msg.get("content", "").replace("\n", "<br>")
             rows.append(
                 f'<tr><td style="padding:8px;background:{bg};color:#e2e8f0;border-bottom:1px solid #4a5568;">'
-                f'<strong>[{role}]</strong><br>{content}</td></tr>'
+                f"<strong>[{role}]</strong><br>{content}</td></tr>"
             )
         conversation_html = f"""
         <h3 style="color:#a78bfa;margin-top:24px;">전체 대화 내역</h3>

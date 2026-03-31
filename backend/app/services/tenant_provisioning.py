@@ -7,6 +7,7 @@ Requires a platform service account with org-level permissions:
 - billing.resourceAssociations.create
 - serviceusage.services.enable
 """
+
 import logging
 import json
 import time
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class TenantProvisioningError(Exception):
     """Error during tenant GCP provisioning"""
+
     pass
 
 
@@ -28,13 +30,15 @@ class TenantProvisioningService:
     @staticmethod
     def _get_platform_credentials():
         """Get platform-level service account credentials"""
-        creds_path = getattr(settings, 'GCP_PLATFORM_CREDENTIALS_PATH', None)
+        creds_path = getattr(settings, "GCP_PLATFORM_CREDENTIALS_PATH", None)
         if not creds_path:
-            raise TenantProvisioningError("GCP_PLATFORM_CREDENTIALS_PATH not configured")
+            raise TenantProvisioningError(
+                "GCP_PLATFORM_CREDENTIALS_PATH not configured"
+            )
 
         scopes = [
-            'https://www.googleapis.com/auth/cloud-platform',
-            'https://www.googleapis.com/auth/cloud-billing',
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-billing",
         ]
         credentials = service_account.Credentials.from_service_account_file(
             creds_path, scopes=scopes
@@ -45,9 +49,9 @@ class TenantProvisioningService:
     def is_configured() -> bool:
         """Check if GCP provisioning is properly configured"""
         return bool(
-            getattr(settings, 'GCP_ORG_ID', None) and
-            getattr(settings, 'GCP_BILLING_ACCOUNT_ID', None) and
-            getattr(settings, 'GCP_PLATFORM_CREDENTIALS_PATH', None)
+            getattr(settings, "GCP_ORG_ID", None)
+            and getattr(settings, "GCP_BILLING_ACCOUNT_ID", None)
+            and getattr(settings, "GCP_PLATFORM_CREDENTIALS_PATH", None)
         )
 
     @staticmethod
@@ -65,7 +69,9 @@ class TenantProvisioningService:
         import httpx
 
         if not TenantProvisioningService.is_configured():
-            logger.warning("GCP provisioning not configured - creating placeholder config")
+            logger.warning(
+                "GCP provisioning not configured - creating placeholder config"
+            )
             return {"status": "skipped", "reason": "GCP provisioning not configured"}
 
         credentials = TenantProvisioningService._get_platform_credentials()
@@ -76,6 +82,7 @@ class TenantProvisioningService:
 
         # Refresh credentials to get access token
         from google.auth.transport.requests import Request
+
         credentials.refresh(Request())
         headers = {
             "Authorization": f"Bearer {credentials.token}",
@@ -94,7 +101,7 @@ class TenantProvisioningService:
                         "projectId": project_id,
                         "name": f"ReadyTalk - {slug}",
                         "parent": {"type": "organization", "id": org_id},
-                    }
+                    },
                 )
                 resp.raise_for_status()
                 operation = resp.json()
@@ -104,7 +111,7 @@ class TenantProvisioningService:
                 for _ in range(30):  # max 60s
                     op_resp = await http_client.get(
                         f"https://cloudresourcemanager.googleapis.com/v1/{op_name}",
-                        headers=headers
+                        headers=headers,
                     )
                     op_data = op_resp.json()
                     if op_data.get("done"):
@@ -118,14 +125,16 @@ class TenantProvisioningService:
                     logger.info(f"GCP project already exists: {project_id}")
                     results["project"] = project_id
                 else:
-                    raise TenantProvisioningError(f"Failed to create project: {e.response.text}")
+                    raise TenantProvisioningError(
+                        f"Failed to create project: {e.response.text}"
+                    )
 
             # Step 2: Link billing account
             try:
                 resp = await http_client.put(
                     f"https://cloudbilling.googleapis.com/v1/projects/{project_id}/billingInfo",
                     headers=headers,
-                    json={"billingAccountName": f"billingAccounts/{billing_account}"}
+                    json={"billingAccountName": f"billingAccounts/{billing_account}"},
                 )
                 resp.raise_for_status()
                 results["billing"] = True
@@ -138,7 +147,7 @@ class TenantProvisioningService:
             try:
                 resp = await http_client.post(
                     f"https://serviceusage.googleapis.com/v1/projects/{project_id}/services/generativelanguage.googleapis.com:enable",
-                    headers=headers
+                    headers=headers,
                 )
                 resp.raise_for_status()
                 # Wait for API to be enabled
@@ -158,9 +167,11 @@ class TenantProvisioningService:
                     json={
                         "displayName": f"readytalk-{slug}-gemini",
                         "restrictions": {
-                            "apiTargets": [{"service": "generativelanguage.googleapis.com"}]
-                        }
-                    }
+                            "apiTargets": [
+                                {"service": "generativelanguage.googleapis.com"}
+                            ]
+                        },
+                    },
                 )
                 resp.raise_for_status()
                 key_operation = resp.json()
@@ -170,8 +181,7 @@ class TenantProvisioningService:
                 key_data = None
                 for _ in range(15):
                     op_resp = await http_client.get(
-                        f"https://apikeys.googleapis.com/v2/{op_name}",
-                        headers=headers
+                        f"https://apikeys.googleapis.com/v2/{op_name}", headers=headers
                     )
                     op_data = op_resp.json()
                     if op_data.get("done"):
@@ -184,7 +194,7 @@ class TenantProvisioningService:
                     # Get the key string
                     key_resp = await http_client.get(
                         f"https://apikeys.googleapis.com/v2/{key_name}/keyString",
-                        headers=headers
+                        headers=headers,
                     )
                     key_resp.raise_for_status()
                     gemini_api_key = key_resp.json().get("keyString")
@@ -200,7 +210,7 @@ class TenantProvisioningService:
                 # Enable storage API
                 await http_client.post(
                     f"https://serviceusage.googleapis.com/v1/projects/{project_id}/services/storage.googleapis.com:enable",
-                    headers=headers
+                    headers=headers,
                 )
                 await _async_sleep(3)
 
@@ -213,7 +223,7 @@ class TenantProvisioningService:
                         "name": bucket_name,
                         "location": "ASIA-NORTHEAST3",  # Seoul
                         "storageClass": "STANDARD",
-                    }
+                    },
                 )
                 if resp.status_code == 409:
                     logger.info(f"GCS bucket already exists: {bucket_name}")
@@ -230,7 +240,7 @@ class TenantProvisioningService:
                 # Enable IAM API
                 await http_client.post(
                     f"https://serviceusage.googleapis.com/v1/projects/{project_id}/services/iam.googleapis.com:enable",
-                    headers=headers
+                    headers=headers,
                 )
                 await _async_sleep(3)
 
@@ -240,10 +250,8 @@ class TenantProvisioningService:
                     headers=headers,
                     json={
                         "accountId": sa_name,
-                        "serviceAccount": {
-                            "displayName": f"ReadyTalk GCS - {slug}"
-                        }
-                    }
+                        "serviceAccount": {"displayName": f"ReadyTalk GCS - {slug}"},
+                    },
                 )
                 if resp.status_code == 409:
                     sa_email = f"{sa_name}@{project_id}.iam.gserviceaccount.com"
@@ -257,35 +265,44 @@ class TenantProvisioningService:
                     # Get current IAM policy
                     iam_resp = await http_client.get(
                         f"https://storage.googleapis.com/storage/v1/b/{bucket_name}/iam",
-                        headers=headers
+                        headers=headers,
                     )
-                    iam_policy = iam_resp.json() if iam_resp.status_code == 200 else {"bindings": []}
+                    iam_policy = (
+                        iam_resp.json()
+                        if iam_resp.status_code == 200
+                        else {"bindings": []}
+                    )
 
                     # Add binding
                     bindings = iam_policy.get("bindings", [])
-                    bindings.append({
-                        "role": "roles/storage.objectAdmin",
-                        "members": [f"serviceAccount:{sa_email}"]
-                    })
+                    bindings.append(
+                        {
+                            "role": "roles/storage.objectAdmin",
+                            "members": [f"serviceAccount:{sa_email}"],
+                        }
+                    )
                     iam_policy["bindings"] = bindings
 
                     await http_client.put(
                         f"https://storage.googleapis.com/storage/v1/b/{bucket_name}/iam",
                         headers=headers,
-                        json=iam_policy
+                        json=iam_policy,
                     )
 
                 # Create service account key
                 key_resp = await http_client.post(
                     f"https://iam.googleapis.com/v1/projects/{project_id}/serviceAccounts/{sa_email}/keys",
                     headers=headers,
-                    json={"keyAlgorithm": "KEY_ALG_RSA_2048"}
+                    json={"keyAlgorithm": "KEY_ALG_RSA_2048"},
                 )
                 key_resp.raise_for_status()
                 key_data = key_resp.json()
 
                 import base64
-                gcs_credentials_json = base64.b64decode(key_data.get("privateKeyData", "")).decode()
+
+                gcs_credentials_json = base64.b64decode(
+                    key_data.get("privateKeyData", "")
+                ).decode()
                 results["service_account"] = sa_email
                 logger.info(f"Created service account: {sa_email}")
             except Exception as e:
@@ -297,18 +314,21 @@ class TenantProvisioningService:
 
         # Encrypt values
         def encrypt_value(value: str) -> str:
-            key = getattr(settings, 'API_ENCRYPTION_KEY', None)
+            key = getattr(settings, "API_ENCRYPTION_KEY", None)
             if not key:
                 return value
             import hashlib, base64
             from cryptography.fernet import Fernet
+
             fernet_key = base64.urlsafe_b64encode(hashlib.sha256(key.encode()).digest())
             f = Fernet(fernet_key)
             return f.encrypt(value.encode()).decode()
 
-        gcp_config = db.query(TenantGcpConfig).filter(
-            TenantGcpConfig.tenant_id == tenant_id
-        ).first()
+        gcp_config = (
+            db.query(TenantGcpConfig)
+            .filter(TenantGcpConfig.tenant_id == tenant_id)
+            .first()
+        )
 
         if not gcp_config:
             gcp_config = TenantGcpConfig(tenant_id=tenant_id, gcp_project_id=project_id)
@@ -335,4 +355,5 @@ class TenantProvisioningService:
 async def _async_sleep(seconds):
     """Async sleep helper"""
     import asyncio
+
     await asyncio.sleep(seconds)

@@ -36,6 +36,7 @@ class PromptTemplateResponse(PromptTemplateBase):
 
 class PromptTemplateListItem(BaseModel):
     """버튼 목록용 간략 정보"""
+
     id: int
     title: str
     description: Optional[str] = None

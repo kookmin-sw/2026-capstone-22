@@ -2,7 +2,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base, SessionLocal
-from .routers import auth, chat, admin, corpus, models, prompt_templates, superadmin, tenants, kakao, calendar, chatbot_settings
+from .routers import (
+    auth,
+    chat,
+    admin,
+    corpus,
+    models,
+    prompt_templates,
+    superadmin,
+    tenants,
+    kakao,
+    calendar,
+    chatbot_settings,
+)
 from .utils.init_data import init_database
 import logging
 import asyncio
@@ -37,7 +49,7 @@ async def lifespan(app: FastAPI):
         cleanup_guest_sessions,
         CronTrigger(hour=4, minute=0, timezone="Asia/Seoul"),
         id="cleanup_guest_sessions",
-        replace_existing=True
+        replace_existing=True,
     )
     logger.info("Scheduler added: Guest session cleanup at 4:00 AM KST")
 
@@ -49,7 +61,6 @@ async def lifespan(app: FastAPI):
     # === Shutdown ===
     scheduler.shutdown(wait=False)
     logger.info("Shutting down application...")
-
 
 
 async def cleanup_guest_sessions():
@@ -67,10 +78,11 @@ async def cleanup_guest_sessions():
             return
 
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
-        old_sessions = db.query(ChatSession).filter(
-            ChatSession.user_id == guest.id,
-            ChatSession.created_at < cutoff
-        ).all()
+        old_sessions = (
+            db.query(ChatSession)
+            .filter(ChatSession.user_id == guest.id, ChatSession.created_at < cutoff)
+            .all()
+        )
 
         count = len(old_sessions)
         for session in old_sessions:
@@ -90,7 +102,7 @@ app = FastAPI(
     title="ReadyTalk API",
     description="Multi-tenant chatbot platform using Google Gemini File Search API",
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS configuration
@@ -109,21 +121,21 @@ app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(corpus.router, prefix="/api/corpus", tags=["Corpus"])
 app.include_router(models.router, prefix="/api/models", tags=["Models"])
-app.include_router(prompt_templates.router, prefix="/api/prompt-templates", tags=["Prompt Templates"])
+app.include_router(
+    prompt_templates.router, prefix="/api/prompt-templates", tags=["Prompt Templates"]
+)
 app.include_router(superadmin.router, prefix="/api/superadmin", tags=["Super Admin"])
 app.include_router(tenants.router, prefix="/api/tenants", tags=["Tenants"])
 app.include_router(kakao.router, prefix="/api/kakao", tags=["KakaoTalk"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
-app.include_router(chatbot_settings.router, prefix="/api/chatbot-settings", tags=["Chatbot Settings"])
+app.include_router(
+    chatbot_settings.router, prefix="/api/chatbot-settings", tags=["Chatbot Settings"]
+)
 
 
 @app.get("/")
 async def root():
-    return {
-        "message": "ReadyTalk API",
-        "version": "2.0.0",
-        "docs": "/docs"
-    }
+    return {"message": "ReadyTalk API", "version": "2.0.0", "docs": "/docs"}
 
 
 @app.get("/health")

@@ -5,8 +5,21 @@ from ..database import get_db
 from ..models.user import User
 from ..models.group import Group
 from ..models.tenant import Tenant
-from ..schemas.user import UserCreate, UserLogin, UserResponse, Token, TokenRefresh, ExternalLoginRequest
-from ..utils.security import verify_password, get_password_hash, create_access_token, create_refresh_token, decode_token
+from ..schemas.user import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    Token,
+    TokenRefresh,
+    ExternalLoginRequest,
+)
+from ..utils.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
 from ..utils.dependencies import get_current_user
 from ..utils.external_auth import validate_external_token
 
@@ -15,21 +28,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, slug: str = None, db: Session = Depends(get_db)):
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
+async def register(
+    user_data: UserCreate, slug: str = None, db: Session = Depends(get_db)
+):
     """Register a new user"""
     email = user_data.email.strip()
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Resolve tenant from slug
     tenant_id = None
     if slug:
-        tenant = db.query(Tenant).filter(Tenant.slug == slug, Tenant.status == "active").first()
+        tenant = (
+            db.query(Tenant)
+            .filter(Tenant.slug == slug, Tenant.status == "active")
+            .first()
+        )
         if not tenant:
             raise HTTPException(status_code=404, detail="Tenant not found")
         tenant_id = tenant.id
@@ -62,7 +82,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
 
     # Include tenant_id and is_superadmin in token
@@ -78,7 +98,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
 
 
@@ -89,8 +109,7 @@ async def refresh_token(token_data: TokenRefresh, db: Session = Depends(get_db))
 
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     user_id_str = payload.get("sub")
@@ -98,15 +117,13 @@ async def refresh_token(token_data: TokenRefresh, db: Session = Depends(get_db))
         user_id = int(user_id_str)
     except (ValueError, TypeError):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
     new_token_data = {"sub": str(user.id)}
@@ -121,7 +138,7 @@ async def refresh_token(token_data: TokenRefresh, db: Session = Depends(get_db))
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
 
 
@@ -132,28 +149,23 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/external-login", response_model=Token)
-async def external_login(
-    request: ExternalLoginRequest,
-    db: Session = Depends(get_db)
-):
+async def external_login(request: ExternalLoginRequest, db: Session = Depends(get_db)):
     """외부 SSO 토큰으로 로그인"""
     payload = await validate_external_token(request.external_token)
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired external token"
+            detail="Invalid or expired external token",
         )
 
     external_user_id = payload.get("userid")
     if not external_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: missing userid"
+            detail="Invalid token: missing userid",
         )
 
-    user = db.query(User).filter(
-        User.external_user_id == external_user_id
-    ).first()
+    user = db.query(User).filter(User.external_user_id == external_user_id).first()
 
     if not user:
         logger.info(f"Creating new external user: {external_user_id}")
@@ -182,7 +194,7 @@ async def external_login(
             auth_provider="external",
             group_id=group.id if group else None,
             tenant_id=tenant_id,
-            is_admin=False
+            is_admin=False,
         )
         db.add(user)
         db.commit()
@@ -218,5 +230,5 @@ async def external_login(
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }

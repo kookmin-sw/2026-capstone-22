@@ -77,15 +77,18 @@ async def get_presets():
 
 # ==================== CRUD ====================
 
+
 @router.get("", response_model=ChatbotSettingsResponse)
 async def get_chatbot_settings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user),
 ):
     """현재 테넌트의 챗봇 설정 조회"""
-    settings = db.query(ChatbotSettings).filter(
-        ChatbotSettings.tenant_id == current_user.tenant_id
-    ).first()
+    settings = (
+        db.query(ChatbotSettings)
+        .filter(ChatbotSettings.tenant_id == current_user.tenant_id)
+        .first()
+    )
 
     if not settings:
         raise HTTPException(status_code=404, detail="Chatbot settings not found")
@@ -100,9 +103,11 @@ async def upsert_chatbot_settings(
     current_user: User = Depends(get_current_admin_user),
 ):
     """챗봇 설정 생성/수정 (upsert)"""
-    settings = db.query(ChatbotSettings).filter(
-        ChatbotSettings.tenant_id == current_user.tenant_id
-    ).first()
+    settings = (
+        db.query(ChatbotSettings)
+        .filter(ChatbotSettings.tenant_id == current_user.tenant_id)
+        .first()
+    )
 
     if settings:
         # Update existing

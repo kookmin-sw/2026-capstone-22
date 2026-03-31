@@ -9,7 +9,9 @@ class UsageRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    session_id = Column(Integer, ForeignKey("chat_sessions.id", ondelete="SET NULL"), nullable=True)
+    session_id = Column(
+        Integer, ForeignKey("chat_sessions.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Type of AI call: "chat", "rag_search", "web_search", "file_chat", "function_calling", "synthesis"
     call_type = Column(String(50), nullable=False)
@@ -25,6 +27,4 @@ class UsageRecord(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        Index("idx_usage_tenant_date", "tenant_id", "created_at"),
-    )
+    __table_args__ = (Index("idx_usage_tenant_date", "tenant_id", "created_at"),)
