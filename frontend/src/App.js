@@ -214,6 +214,7 @@ function App() {
                   <Route index element={<ChatPage />} />
                   <Route path="admin" element={<AdminRoute><AdminPage section="dashboard" /></AdminRoute>} />
                   <Route path="admin/dashboard" element={<AdminRoute><AdminPage section="dashboard" /></AdminRoute>} />
+                  <Route path="admin/hitl" element={<AdminRoute><AdminPage section="hitl" /></AdminRoute>} />
                   <Route path="admin/stores" element={<AdminRoute><AdminPage section="stores" /></AdminRoute>} />
                   <Route path="admin/users" element={<AdminRoute><AdminPage section="users" /></AdminRoute>} />
                   <Route path="admin/templates" element={<AdminRoute><AdminPage section="templates" /></AdminRoute>} />
