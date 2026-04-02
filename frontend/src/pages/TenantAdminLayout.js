@@ -32,6 +32,7 @@ import {
   ChatBubbleOutline as ChatBubbleOutlineIcon,
   History as HistoryIcon,
   Dashboard as DashboardIcon,
+  SupportAgent as SupportAgentIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
@@ -74,6 +75,7 @@ export default function TenantAdminLayout() {
       label: 'MANAGEMENT',
       items: [
         { text: '대시보드', icon: <DashboardIcon />, path: `${basePath}/admin/dashboard` },
+        { text: '상담 대기', icon: <SupportAgentIcon />, path: `${basePath}/admin/hitl` },
         { text: '채팅 내역', icon: <HistoryIcon />, path: `${basePath}/admin/chat-history` },
         { text: '문서 저장소', icon: <FolderIcon />, path: `${basePath}/admin/stores` },
         { text: '그룹 & 유저', icon: <PeopleIcon />, path: `${basePath}/admin/users` },
