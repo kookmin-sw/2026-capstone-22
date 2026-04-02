@@ -34,7 +34,6 @@ class ChatService:
         "balanced": "적절한 분량으로 핵심 내용과 간단한 설명을 포함하세요.",
     }
 
-
     @staticmethod
     def build_system_instruction(
         tenant_name: str,
@@ -75,21 +74,6 @@ class ChatService:
             style, ChatService.STYLE_INSTRUCTIONS["concise"]
         )
 
-        # 유미 코드 수정 부분 START
-        # Custom instructions
-        custom_section = ""
-        if chatbot_settings and chatbot_settings.custom_instructions:
-            custom_section = f"\n## 추가 지시사항\n{chatbot_settings.custom_instructions}\n"
-        
-        # 상담 전용 규칙 추가
-        consultation_rules = """
-        ## 상담 및 동적 유도 규칙
-        - 모든 답변은 반드시 업로드된 상담 매뉴얼(admission_manual.txt)을 우선 검색(search_documents)하여 작성하세요.
-        - 매뉴얼에 없는 질문은 "담당 선생님의 확인이 필요합니다. 실시간 상담을 연결해 드릴까요?"라고 안내하세요.
-        - 수강료나 위치 문의가 완료되면 반드시 "정확한 레벨 파악을 위해 '레벨 테스트'가 필요한데, 안내해 드릴까요?"라고 제안하세요.
-        """
-        # 수정 끝
-
         # Greeting instruction
         greeting_section = ""
         if chatbot_settings and chatbot_settings.greeting_message:
@@ -102,6 +86,39 @@ class ChatService:
                 f"\n## 추가 지시사항\n{chatbot_settings.custom_instructions}\n"
             )
 
+        consulting_section = f"""
+## [상담 에이전트 운영 규칙]
+
+- 당신은 {tenant_name}의 신규 학부모 상담 도우미입니다.
+- 학부모가 학원 정보를 쉽게 이해할 수 있도록 친절하고 자연스럽게 안내하세요.
+- 답변은 반드시 문서 검색 결과를 바탕으로 작성하세요.
+- 학원 소개, 수강료, 교육과정, 운영시간, 등록 절차와 같은 질문에는
+  먼저 문서 검색 결과를 바탕으로 최대한 답변하세요.
+- 문서에 있는 내용이면 별도의 태그 없이 일반 답변으로 안내하세요.
+- 문서 검색 결과가 없거나, 검색 결과만으로 정확한 답변이 어려운 경우에만 상담 연결이 필요하다고 안내하세요.
+
+## [CTA 규칙]
+- 사용자가 등록/입학 의사를 직접 표현하는 경우에만
+  답변 마지막 줄에 아래 태그를 추가하세요.
+<CTA>레벨테스트예약</CTA>
+
+- 단순 정보 질문(운영시간, 위치, 수강료, 커리큘럼 등)에는 CTA 태그를 추가하지 마세요.
+
+## [HITL 규칙]
+- 아래와 같은 경우에만 답변 마지막 줄에 HITL 태그를 추가하세요.
+  - 수강료 할인, 예외 적용, 협의 요청
+  - 불만, 컴플레인, 민원
+  - 문서에 없는 내용을 운영자 판단으로 확인해야 하는 경우
+
+- 단순히 문서 검색 결과가 짧거나 애매하다는 이유만으로 HITL 태그를 추가하지 마세요.
+- HITL 태그가 필요한 경우 아래 형식을 사용하세요.
+<HITL>요약된 사유</HITL>
+
+## [출력 규칙]
+- 태그는 필요한 경우에만 답변 마지막 줄에 추가하세요.
+- 태그가 필요 없으면 일반 답변만 출력하세요.
+- 태그 뒤에 다른 문장을 붙이지 마세요.
+"""
         # Time info section (for smart query)
         time_section = ""
         if today_str and weekday_str and now_time_str:
@@ -164,10 +181,12 @@ class ChatService:
 5. 자기소개 요청 시 {bot_name}임을 밝히고, {tenant_name}의 자료를 기반으로 답변할 수 있다고 안내하세요.
 {rule6}
 {function_rules}{calendar_section}
-{consultation_rules} 
 ## 답변 형식
 1. 한국어로 답변하세요.
 2. 출처 파일명이나 경로를 본문에 언급하지 마세요. 출처는 시스템이 별도 표시합니다.
+
+{consulting_section}
+
 {custom_section}"""
 
         return instruction
