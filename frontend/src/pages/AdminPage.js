@@ -43,6 +43,7 @@ import {
   Visibility as VisibilityIcon,
   ArrowBack as ArrowBackIcon,
   History as HistoryIcon,
+  SupportAgent as SupportAgentIcon,
 } from '@mui/icons-material';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
