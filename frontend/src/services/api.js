@@ -218,4 +218,9 @@ export const chatbotSettingsAPI = {
   getPresets: () => api.get('/chatbot-settings/presets'),
 };
 
+export const hitlAPI = {
+  list: () => api.get('/hitl'),
+  resolve: (id) => api.patch(`/hitl/${id}`),
+};
+
 export default api;

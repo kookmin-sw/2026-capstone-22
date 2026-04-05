@@ -25,7 +25,7 @@ import {
 import CalendarPage from './CalendarPage';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
-import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI } from '../services/api';
+import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI } from '../services/api';
 import {
   SmartToy as SmartToyIcon,
   TuneOutlined as TuneIcon,
@@ -963,70 +963,35 @@ function CalendarSettingsPanel() {
 }
 
 function HITLPanel() {
-  const [sessions, setSessions] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [answering, setAnswering] = useState({}); // { sessionId: true/false }
-  const [replyText, setReplyText] = useState({}); // { sessionId: 'text' }
+  const [resolving, setResolving] = useState({}); // { id: true/false }
 
-  const loadHITLMessages = async () => {
+  const loadHITL = async () => {
     setLoading(true);
     try {
-      // 모든 최근 채팅 세션을 가져옵니다.
-      const res = await adminAPI.listChatSessions({ page_size: 20 });
-      const allSessions = res.data.sessions;
-      
-      const hitlRequired = [];
-      for (const session of allSessions) {
-        try {
-          const msgRes = await adminAPI.getSessionMessages(session.id);
-          const messages = msgRes.data.messages;
-          const lastMsg = messages[messages.length - 1];
-          
-          if (lastMsg) {
-            hitlRequired.push({
-              ...session,
-              lastMessage: lastMsg,
-              timestamp: new Date(lastMsg.timestamp)
-            });
-          }
-        } catch (msgErr) {
-          console.error(`세션 ${session.id} 메시지 로딩 실패:`, msgErr);
-        }
-      }
-
-      // 오래된 순으로 정렬 (Oldest first - 상담 대기 원칙)
-      hitlRequired.sort((a, b) => a.timestamp - b.timestamp);
-      setSessions(hitlRequired);
+      const res = await hitlAPI.list();
+      setItems(res.data.items);
     } catch (err) {
-      console.error('채팅 목록 로딩 오류:', err);
+      console.error('HITL 목록 로딩 오류:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadHITLMessages();
+    loadHITL();
   }, []);
 
-  const handleReply = async (sessionId) => {
-    const text = replyText[sessionId];
-    if (!text?.trim()) return;
-
-    setAnswering({ ...answering, [sessionId]: true });
+  const handleResolve = async (id) => {
+    setResolving((prev) => ({ ...prev, [id]: true }));
     try {
-      // 실제 API가 구현되기 전까지는 일반 메시지로 전송
-      // role을 assistant로 주면 관리자의 답변처럼 보입니다.
-      await chatAPI.sendMessage(sessionId, { 
-        text: `[상담사 답변] ${text}`
-      });
-      
-      alert('답변이 전송되었습니다.');
-      setReplyText({ ...replyText, [sessionId]: '' });
-      loadHITLMessages();
+      await hitlAPI.resolve(id);
+      loadHITL();
     } catch (err) {
-      alert('답변 전송 실패: ' + err.message);
+      alert('처리 실패: ' + err.message);
     } finally {
-      setAnswering({ ...answering, [sessionId]: false });
+      setResolving((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -1055,12 +1020,12 @@ function HITLPanel() {
               상담 대기 (HITL)
             </Typography>
             <Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>
-              실시간으로 들어오는 사용자 질문에 직접 답변할 수 있습니다. (오래된 순)
+              AI가 답변하기 어려운 질문 목록입니다. (오래된 순 / pending 우선)
             </Typography>
           </Box>
         </Box>
-        <Button 
-          onClick={loadHITLMessages}
+        <Button
+          onClick={loadHITL}
           size="small"
           startIcon={<HistoryIcon sx={{ fontSize: 16 }} />}
           sx={{ color: '#a78bfa', fontWeight: 600, textTransform: 'none' }}
@@ -1069,103 +1034,86 @@ function HITLPanel() {
         </Button>
       </Box>
 
-      {sessions.length === 0 ? (
-        <Paper sx={{ 
+      {items.length === 0 ? (
+        <Paper sx={{
           p: 8, textAlign: 'center', bgcolor: '#18181B', borderRadius: '20px',
           border: '1px solid rgba(255,255,255,0.06)'
         }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.1)', mb: 2 }} />
           <Typography sx={{ color: '#71717A', fontSize: '1rem', fontWeight: 500 }}>
-            현재 활성화된 상담 세션이 없습니다.
+            처리 대기 중인 항목이 없습니다.
           </Typography>
         </Paper>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {sessions.map((session) => (
-            <Card key={session.id} sx={{ 
-              bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)',
+          {items.map((item) => (
+            <Card key={item.id} sx={{
+              bgcolor: '#18181B', borderRadius: '16px',
+              border: `1px solid ${item.status === 'pending' ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.06)'}`,
               overflow: 'visible', position: 'relative',
               transition: 'all 0.2s ease',
-              '&:hover': { borderColor: 'rgba(167,139,250,0.3)', transform: 'translateY(-2px)' }
+              opacity: item.status === 'resolved' ? 0.6 : 1,
+              '&:hover': { borderColor: item.status === 'pending' ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)', transform: 'translateY(-2px)' }
             }}>
               <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Avatar sx={{ 
-                      bgcolor: 'rgba(167,139,250,0.15)', 
-                      color: '#a78bfa', 
-                      width: 36, height: 36, 
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                      border: '1px solid rgba(167,139,250,0.2)'
-                    }}>
-                      {(session.username || 'U')[0].toUpperCase()}
-                    </Avatar>
-                    <Box>
-                      <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
-                        {session.username || '익명 사용자'}
-                      </Typography>
-                      <Typography sx={{ color: '#52525B', fontSize: '0.75rem', fontFamily: 'JetBrains Mono, monospace' }}>
-                        {session.timestamp.toLocaleString('ko-KR')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    {session.lastMessage.content.includes('<HITL>') && (
-                      <Chip label="도움 필요" size="small" sx={{ bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#f87171', fontWeight: 700, fontSize: '0.65rem' }} />
+                {/* 상단: 상태 + 접수 시각 */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    {item.status === 'pending' ? (
+                      <Chip label="대기중" size="small" sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#f87171', fontWeight: 700, fontSize: '0.65rem' }} />
+                    ) : (
+                      <Chip label="처리완료" size="small" sx={{ bgcolor: 'rgba(134,239,172,0.1)', color: '#86efac', fontWeight: 700, fontSize: '0.65rem' }} />
                     )}
-                    <Chip label={`세션 #${session.id}`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }} />
+                    {item.hitl_reason && (
+                      <Chip label={item.hitl_reason} size="small" sx={{ bgcolor: 'rgba(251,191,36,0.1)', color: '#fbbf24', fontWeight: 600, fontSize: '0.65rem', maxWidth: 240 }} />
+                    )}
                   </Box>
+                  <Typography sx={{ color: '#52525B', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '-'}
+                  </Typography>
                 </Box>
 
-                <Box sx={{ 
-                  bgcolor: '#09090B', borderRadius: '12px', p: 2.5, mb: 3,
-                  border: '1px solid rgba(255,255,255,0.04)',
-                  position: 'relative'
-                }}>
-                  <Typography sx={{ 
-                    color: session.lastMessage.role === 'user' ? '#a78bfa' : '#86efac', 
-                    fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', mb: 1, letterSpacing: '0.05em' 
-                  }}>
-                    Last Message ({session.lastMessage.role === 'user' ? 'USER' : 'AI'})
+                {/* 사용자 질문 */}
+                <Box sx={{ bgcolor: '#09090B', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
+                    USER
                   </Typography>
                   <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-                    {session.lastMessage.content.replace('<HITL>', '').trim()}
+                    {item.user_message}
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    maxRows={4}
-                    placeholder="사용자에게 보낼 답변을 입력하세요..."
-                    value={replyText[session.id] || ''}
-                    onChange={(e) => setReplyText({ ...replyText, [session.id]: e.target.value })}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(255,255,255,0.02)', borderRadius: '12px', color: 'white', fontSize: '0.875rem',
-                        '& fieldset': { borderColor: 'rgba(255,255,255,0.08)' },
-                        '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
-                        '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    disabled={answering[session.id] || !replyText[session.id]?.trim()}
-                    onClick={() => handleReply(session.id)}
-                    sx={{
-                      minWidth: 100, height: 48, borderRadius: '12px', fontWeight: 700, textTransform: 'none',
-                      background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
-                      boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
-                      '&:hover': { background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)', transform: 'translateY(-1px)' },
-                      '&.Mui-disabled': { opacity: 0.3, color: 'rgba(255,255,255,0.3)' }
-                    }}
-                  >
-                    {answering[session.id] ? <CircularProgress size={20} color="inherit" /> : '전송'}
-                  </Button>
-                </Box>
+                {/* AI 답변 */}
+                {item.ai_response && (
+                  <Box sx={{ bgcolor: '#09090B', borderRadius: '10px', p: 2, mb: 2, border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <Typography sx={{ color: '#86efac', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
+                      AI
+                    </Typography>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                      {item.ai_response}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* 완료 처리 버튼 */}
+                {item.status === 'pending' && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={resolving[item.id]}
+                      onClick={() => handleResolve(item.id)}
+                      sx={{
+                        borderColor: 'rgba(134,239,172,0.3)', color: '#86efac',
+                        borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
+                        '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
+                        '&.Mui-disabled': { opacity: 0.3 }
+                      }}
+                    >
+                      {resolving[item.id] ? <CircularProgress size={16} color="inherit" /> : '✓ 완료 처리'}
+                    </Button>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           ))}
