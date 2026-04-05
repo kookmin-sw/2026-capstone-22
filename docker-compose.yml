@@ -53,6 +53,10 @@ services:
     restart: always
     environment:
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost}
+      - WDS_SOCKET_HOST=localhost
+      - WDS_SOCKET_PORT=8888
+      - WDS_SOCKET_PATH=/ws
+      - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend:/app
       - /app/node_modules

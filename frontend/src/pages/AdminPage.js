@@ -44,6 +44,12 @@ import {
   ArrowBack as ArrowBackIcon,
   History as HistoryIcon,
   SupportAgent as SupportAgentIcon,
+  School,
+  Groups,
+  Class,
+  Person,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -1123,6 +1129,456 @@ function HITLPanel() {
   );
 }
 
+const INIT_CLASSES = [
+  { id: 1, name: '중등 영어반 A', code: 'MID-ENG-A', grade_level: '중등', subject: '영어', teacher_name: '김지혜', day_of_week: '월수금', start_time: '15:00', end_time: '17:00', capacity: 10, status: 'active', memo: '' },
+  { id: 2, name: '고등 수학반 B', code: 'HIGH-MATH-B', grade_level: '고등', subject: '수학', teacher_name: '이민준', day_of_week: '화목', start_time: '17:00', end_time: '19:30', capacity: 8, status: 'active', memo: '' },
+  { id: 3, name: '초등 국어반 C', code: 'ELEM-KOR-C', grade_level: '초등', subject: '국어', teacher_name: '박소연', day_of_week: '토', start_time: '10:00', end_time: '12:00', capacity: 15, status: 'closed', memo: '방학 이후 재개 예정' },
+];
+
+const INIT_STUDENTS = [
+  { id: 1, student_no: '2024001', name: '홍길동', birth_date: '2010-03-15', school_name: '서울중학교', grade: '2학년', class_id: 1, phone: '010-1234-5678', status: 'active', memo: '', updated_at: '2024-03-20' },
+  { id: 2, student_no: '2024002', name: '김민지', birth_date: '2010-07-22', school_name: '광화문중학교', grade: '2학년', class_id: 1, phone: '010-2345-6789', status: 'active', memo: '', updated_at: '2024-03-18' },
+  { id: 3, student_no: '2024003', name: '이준혁', birth_date: '2009-11-08', school_name: '강남고등학교', grade: '1학년', class_id: 2, phone: '010-3456-7890', status: 'active', memo: '', updated_at: '2024-03-15' },
+  { id: 4, student_no: '2024004', name: '박서연', birth_date: '2009-05-30', school_name: '마포고등학교', grade: '1학년', class_id: 2, phone: '010-4567-8901', status: 'inactive', memo: '일시 휴강', updated_at: '2024-02-28' },
+  { id: 5, student_no: '2024005', name: '최유진', birth_date: '2013-09-12', school_name: '한강초등학교', grade: '4학년', class_id: 3, phone: '010-5678-9012', status: 'active', memo: '', updated_at: '2024-03-10' },
+  { id: 6, student_no: '2024006', name: '정태양', birth_date: '2010-01-25', school_name: '서울중학교', grade: '2학년', class_id: 1, phone: '010-6789-0123', status: 'graduated', memo: '', updated_at: '2024-01-30' },
+];
+
+const STUDENT_STATUS_MAP = {
+  active:    { label: '재원',   bgcolor: 'rgba(34,197,94,0.15)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  inactive:  { label: '휴원',   bgcolor: 'rgba(239,68,68,0.15)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
+  graduated: { label: '졸업',   bgcolor: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: 'rgba(251,191,36,0.3)' },
+};
+
+const CLASS_STATUS_MAP = {
+  active: { label: '운영중', bgcolor: 'rgba(34,197,94,0.15)',  color: '#86efac' },
+  closed: { label: '종료',   bgcolor: 'rgba(239,68,68,0.15)',  color: '#fca5a5' },
+};
+
+const EMPTY_CLASS_FORM = { name: '', code: '', grade_level: '', subject: '', teacher_name: '', day_of_week: '', start_time: '', end_time: '', capacity: '', status: 'active', memo: '' };
+const EMPTY_STUDENT_FORM = { student_no: '', name: '', birth_date: '', school_name: '', grade: '', class_id: '', phone: '', status: 'active', memo: '' };
+
+function StudentStatusChip({ status }) {
+  const s = STUDENT_STATUS_MAP[status] || STUDENT_STATUS_MAP.active;
+  return (
+    <Chip label={s.label} size="small" sx={{ bgcolor: s.bgcolor, color: s.color, border: `1px solid ${s.border}`, fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+  );
+}
+
+function ClassStatusChip({ status }) {
+  const s = CLASS_STATUS_MAP[status] || CLASS_STATUS_MAP.active;
+  return (
+    <Chip label={s.label} size="small" sx={{ bgcolor: s.bgcolor, color: s.color, fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+  );
+}
+
+function StudentManagementPanel() {
+  const [classes, setClasses] = useState(INIT_CLASSES);
+  const [students, setStudents] = useState(INIT_STUDENTS);
+  const [studentSubTab, setStudentSubTab] = useState(0);
+  const [expandedClasses, setExpandedClasses] = useState(new Set(INIT_CLASSES.map(c => c.id)));
+
+  const [classDialogOpen, setClassDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
+  const [classForm, setClassForm] = useState(EMPTY_CLASS_FORM);
+
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [studentForm, setStudentForm] = useState(EMPTY_STUDENT_FORM);
+
+  const [studentSearch, setStudentSearch] = useState('');
+  const [classFilter, setClassFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [gradeFilter, setGradeFilter] = useState('all');
+
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const [deleteClassId, setDeleteClassId] = useState(null);
+  const [deleteStudentId, setDeleteStudentId] = useState(null);
+
+  const showSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
+
+  const toggleClassExpanded = (id) => {
+    setExpandedClasses(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const openAddClass = () => { setEditingClass(null); setClassForm(EMPTY_CLASS_FORM); setClassDialogOpen(true); };
+  const openEditClass = (cls) => { setEditingClass(cls); setClassForm({ ...cls }); setClassDialogOpen(true); };
+
+  const saveClass = () => {
+    if (!classForm.name.trim()) { showSnack('분반명을 입력해주세요.', 'error'); return; }
+    if (editingClass) {
+      setClasses(prev => prev.map(c => c.id === editingClass.id ? { ...c, ...classForm } : c));
+      showSnack('분반이 수정되었습니다.');
+    } else {
+      const newId = classes.length > 0 ? Math.max(...classes.map(c => c.id)) + 1 : 1;
+      setClasses(prev => [...prev, { ...classForm, id: newId }]);
+      setExpandedClasses(prev => new Set([...prev, newId]));
+      showSnack('분반이 추가되었습니다.');
+    }
+    setClassDialogOpen(false);
+  };
+
+  const confirmDeleteClass = () => {
+    setClasses(prev => prev.filter(c => c.id !== deleteClassId));
+    setStudents(prev => prev.filter(s => s.class_id !== deleteClassId));
+    setDeleteClassId(null);
+    showSnack('분반이 삭제되었습니다.');
+  };
+
+  const openAddStudent = () => { setEditingStudent(null); setStudentForm(EMPTY_STUDENT_FORM); setStudentDialogOpen(true); };
+  const openEditStudent = (stu) => { setEditingStudent(stu); setStudentForm({ ...stu }); setStudentDialogOpen(true); };
+
+  const saveStudent = () => {
+    if (!studentForm.student_no.trim()) { showSnack('학번을 입력해주세요.', 'error'); return; }
+    if (!studentForm.name.trim()) { showSnack('이름을 입력해주세요.', 'error'); return; }
+    if (!studentForm.birth_date.trim()) { showSnack('생년월일을 입력해주세요.', 'error'); return; }
+    const duplicate = students.find(s => s.student_no === studentForm.student_no && (!editingStudent || s.id !== editingStudent.id));
+    if (duplicate) { showSnack('이미 존재하는 학번입니다.', 'error'); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    if (editingStudent) {
+      setStudents(prev => prev.map(s => s.id === editingStudent.id ? { ...s, ...studentForm, updated_at: today } : s));
+      showSnack('학생 정보가 수정되었습니다.');
+    } else {
+      const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
+      setStudents(prev => [...prev, { ...studentForm, id: newId, updated_at: today }]);
+      showSnack('학생이 추가되었습니다.');
+    }
+    setStudentDialogOpen(false);
+  };
+
+  const confirmDeleteStudent = () => {
+    setStudents(prev => prev.filter(s => s.id !== deleteStudentId));
+    setDeleteStudentId(null);
+    showSnack('학생이 삭제되었습니다.');
+  };
+
+  const toggleStudentStatus = (stu) => {
+    if (stu.status === 'graduated') return;
+    const next = stu.status === 'active' ? 'inactive' : 'active';
+    const today = new Date().toISOString().slice(0, 10);
+    setStudents(prev => prev.map(s => s.id === stu.id ? { ...s, status: next, updated_at: today } : s));
+  };
+
+  const filteredStudents = students.filter(s => {
+    const matchSearch = !studentSearch || s.name.includes(studentSearch) || s.student_no.includes(studentSearch);
+    const matchClass = classFilter === 'all' || s.class_id === Number(classFilter);
+    const matchStatus = statusFilter === 'all' || s.status === statusFilter;
+    const matchGrade = gradeFilter === 'all' || s.grade === gradeFilter;
+    return matchSearch && matchClass && matchStatus && matchGrade;
+  });
+
+  const allGrades = [...new Set(students.map(s => s.grade).filter(Boolean))].sort();
+
+  const inputSx = {
+    '& .MuiOutlinedInput-root': {
+      bgcolor: 'rgba(255,255,255,0.03)',
+      borderRadius: '10px',
+      fontSize: '0.8125rem',
+      color: '#FAFAFA',
+      '& fieldset': { borderColor: 'rgba(255,255,255,0.08)' },
+      '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
+      '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+    },
+    '& .MuiInputLabel-root': { color: '#71717A', fontSize: '0.8125rem' },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
+  };
+
+  const selectSx = {
+    bgcolor: 'rgba(255,255,255,0.03)',
+    borderRadius: '10px',
+    fontSize: '0.8125rem',
+    color: '#FAFAFA',
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.08)' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(167,139,250,0.3)' },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#a78bfa' },
+    '& .MuiSvgIcon-root': { color: '#71717A' },
+  };
+
+  const menuProps = {
+    PaperProps: {
+      sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', '& .MuiMenuItem-root': { fontSize: '0.8125rem', color: '#A1A1AA', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' }, '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' } } },
+    },
+  };
+
+  const colHeaderSx = { fontSize: '0.7rem', fontWeight: 700, color: '#52525B', textTransform: 'uppercase', letterSpacing: '0.05em' };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <School sx={{ fontSize: 18, color: '#fff' }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#FAFAFA' }}>학생 관리</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>분반 및 학생 정보를 관리합니다</Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+        {['분반 관리', '학생 관리'].map((label, i) => (
+          <Box key={i} onClick={() => setStudentSubTab(i)} sx={{
+            px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
+            bgcolor: studentSubTab === i ? 'rgba(167,139,250,0.12)' : 'transparent',
+            color: studentSubTab === i ? '#a78bfa' : '#71717A',
+            border: studentSubTab === i ? '1px solid rgba(167,139,250,0.25)' : '1px solid transparent',
+            transition: 'all 0.2s',
+            '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#c4b5fd' },
+          }}>{label}</Box>
+        ))}
+      </Box>
+
+      {studentSubTab === 0 && (
+        <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button onClick={openAddClass} startIcon={<Add />} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 600, fontSize: '0.8125rem', px: 2.5, borderRadius: '10px', textTransform: 'none', '&:hover': { opacity: 0.9 } }}>
+              + 분반 추가
+            </Button>
+          </Box>
+
+          <Box sx={{ bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.2, borderBottom: '1px solid rgba(255,255,255,0.06)', bgcolor: '#111113' }}>
+              {['분반명/코드', '대상/과목', '담당자', '요일/시간', '정원', '상태', '액션'].map(h => (
+                <Typography key={h} sx={colHeaderSx}>{h}</Typography>
+              ))}
+            </Box>
+            {classes.length === 0 && (
+              <Box sx={{ py: 6, textAlign: 'center' }}>
+                <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>등록된 분반이 없습니다.</Typography>
+              </Box>
+            )}
+            {classes.map((cls, idx) => (
+              <Box key={cls.id} sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.6, borderBottom: idx < classes.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                <Box>
+                  <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#FAFAFA' }}>{cls.name}</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: '#52525B', fontFamily: 'JetBrains Mono, monospace' }}>{cls.code}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{cls.grade_level}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{cls.subject}</Typography>
+                </Box>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{cls.teacher_name}</Typography>
+                <Box>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{cls.day_of_week}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{cls.start_time} ~ {cls.end_time}</Typography>
+                </Box>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA', textAlign: 'center' }}>{cls.capacity}명</Typography>
+                <ClassStatusChip status={cls.status} />
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <IconButton size="small" onClick={() => openEditClass(cls)} sx={{ color: '#71717A', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                  <IconButton size="small" onClick={() => setDeleteClassId(cls.id)} sx={{ color: '#71717A', '&:hover': { color: '#fca5a5', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {studentSubTab === 1 && (
+        <Box>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            <TextField
+              size="small"
+              placeholder="이름 또는 학번 검색"
+              value={studentSearch}
+              onChange={e => setStudentSearch(e.target.value)}
+              InputProps={{ startAdornment: <Search sx={{ fontSize: 16, color: '#52525B', mr: 0.5 }} /> }}
+              sx={{ ...inputSx, width: 200 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <Select value={classFilter} onChange={e => setClassFilter(e.target.value)} displayEmpty sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="all">전체 분반</MenuItem>
+                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} displayEmpty sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="all">전체 상태</MenuItem>
+                <MenuItem value="active">재원</MenuItem>
+                <MenuItem value="inactive">휴원</MenuItem>
+                <MenuItem value="graduated">졸업</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <Select value={gradeFilter} onChange={e => setGradeFilter(e.target.value)} displayEmpty sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="all">전체 학년</MenuItem>
+                {allGrades.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <Box sx={{ flex: 1 }} />
+            <Button onClick={openAddStudent} startIcon={<Add />} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 600, fontSize: '0.8125rem', px: 2.5, borderRadius: '10px', textTransform: 'none', '&:hover': { opacity: 0.9 } }}>
+              학생 추가
+            </Button>          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {classes.map(cls => {
+              const clsStudents = filteredStudents.filter(s => s.class_id === cls.id);
+              if (classFilter !== 'all' && cls.id !== Number(classFilter)) return null;
+              const isExpanded = expandedClasses.has(cls.id);
+              return (
+                <Box key={cls.id} sx={{ border: '1px solid rgba(167,139,250,0.12)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: 'rgba(167,139,250,0.06)', borderRadius: isExpanded ? '10px 10px 0 0' : '10px', cursor: 'pointer' }} onClick={() => toggleClassExpanded(cls.id)}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Groups sx={{ fontSize: 15, color: '#fff' }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#FAFAFA' }}>{cls.name}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: '#71717A' }}>{cls.teacher_name} · {cls.day_of_week} {cls.start_time}~{cls.end_time}</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip label={`${clsStudents.length}명`} size="small" sx={{ bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+                      <ClassStatusChip status={cls.status} />
+                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#71717A' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#71717A' }} />}
+                    </Box>
+                  </Box>
+
+                  {isExpanded && (
+                    <Box>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '100px 1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1, bgcolor: '#111113', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        {['학번', '이름', '학교/학년', '분반', '연락처', '상태', '수정일', '액션'].map(h => (
+                          <Typography key={h} sx={colHeaderSx}>{h}</Typography>
+                        ))}
+                      </Box>
+                      {clsStudents.length === 0 && (
+                        <Box sx={{ py: 4, textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                          <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>조건에 맞는 학생이 없습니다.</Typography>
+                        </Box>
+                      )}
+                      {clsStudents.map((stu) => (
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '100px 1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#71717A', fontFamily: 'JetBrains Mono, monospace' }}>{stu.student_no}</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
+                            <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#FAFAFA' }}>{stu.name}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{stu.school_name}</Typography>
+                            <Typography sx={{ fontSize: '0.7rem', color: '#52525B' }}>{stu.grade}</Typography>
+                          </Box>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{cls.name}</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{stu.phone}</Typography>
+                          <Box onClick={() => toggleStudentStatus(stu)} sx={{ cursor: stu.status !== 'graduated' ? 'pointer' : 'default' }}>
+                            <StudentStatusChip status={stu.status} />
+                          </Box>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{stu.updated_at}</Typography>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#71717A', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#71717A', '&:hover': { color: '#fca5a5', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      <Dialog open={classDialogOpen} onClose={() => setClassDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {editingClass ? '분반 수정' : '분반 추가'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <TextField label="분반명 *" size="small" value={classForm.name} onChange={e => setClassForm(p => ({ ...p, name: e.target.value }))} sx={inputSx} />
+            <TextField label="분반코드" size="small" value={classForm.code} onChange={e => setClassForm(p => ({ ...p, code: e.target.value }))} sx={inputSx} />
+            <TextField label="대상학년" size="small" value={classForm.grade_level} onChange={e => setClassForm(p => ({ ...p, grade_level: e.target.value }))} sx={inputSx} />
+            <TextField label="과목" size="small" value={classForm.subject} onChange={e => setClassForm(p => ({ ...p, subject: e.target.value }))} sx={inputSx} />
+            <TextField label="담당자" size="small" value={classForm.teacher_name} onChange={e => setClassForm(p => ({ ...p, teacher_name: e.target.value }))} sx={inputSx} />
+            <TextField label="수업요일" size="small" value={classForm.day_of_week} onChange={e => setClassForm(p => ({ ...p, day_of_week: e.target.value }))} sx={inputSx} />
+            <TextField label="시작시간" size="small" type="time" value={classForm.start_time} onChange={e => setClassForm(p => ({ ...p, start_time: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
+            <TextField label="종료시간" size="small" type="time" value={classForm.end_time} onChange={e => setClassForm(p => ({ ...p, end_time: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
+            <TextField label="정원" size="small" type="number" value={classForm.capacity} onChange={e => setClassForm(p => ({ ...p, capacity: e.target.value }))} sx={inputSx} />
+            <FormControl size="small">
+              <Select value={classForm.status} onChange={e => setClassForm(p => ({ ...p, status: e.target.value }))} sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="active">운영중</MenuItem>
+                <MenuItem value="closed">종료</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+          <TextField label="비고" size="small" multiline rows={2} value={classForm.memo} onChange={e => setClassForm(p => ({ ...p, memo: e.target.value }))} sx={inputSx} />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setClassDialogOpen(false)} sx={{ color: '#71717A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={saveClass} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>저장</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!deleteClassId} onClose={() => setDeleteClassId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem' }}>분반 삭제</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#A1A1AA', fontSize: '0.875rem' }}>해당 분반과 소속 학생 데이터가 모두 삭제됩니다. 계속하시겠습니까?</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setDeleteClassId(null)} sx={{ color: '#71717A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={confirmDeleteClass} sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>삭제</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={studentDialogOpen} onClose={() => setStudentDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {editingStudent ? '학생 수정' : '학생 추가'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <TextField label="학번 *" size="small" value={studentForm.student_no} onChange={e => setStudentForm(p => ({ ...p, student_no: e.target.value }))} sx={inputSx} />
+            <TextField label="이름 *" size="small" value={studentForm.name} onChange={e => setStudentForm(p => ({ ...p, name: e.target.value }))} sx={inputSx} />
+            <TextField label="생년월일 *" size="small" type="date" value={studentForm.birth_date} onChange={e => setStudentForm(p => ({ ...p, birth_date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
+            <TextField label="학교명" size="small" value={studentForm.school_name} onChange={e => setStudentForm(p => ({ ...p, school_name: e.target.value }))} sx={inputSx} />
+            <TextField label="학년" size="small" value={studentForm.grade} onChange={e => setStudentForm(p => ({ ...p, grade: e.target.value }))} sx={inputSx} />
+            <TextField label="연락처" size="small" value={studentForm.phone} onChange={e => setStudentForm(p => ({ ...p, phone: e.target.value }))} sx={inputSx} />
+            <FormControl size="small">
+              <Select value={studentForm.class_id} onChange={e => setStudentForm(p => ({ ...p, class_id: e.target.value }))} displayEmpty sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="">분반 선택</MenuItem>
+                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <FormControl size="small">
+              <Select value={studentForm.status} onChange={e => setStudentForm(p => ({ ...p, status: e.target.value }))} sx={selectSx} MenuProps={menuProps}>
+                <MenuItem value="active">재원</MenuItem>
+                <MenuItem value="inactive">휴원</MenuItem>
+                <MenuItem value="graduated">졸업</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+          <TextField label="비고" size="small" multiline rows={2} value={studentForm.memo} onChange={e => setStudentForm(p => ({ ...p, memo: e.target.value }))} sx={inputSx} />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setStudentDialogOpen(false)} sx={{ color: '#71717A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={saveStudent} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>저장</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!deleteStudentId} onClose={() => setDeleteStudentId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem' }}>학생 삭제</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#A1A1AA', fontSize: '0.875rem' }}>학생 데이터가 삭제됩니다. 계속하시겠습니까?</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setDeleteStudentId(null)} sx={{ color: '#71717A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={confirmDeleteStudent} sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>삭제</Button>
+        </DialogActions>
+      </Dialog>
+
+      {snack.open && (
+        <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, color: snack.severity === 'error' ? '#fca5a5' : '#86efac', px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600 }}
+          onClick={() => setSnack(p => ({ ...p, open: false }))}>
+          {snack.message}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 const SECTION_TAB_MAP = {
   dashboard: 0,
   hitl: 7,
@@ -1132,6 +1588,7 @@ const SECTION_TAB_MAP = {
   templates: 3,
   calendar: 4,
   chatbot: 5,
+  students: 8,
 };
 
 export default function AdminPage({ section = 'stores' }) {
@@ -4008,6 +4465,7 @@ export default function AdminPage({ section = 'stores' }) {
 
       {/* ============ Tab Panel 7: 상담 대기 (HITL) ============ */}
       {tabValue === 7 && <HITLPanel />}
+      {tabValue === 8 && <StudentManagementPanel />}
     </Box>
   );
 }

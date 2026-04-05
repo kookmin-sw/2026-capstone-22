@@ -220,6 +220,7 @@ function App() {
                   <Route path="admin/templates" element={<AdminRoute><AdminPage section="templates" /></AdminRoute>} />
                   <Route path="admin/calendar" element={<AdminRoute><AdminPage section="calendar" /></AdminRoute>} />
                   <Route path="admin/chatbot" element={<AdminRoute><AdminPage section="chatbot" /></AdminRoute>} />
+                  <Route path="admin/students" element={<AdminRoute><AdminPage section="students" /></AdminRoute>} />
                   <Route path="admin/chat-history" element={<AdminRoute><AdminPage section="chat-history" /></AdminRoute>} />
                 </Route>
               </Route>
