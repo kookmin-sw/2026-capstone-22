@@ -33,6 +33,7 @@ import {
   History as HistoryIcon,
   Dashboard as DashboardIcon,
   SupportAgent as SupportAgentIcon,
+  School as SchoolIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
@@ -79,6 +80,7 @@ export default function TenantAdminLayout() {
         { text: '채팅 내역', icon: <HistoryIcon />, path: `${basePath}/admin/chat-history` },
         { text: '문서 저장소', icon: <FolderIcon />, path: `${basePath}/admin/stores` },
         { text: '그룹 & 유저', icon: <PeopleIcon />, path: `${basePath}/admin/users` },
+        { text: '학생 관리', icon: <SchoolIcon />, path: `${basePath}/admin/students` },
         { text: '프롬프트 템플릿', icon: <ArticleIcon />, path: `${basePath}/admin/templates` },
       ],
     },

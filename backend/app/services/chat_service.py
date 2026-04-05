@@ -17,6 +17,71 @@ from .gemini_client import (
 logger = logging.getLogger(__name__)
 
 
+class AgentType:
+    CONSULTING = "CONSULTING"
+    PERSONAL = "PERSONAL"
+    REPORT = "REPORT"
+    ADMIN = "ADMIN"
+
+
+class RouterAgent:
+    """Central control agent that classifies user intent and routes to specialized agents."""
+
+    ROUTER_INSTRUCTION = """당신은 학원 관리 플랫폼 'ReadyTalk'의 중앙 관제 에이전트입니다.
+사용자의 질문을 분석하여 가장 적합한 에이전트 타입을 하나만 선택하세요.
+
+[에이전트 타입 및 역할]
+1. CONSULTING: 입학 상담, 학원 위치, 수강료 문의, 일반적인 학원 매뉴얼 안내. (미인증 사용자의 기본 창구)
+2. PERSONAL: 나의 수업 일정, 결석 신고, 보강 날짜 잡기, 출석 확인. (본인 데이터 관련)
+3. REPORT: 성적 분석, 월간 학습 리포트 브리핑, 취약점 분석.
+4. ADMIN: 상담 내용 요약, 시스템 설정 변경, 관리자 전용 기능.
+
+[규칙]
+- 사용자의 질문 의도가 위 4개 중 어디에 해당하는지 판단하세요.
+- 오직 에이전트 타입 이름(예: CONSULTING)만 답변하세요.
+- 판단이 모호하면 CONSULTING을 선택하세요.
+"""
+
+    @staticmethod
+    def determine_agent(query: str, is_authenticated: bool) -> str:
+        """Classify intent using a lightweight LLM call."""
+        try:
+            # If not authenticated, most requests should go to CONSULTING
+            # (unless it's a general greeting, etc.)
+            
+            prompt = f"사용자 질문: \"{query}\"\n인증 상태: {'로그인됨' if is_authenticated else '비인증'}\n\n위 질문에 가장 적합한 에이전트 타입은?"
+            
+            gen_params = _get_model_generation_params()
+            # Use flash model for fast and cheap routing
+            response = _get_genai_client().models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=RouterAgent.ROUTER_INSTRUCTION,
+                    temperature=0.1, # Low temperature for consistent classification
+                    **{k: v for k, v in gen_params.items() if k not in ["temperature", "thinking_config"]}
+                )
+            )
+            
+            agent_type = response.text.strip().upper()
+            
+            # Validation: Fallback to CONSULTING if LLM returns unexpected text
+            valid_types = [AgentType.CONSULTING, AgentType.PERSONAL, AgentType.REPORT, AgentType.ADMIN]
+            if agent_type not in valid_types:
+                logger.warning(f"Router returned invalid agent type: {agent_type}. Falling back to CONSULTING.")
+                return AgentType.CONSULTING
+                
+            # Security Guard: If not authenticated but requesting PERSONAL/REPORT, route back to CONSULTING
+            if not is_authenticated and agent_type in [AgentType.PERSONAL, AgentType.REPORT]:
+                logger.info(f"Unauthenticated access to {agent_type} blocked. Routing to CONSULTING.")
+                return AgentType.CONSULTING
+                
+            return agent_type
+        except Exception as e:
+            logger.error(f"Error in RouterAgent: {e}")
+            return AgentType.CONSULTING
+
+
 class ChatService:
     """Service for chatbot queries — RAG search, web search, calendar, file chat"""
 
@@ -388,11 +453,18 @@ class ChatService:
             else:
                 contents = query
 
-            # Build function declarations based on tenant capabilities
+            # --- [Router Step] Determine specialized agent ---
+            is_authenticated = user_id is not None
+            agent_type = RouterAgent.determine_agent(query, is_authenticated)
+            logger.info(
+                f"Routed query to agent: {agent_type} (Authenticated: {is_authenticated})"
+            )
+
+            # Build function declarations based on assigned agent
             function_declarations = []
 
-            # Calendar functions (conditional)
-            if has_calendar:
+            # 1. PERSONAL Agent: Calendar functions
+            if agent_type == AgentType.PERSONAL and has_calendar:
                 from .calendar_service import (
                     CALENDAR_FUNCTION_DECLARATIONS,
                     execute_calendar_function,
@@ -400,30 +472,31 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
-            # Document search (always available)
-            function_declarations.append(
-                {
-                    "name": "search_documents",
-                    "description": "업로드된 내부 문서에서 정보를 검색합니다. 사용자가 조직의 자료, 문서, 정책, 가이드 등에 대해 질문할 때 사용하세요.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "문서에서 검색할 질문",
-                            }
+            # 2. CONSULTING Agent: Document search (always fallback or specific)
+            if agent_type == AgentType.CONSULTING or agent_type == AgentType.PERSONAL:
+                function_declarations.append(
+                    {
+                        "name": "search_documents",
+                        "description": "업로드된 내부 문서에서 정보를 검색합니다. 입학 상담, 학원 정책, 공지사항 등을 확인할 때 사용하세요.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {
+                                    "type": "string",
+                                    "description": "문서에서 검색할 질문",
+                                }
+                            },
+                            "required": ["query"],
                         },
-                        "required": ["query"],
-                    },
-                }
-            )
+                    }
+                )
 
-            # Web search (conditional)
-            if web_search_enabled:
+            # 3. WEB search (if enabled and applicable)
+            if web_search_enabled and agent_type == AgentType.CONSULTING:
                 function_declarations.append(
                     {
                         "name": "search_web",
-                        "description": "웹에서 최신 정보를 검색합니다.",
+                        "description": "웹에서 최신 정보를 검색합니다. 학원 외부 정보가 필요할 때만 사용하세요.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -454,8 +527,8 @@ class ChatService:
             weekday_str = weekday_names[now_kst.weekday()]
             now_time_str = now_kst.strftime("%H:%M")
 
-            # Build system instruction from chatbot settings
-            effective_instruction = ChatService.build_system_instruction(
+            # --- [Prompt Step] Build specialized system instruction ---
+            base_instruction = ChatService.build_system_instruction(
                 tenant_name=tenant_name,
                 chatbot_settings=chatbot_settings,
                 today_str=today_str,
@@ -466,8 +539,19 @@ class ChatService:
                 web_search_enabled=web_search_enabled,
             )
 
+            # Add Agent-specific persona
+            agent_persona = ""
+            if agent_type == AgentType.PERSONAL:
+                agent_persona = f"\n## 배정된 역할: 개인화 관리 에이전트\n- 당신은 현재 로그인한 사용자의 전용 비서입니다.\n- 수업 일정 확인, 결석 신고, 보강 날짜 잡기 업무를 처리하세요.\n- 답변 시 사용자의 이름을 부르며 친절하게 응대하세요."
+            elif agent_type == AgentType.CONSULTING:
+                agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+            elif agent_type == AgentType.REPORT:
+                agent_persona = f"\n## 배정된 역할: 학습 분석 에이전트\n- 당신은 학생의 성취도를 분석하는 데이터 전문가입니다.\n- 성적 및 리포트 데이터를 기반으로 객관적인 피드백을 제공하세요."
+
+            effective_instruction = base_instruction + agent_persona
+
             logger.info(
-                f"Starting smart query (calendar={has_calendar}, web={web_search_enabled}): {query[:100]}..."
+                f"Starting smart query with {agent_type} persona: {query[:100]}..."
             )
 
             gen_params = _get_model_generation_params()

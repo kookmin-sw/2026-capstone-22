@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import asyncio
 import logging
 import os
 import re
 import shutil
 import uuid
+from functools import partial
 
 logger = logging.getLogger(__name__)
 from ..database import get_db
@@ -282,41 +284,50 @@ async def send_message(
     try:
         model_name = model or session.model_used or _get_default_model(db)
 
+        loop = asyncio.get_event_loop()
         if file_uris:
             # Chat with uploaded files
-            ai_response = GeminiService.chat_with_files(
-                file_uris=file_uris,
-                query=message,
-                model_name=model_name,
-                corpus_names=accessible_stores,
-                web_search_enabled=web_search_enabled,
-                db_session=db,
-                history=conversation_history,
-                user_group_name=user_group_name,
-                tenant_id=current_user.tenant_id,
-                user_id=current_user.id,
-                session_id=session.id,
-                tenant_name=tenant_name,
-                chatbot_settings=chatbot_settings,
+            ai_response = await loop.run_in_executor(
+                None,
+                partial(
+                    GeminiService.chat_with_files,
+                    file_uris=file_uris,
+                    query=message,
+                    model_name=model_name,
+                    corpus_names=accessible_stores,
+                    web_search_enabled=web_search_enabled,
+                    db_session=db,
+                    history=conversation_history,
+                    user_group_name=user_group_name,
+                    tenant_id=current_user.tenant_id,
+                    user_id=current_user.id,
+                    session_id=session.id,
+                    tenant_name=tenant_name,
+                    chatbot_settings=chatbot_settings,
+                ),
             )
             # chat_with_files returns string for now
             response_text = ai_response
         else:
             # Unified smart query: LLM decides which functions to call
-            smart_result = GeminiService.query_smart(
-                corpus_names=accessible_stores,
-                query=message,
-                tenant_id=current_user.tenant_id,
-                db_session=db,
-                model_name=model_name,
-                history=conversation_history,
-                user_group_name=user_group_name,
-                web_search_enabled=web_search_enabled,
-                has_calendar=has_calendar,
-                tenant_name=tenant_name,
-                user_id=current_user.id,
-                session_id=session.id,
-                chatbot_settings=chatbot_settings,
+            smart_result = await loop.run_in_executor(
+                None,
+                partial(
+                    GeminiService.query_smart,
+                    corpus_names=accessible_stores,
+                    query=message,
+                    tenant_id=current_user.tenant_id,
+                    db_session=db,
+                    model_name=model_name,
+                    history=conversation_history,
+                    user_group_name=user_group_name,
+                    web_search_enabled=web_search_enabled,
+                    has_calendar=has_calendar,
+                    tenant_name=tenant_name,
+                    user_id=current_user.id,
+                    session_id=session.id,
+                    chatbot_settings=chatbot_settings,
+                ),
             )
             response_text = smart_result.get("text", "답변을 생성할 수 없습니다.")
             cited_sources = smart_result.get("cited_sources", [])

@@ -72,24 +72,24 @@ def _get_genai_client():
 client = _get_genai_client()
 
 # --- Vertex AI RAG initialization ---
-_vertex_ai_initialized = False
-
+_vertex_ai_initialized_rag = False
+_vertex_ai_initialized_global = False
 
 def _ensure_credentials():
     """Ensure GCP credentials are set (once)."""
-    global _vertex_ai_initialized
-    if _vertex_ai_initialized:
-        return
     credentials_path = _get_platform_setting("GCP_CREDENTIALS_PATH")
     if credentials_path and os.path.exists(credentials_path):
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    _vertex_ai_initialized = True
 
 
 def _init_vertex_ai():
     """Initialize Vertex AI SDK with RAG corpus location (asia-northeast3 etc).
-    Call this before any RAG corpus operations (create, upload, search, delete).
+    Lazy-initialized: only runs once per worker.
     """
+    global _vertex_ai_initialized_rag
+    if _vertex_ai_initialized_rag:
+        return
+        
     _ensure_credentials()
     project_id = _get_platform_setting("VERTEX_AI_PROJECT_ID")
     location = _get_platform_setting("VERTEX_AI_LOCATION") or "asia-northeast3"
@@ -99,17 +99,24 @@ def _init_vertex_ai():
         return
 
     vertexai.init(project=project_id, location=location)
-    logger.debug(f"Vertex AI initialized: project={project_id}, location={location}")
+    _vertex_ai_initialized_rag = True
+    logger.info(f"Vertex AI RAG initialized: project={project_id}, location={location}")
 
 
 def _init_vertex_ai_global():
     """Initialize Vertex AI SDK with global location for model inference.
-    Call this before GenerativeModel calls (supports preview models).
+    Lazy-initialized: only runs once per worker.
     """
+    global _vertex_ai_initialized_global
+    if _vertex_ai_initialized_global:
+        return
+        
     _ensure_credentials()
     project_id = _get_platform_setting("VERTEX_AI_PROJECT_ID")
     if project_id:
         vertexai.init(project=project_id, location="global")
+        _vertex_ai_initialized_global = True
+        logger.info(f"Vertex AI Global initialized: project={project_id}")
 
 
 def _get_vertex_project() -> str:
@@ -166,6 +173,5 @@ def _get_model_generation_params() -> dict:
 
     return params
 
-
-# Initialize on module load
-_init_vertex_ai()
+# Initialize on module load - Removed for Lazy Initialization (prevent 504 timeout)
+# _init_vertex_ai()
