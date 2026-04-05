@@ -9,6 +9,7 @@ from .prompt_template import PromptTemplate
 from .platform_setting import PlatformSetting
 from .usage import UsageRecord
 from .chatbot_settings import ChatbotSettings
+from .hitl_request import HitlRequest, HitlStatus
 
 __all__ = [
     "Tenant",
@@ -27,4 +28,6 @@ __all__ = [
     "PlatformSetting",
     "UsageRecord",
     "ChatbotSettings",
+    "HitlRequest",
+    "HitlStatus",
 ]

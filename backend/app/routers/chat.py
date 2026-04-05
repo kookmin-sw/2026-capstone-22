@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import logging
 import os
+import re
 import shutil
 import uuid
+
+logger = logging.getLogger(__name__)
 from ..database import get_db
 from ..models.user import User
 from ..models.chat import ChatSession, Message, MessageRole
@@ -323,6 +327,30 @@ async def send_message(
         for temp_path in temp_file_paths:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+
+    # HITL 태그 파싱: 사용자에게 보내기 전에 제거 + hitl_requests 저장
+    hitl_match = re.search(r"<HITL>(.*?)</HITL>", response_text, re.DOTALL)
+    if hitl_match:
+        from ..models.hitl_request import HitlRequest, HitlStatus
+
+        hitl_reason = hitl_match.group(1).strip()
+        response_text = re.sub(
+            r"<HITL>.*?</HITL>", "", response_text, flags=re.DOTALL
+        ).strip()
+        db.add(
+            HitlRequest(
+                tenant_id=current_user.tenant_id,
+                session_id=session.id,
+                user_message=message,
+                ai_response=response_text,
+                hitl_reason=hitl_reason,
+                status=HitlStatus.pending,
+            )
+        )
+        db.commit()
+        logger.info(
+            f"HITL saved from web chat: reason='{hitl_reason}' tenant={current_user.tenant_id}"
+        )
 
     # Convert cited_sources to JSON-serializable format for DB storage
     cited_sources_for_db = None
