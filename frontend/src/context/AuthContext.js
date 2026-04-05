@@ -32,6 +32,13 @@ function getAccessToken() {
   return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
 }
 
+function getCurrentTenantSlug() {
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  if (pathSegments.length === 0) return null;
+  const slug = pathSegments[0];
+  return slug !== 'superadmin' ? slug : null;
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +82,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, username, password) => {
-    await authAPI.register({ email, username, password });
+    const slug = getCurrentTenantSlug();
+    await authAPI.register({ email, username, password }, slug);
     await login(email, password);
   };
 
