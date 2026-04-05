@@ -59,12 +59,24 @@ async def register(
         if tenant:
             tenant_id = tenant.id
 
+    # Assign default "일반" group in the tenant when available.
+    default_group_id = None
+    if tenant_id is not None:
+        default_group = (
+            db.query(Group)
+            .filter(Group.tenant_id == tenant_id, Group.name == "일반")
+            .first()
+        )
+        if default_group:
+            default_group_id = default_group.id
+
     new_user = User(
         email=email,
         username=user_data.username.strip(),
         password_hash=get_password_hash(user_data.password),
         is_admin=False,
         tenant_id=tenant_id,
+        group_id=default_group_id,
     )
 
     db.add(new_user)

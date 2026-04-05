@@ -63,7 +63,10 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
+  register: (data, slug = null) => {
+    const params = slug ? { params: { slug } } : undefined;
+    return api.post('/auth/register', data, params);
+  },
   login: (data) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),
 };
