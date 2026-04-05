@@ -25,7 +25,7 @@ import {
 import CalendarPage from './CalendarPage';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
-import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI } from '../services/api';
+import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI } from '../services/api';
 import {
   SmartToy as SmartToyIcon,
   TuneOutlined as TuneIcon,
