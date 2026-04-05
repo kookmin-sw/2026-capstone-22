@@ -159,6 +159,48 @@ def _extract_citations(text: str) -> list:
     return unique
 
 
+# CTA 키 → Kakao textCard 버튼 매핑
+_CTA_CARD_MAP = {
+    "레벨테스트예약": {
+        "title": "레벨테스트 예약",
+        "description": "아래 버튼을 눌러 레벨테스트를 예약하세요.",
+        "label": "레벨테스트 예약하기",
+        "webLinkUrl": "https://workspace.google.com/intl/ko/products/forms/",
+    },
+}
+
+
+def _parse_cta_tags(text: str) -> tuple:
+    """AI 응답에서 <CTA> 태그를 추출하고 태그를 제거한 텍스트를 반환."""
+    cta_keys = re.findall(r"<CTA>(.*?)</CTA>", text, re.DOTALL)
+    clean_text = re.sub(r"<CTA>.*?</CTA>", "", text, flags=re.DOTALL).strip()
+    return clean_text, cta_keys
+
+
+def _build_cta_outputs(cta_keys: list) -> list:
+    """CTA 키 리스트를 Kakao textCard output 배열로 변환."""
+    cta_outputs = []
+    for key in cta_keys:
+        card = _CTA_CARD_MAP.get(key)
+        if card:
+            cta_outputs.append(
+                {
+                    "textCard": {
+                        "title": card["title"],
+                        "description": card["description"],
+                        "buttons": [
+                            {
+                                "action": "webLink",
+                                "label": card["label"],
+                                "webLinkUrl": card["webLinkUrl"],
+                            }
+                        ],
+                    }
+                }
+            )
+    return cta_outputs
+
+
 def _resolve_source_links(db: Session, filenames: list) -> list:
     """Look up cited filenames in DB and generate GCS signed URLs."""
     from ..models.corpus import Document
@@ -344,10 +386,11 @@ async def _process_kakao_callback(
 
         if not raw_text:
             raw_text = "요청하신 작업을 처리했습니다."
-        response_text = _strip_markdown(raw_text)
+        clean_text, cta_keys = _parse_cta_tags(raw_text)
+        response_text = _strip_markdown(clean_text)
         chunks = _split_text(response_text)
 
-        # Save messages to DB
+        # Save messages to DB (raw_text with tags preserved)
         _save_messages(db, session_id, tenant_id, utterance, raw_text)
 
         outputs = _build_kakao_outputs(chunks, valid_sources)
@@ -375,6 +418,11 @@ async def _process_kakao_callback(
                         }
                     }
                 )
+
+        # Append CTA card(s) if space remains (Kakao max 3 outputs)
+        for cta_output in _build_cta_outputs(cta_keys):
+            if len(outputs) < 3:
+                outputs.append(cta_output)
 
         callback_body = {
             "version": "2.0",
@@ -681,7 +729,8 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
 
         if not raw_text:
             raw_text = "요청하신 작업을 처리했습니다."
-        response_text = _strip_markdown(raw_text)
+        clean_text, cta_keys = _parse_cta_tags(raw_text)
+        response_text = _strip_markdown(clean_text)
         chunks = _split_text(response_text)
 
         if session:
@@ -712,6 +761,11 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
                         }
                     }
                 )
+
+        # Append CTA card(s) if space remains (Kakao max 3 outputs)
+        for cta_output in _build_cta_outputs(cta_keys):
+            if len(outputs) < 3:
+                outputs.append(cta_output)
 
         return {
             "version": "2.0",
