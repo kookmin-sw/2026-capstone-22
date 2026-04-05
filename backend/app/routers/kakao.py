@@ -170,6 +170,42 @@ _CTA_CARD_MAP = {
 }
 
 
+def _parse_hitl_tag(text: str) -> tuple:
+    """AI 응답에서 <HITL> 태그를 추출하고 태그를 제거한 텍스트를 반환.
+
+    Returns:
+        (clean_text, hitl_reason) — hitl_reason은 태그 없을 시 None
+    """
+    match = re.search(r"<HITL>(.*?)</HITL>", text, re.DOTALL)
+    hitl_reason = match.group(1).strip() if match else None
+    clean_text = re.sub(r"<HITL>.*?</HITL>", "", text, flags=re.DOTALL).strip()
+    return clean_text, hitl_reason
+
+
+def _save_hitl(
+    db: Session,
+    tenant_id: int,
+    session_id: int | None,
+    utterance: str,
+    ai_response: str,
+    hitl_reason: str,
+) -> None:
+    """HITL 트리거 시 hitl_requests 테이블에 저장."""
+    from ..models.hitl_request import HitlRequest, HitlStatus
+
+    hitl_entry = HitlRequest(
+        tenant_id=tenant_id,
+        session_id=session_id,  # None이면 NULL로 저장 (0 금지)
+        user_message=utterance,
+        ai_response=ai_response,
+        hitl_reason=hitl_reason,
+        status=HitlStatus.pending,
+    )
+    db.add(hitl_entry)
+    db.commit()
+    logger.info(f"HITL saved: reason='{hitl_reason}' tenant={tenant_id}")
+
+
 def _parse_cta_tags(text: str) -> tuple:
     """AI 응답에서 <CTA> 태그를 추출하고 태그를 제거한 텍스트를 반환."""
     cta_keys = re.findall(r"<CTA>(.*?)</CTA>", text, re.DOTALL)
@@ -386,6 +422,12 @@ async def _process_kakao_callback(
 
         if not raw_text:
             raw_text = "요청하신 작업을 처리했습니다."
+
+        # HITL 파싱: CTA 파싱 이전에 먼저 처리
+        raw_text, hitl_reason = _parse_hitl_tag(raw_text)
+        if hitl_reason is not None:
+            _save_hitl(db, tenant_id, session_id, utterance, raw_text, hitl_reason)
+
         clean_text, cta_keys = _parse_cta_tags(raw_text)
         response_text = _strip_markdown(clean_text)
         chunks = _split_text(response_text)
@@ -729,6 +771,13 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
 
         if not raw_text:
             raw_text = "요청하신 작업을 처리했습니다."
+
+        # HITL 파싱: CTA 파싱 이전에 먼저 처리
+        raw_text, hitl_reason = _parse_hitl_tag(raw_text)
+        if hitl_reason is not None:
+            _sid = session.id if session else None
+            _save_hitl(db, tenant_id, _sid, utterance, raw_text, hitl_reason)
+
         clean_text, cta_keys = _parse_cta_tags(raw_text)
         response_text = _strip_markdown(clean_text)
         chunks = _split_text(response_text)

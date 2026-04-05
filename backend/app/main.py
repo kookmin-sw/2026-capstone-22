@@ -14,6 +14,7 @@ from .routers import (
     kakao,
     calendar,
     chatbot_settings,
+    hitl,
 )
 from .utils.init_data import init_database
 import logging
@@ -131,6 +132,7 @@ app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
 app.include_router(
     chatbot_settings.router, prefix="/api/chatbot-settings", tags=["Chatbot Settings"]
 )
+app.include_router(hitl.router, prefix="/api/hitl", tags=["HITL"])
 
 
 @app.get("/")
