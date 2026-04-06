@@ -1,8 +1,8 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class StudentClassStatus(str, Enum):
@@ -14,6 +14,12 @@ class StudentStatus(str, Enum):
     active = "active"
     inactive = "inactive"
     graduated = "graduated"
+
+
+def _clean_empty_strings(data: Any) -> Any:
+    if isinstance(data, dict):
+        return {k: (None if v == "" else v) for k, v in data.items()}
+    return data
 
 
 # ==================== StudentClass Schemas ====================
@@ -34,7 +40,10 @@ class StudentClassBase(BaseModel):
 
 
 class StudentClassCreate(StudentClassBase):
-    pass
+    @model_validator(mode="before")
+    @classmethod
+    def clean(cls, data):
+        return _clean_empty_strings(data)
 
 
 class StudentClassUpdate(BaseModel):
@@ -49,6 +58,11 @@ class StudentClassUpdate(BaseModel):
     capacity: Optional[int] = None
     status: Optional[StudentClassStatus] = None
     memo: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def clean(cls, data):
+        return _clean_empty_strings(data)
 
 
 class StudentClassResponse(StudentClassBase):
@@ -78,7 +92,10 @@ class StudentBase(BaseModel):
 
 
 class StudentCreate(StudentBase):
-    pass
+    @model_validator(mode="before")
+    @classmethod
+    def clean(cls, data):
+        return _clean_empty_strings(data)
 
 
 class StudentUpdate(BaseModel):
@@ -92,6 +109,11 @@ class StudentUpdate(BaseModel):
     parent_phone: Optional[str] = None
     status: Optional[StudentStatus] = None
     memo: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def clean(cls, data):
+        return _clean_empty_strings(data)
 
 
 class StudentResponse(StudentBase):

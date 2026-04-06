@@ -1142,7 +1142,7 @@ const CLASS_STATUS_MAP = {
 };
 
 const EMPTY_CLASS_FORM = { name: '', code: '', grade_level: '', subject: '', teacher_name: '', day_of_week: '', start_time: '', end_time: '', capacity: '', status: 'active', memo: '' };
-const EMPTY_STUDENT_FORM = { name: '', birth_date: '', school_name: '', grade: '', class_id: '', phone: '', parent_name: '', parent_phone: '', status: 'active', memo: '' };
+const EMPTY_STUDENT_FORM = { name: '', birth_date: '', school_name: '', grade: '', class_id: null, phone: '', parent_name: '', parent_phone: '', status: 'active', memo: '' };
 
 function StudentStatusChip({ status }) {
   const s = STUDENT_STATUS_MAP[status] || STUDENT_STATUS_MAP.active;
@@ -1213,20 +1213,23 @@ function StudentManagementPanel() {
 
   const saveClass = async () => {
     if (!classForm.name.trim()) { showSnack('분반명을 입력해주세요.', 'error'); return; }
+    const payload = { ...classForm, capacity: classForm.capacity === '' ? null : Number(classForm.capacity) };
     try {
       if (editingClass) {
-        const res = await studentAPI.updateClass(editingClass.id, classForm);
+        const res = await studentAPI.updateClass(editingClass.id, payload);
         setClasses(prev => prev.map(c => c.id === editingClass.id ? res.data : c));
         showSnack('분반이 수정되었습니다.');
       } else {
-        const res = await studentAPI.createClass(classForm);
+        const res = await studentAPI.createClass(payload);
         setClasses(prev => [...prev, res.data]);
         setExpandedClasses(prev => new Set([...prev, res.data.id]));
         showSnack('분반이 추가되었습니다.');
       }
       setClassDialogOpen(false);
     } catch (err) {
-      showSnack(err.response?.data?.detail || '저장에 실패했습니다.', 'error');
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || '저장에 실패했습니다.');
+      showSnack(msg, 'error');
     }
   };
 
@@ -1260,7 +1263,9 @@ function StudentManagementPanel() {
       }
       setStudentDialogOpen(false);
     } catch (err) {
-      showSnack(err.response?.data?.detail || '저장에 실패했습니다.', 'error');
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || '저장에 실패했습니다.');
+      showSnack(msg, 'error');
     }
   };
 
@@ -1501,6 +1506,58 @@ function StudentManagementPanel() {
                 </Box>
               );
             })}
+            {(() => {
+              const unassigned = filteredStudents.filter(s => s.class_id === null);
+              if (classFilter !== 'all' || unassigned.length === 0) return null;
+              const isExpanded = expandedClasses.has('unassigned');
+              return (
+                <Box sx={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: 'rgba(255,255,255,0.03)', cursor: 'pointer' }} onClick={() => toggleClassExpanded('unassigned')}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: 'rgba(113,113,122,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Groups sx={{ fontSize: 15, color: '#71717A' }} />
+                      </Box>
+                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#A1A1AA' }}>미배정</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip label={`${unassigned.length}명`} size="small" sx={{ bgcolor: 'rgba(113,113,122,0.15)', color: '#71717A', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#71717A' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#71717A' }} />}
+                    </Box>
+                  </Box>
+                  {isExpanded && (
+                    <Box>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1, bgcolor: '#111113', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        {['이름', '학교/학년', '분반', '연락처', '상태', '수정일', '액션'].map(h => (
+                          <Typography key={h} sx={colHeaderSx}>{h}</Typography>
+                        ))}
+                      </Box>
+                      {unassigned.map(stu => (
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(113,113,122,0.15)', color: '#71717A', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
+                            <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#FAFAFA' }}>{stu.name}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{stu.school_name}</Typography>
+                            <Typography sx={{ fontSize: '0.7rem', color: '#52525B' }}>{stu.grade}</Typography>
+                          </Box>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#52525B' }}>-</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA' }}>{stu.phone}</Typography>
+                          <Box onClick={() => toggleStudentStatus(stu)} sx={{ cursor: stu.status !== 'graduated' ? 'pointer' : 'default' }}>
+                            <StudentStatusChip status={stu.status} />
+                          </Box>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#71717A', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#71717A', '&:hover': { color: '#fca5a5', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              );
+            })()}
           </Box>
         </Box>
       )}
@@ -1561,7 +1618,7 @@ function StudentManagementPanel() {
             <TextField label="학부모 이름" size="small" value={studentForm.parent_name} onChange={e => setStudentForm(p => ({ ...p, parent_name: e.target.value }))} sx={inputSx} />
             <TextField label="학부모 연락처" size="small" value={studentForm.parent_phone} onChange={e => setStudentForm(p => ({ ...p, parent_phone: e.target.value }))} sx={inputSx} />
             <FormControl size="small">
-              <Select value={studentForm.class_id} onChange={e => setStudentForm(p => ({ ...p, class_id: e.target.value }))} displayEmpty sx={selectSx} MenuProps={menuProps}>
+              <Select value={studentForm.class_id ?? ''} onChange={e => setStudentForm(p => ({ ...p, class_id: e.target.value || null }))} displayEmpty sx={selectSx} MenuProps={menuProps}>
                 <MenuItem value="">분반 선택</MenuItem>
                 {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>

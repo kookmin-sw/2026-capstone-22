@@ -57,7 +57,8 @@ async def create_class(
         if existing:
             raise HTTPException(status_code=400, detail="Class code already exists")
 
-    new_class = StudentClass(**data.model_dump(), tenant_id=current_user.tenant_id)
+    cleaned = {k: (None if v == "" else v) for k, v in data.model_dump().items()}
+    new_class = StudentClass(**cleaned, tenant_id=current_user.tenant_id)
     db.add(new_class)
     db.commit()
     db.refresh(new_class)
@@ -97,7 +98,7 @@ async def update_class(
             raise HTTPException(status_code=400, detail="Class code already exists")
 
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(cls, field, value)
+        setattr(cls, field, None if value == "" else value)
 
     db.commit()
     db.refresh(cls)
@@ -149,7 +150,7 @@ async def list_students(
             Student.name.contains(search) | Student.student_no.contains(search)
         )
 
-    return query.order_by(Student.student_no).all()
+    return query.order_by(Student.name).all()
 
 
 @router.post(
@@ -161,17 +162,6 @@ async def create_student(
     current_user: User = Depends(get_current_admin_user),
 ):
     """Create a new student (Admin only)"""
-    existing = (
-        db.query(Student)
-        .filter(
-            Student.tenant_id == current_user.tenant_id,
-            Student.student_no == data.student_no,
-        )
-        .first()
-    )
-    if existing:
-        raise HTTPException(status_code=400, detail="Student number already exists")
-
     if data.class_id:
         cls = (
             db.query(StudentClass)
@@ -184,7 +174,8 @@ async def create_student(
         if not cls:
             raise HTTPException(status_code=404, detail="Class not found")
 
-    new_student = Student(**data.model_dump(), tenant_id=current_user.tenant_id)
+    cleaned = {k: (None if v == "" else v) for k, v in data.model_dump().items()}
+    new_student = Student(**cleaned, tenant_id=current_user.tenant_id)
     db.add(new_student)
     db.commit()
     db.refresh(new_student)
@@ -210,19 +201,6 @@ async def update_student(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    if data.student_no and data.student_no != student.student_no:
-        existing = (
-            db.query(Student)
-            .filter(
-                Student.tenant_id == current_user.tenant_id,
-                Student.student_no == data.student_no,
-                Student.id != student_id,
-            )
-            .first()
-        )
-        if existing:
-            raise HTTPException(status_code=400, detail="Student number already exists")
-
     if data.class_id:
         cls = (
             db.query(StudentClass)
@@ -236,7 +214,7 @@ async def update_student(
             raise HTTPException(status_code=404, detail="Class not found")
 
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(student, field, value)
+        setattr(student, field, None if value == "" else value)
 
     db.commit()
     db.refresh(student)

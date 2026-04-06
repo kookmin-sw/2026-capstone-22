@@ -6,7 +6,7 @@ Revision ID: 013
 import sqlalchemy as sa
 from alembic import op
 
-revision = "013_add_parent_fields_to_students"
+revision = "013_add_parent_fields"
 down_revision = "012_create_student_tables"
 branch_labels = None
 depends_on = None

@@ -73,7 +73,6 @@ def upgrade():
             sa.ForeignKey("student_classes.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column("student_no", sa.String(50), nullable=False),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("birth_date", sa.Date(), nullable=False),
         sa.Column("school_name", sa.String(100), nullable=True),
@@ -93,7 +92,6 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.UniqueConstraint("tenant_id", "student_no", name="uq_student_no_tenant"),
     )
 
     op.create_index("idx_students_tenant", "students", ["tenant_id"])
