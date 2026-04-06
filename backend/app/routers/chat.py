@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import asyncio
+import json
 import logging
 import os
 import re
@@ -394,6 +396,128 @@ async def send_message(
         "assistant_message": assistant_message,
         "cited_sources": cited_sources,
     }
+
+
+@router.post("/message-stream")
+async def send_message_stream(
+    message: str = Form(...),
+    session_id: Optional[int] = Form(None),
+    model: Optional[str] = Form(None),
+    web_search_enabled: bool = Form(False),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Send a message and get AI response as a stream (SSE)"""
+    if current_user is None:
+        current_user = get_or_create_guest_user(db)
+
+    # Get or create session
+    if session_id:
+        session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+    else:
+        model_to_use = model or current_user.preferred_model or _get_default_model(db)
+        session = ChatSession(user_id=current_user.id, tenant_id=current_user.tenant_id, title="New Chat", model_used=model_to_use)
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+
+    # Save user message
+    user_message = Message(session_id=session.id, tenant_id=current_user.tenant_id, role=MessageRole.USER, content=message)
+    db.add(user_message)
+    db.commit()
+
+    # Load history
+    conversation_history = get_conversation_history(session_id=session.id, db=db, max_messages=20)
+
+    # Tenant info
+    tenant_name = "ReadyTalk"
+    has_calendar = False
+    chatbot_settings = None
+    if current_user.tenant_id:
+        from ..models.tenant import Tenant, TenantCalendarConfig
+        from ..models.chatbot_settings import ChatbotSettings
+        _tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+        if _tenant: tenant_name = _tenant.name
+        cal_config = db.query(TenantCalendarConfig).filter(TenantCalendarConfig.tenant_id == current_user.tenant_id, TenantCalendarConfig.refresh_token.isnot(None)).first()
+        has_calendar = cal_config is not None
+        chatbot_settings = db.query(ChatbotSettings).filter(ChatbotSettings.tenant_id == current_user.tenant_id).first()
+
+    from ..utils.store_access import get_accessible_stores
+    accessible_stores = get_accessible_stores(current_user, db)
+    user_group_name = current_user.group.name if current_user.group else None
+    model_name = model or session.model_used or _get_default_model(db)
+
+    async def stream_generator():
+        full_text = ""
+        final_cited_sources = []
+        
+        # We need to run the sync generator in a thread pool
+        loop = asyncio.get_event_loop()
+        gen = GeminiService.query_smart_stream(
+            corpus_names=accessible_stores,
+            query=message,
+            tenant_id=current_user.tenant_id,
+            db_session=db,
+            model_name=model_name,
+            history=conversation_history,
+            user_group_name=user_group_name,
+            web_search_enabled=web_search_enabled,
+            has_calendar=has_calendar,
+            tenant_name=tenant_name,
+            user_id=current_user.id,
+            session_id=session.id,
+            chatbot_settings=chatbot_settings
+        )
+
+        try:
+            while True:
+                chunk = await loop.run_in_executor(None, next, gen, None)
+                if chunk is None: break
+                
+                text = chunk.get("text", "")
+                full_text += text
+                if chunk.get("cited_sources"):
+                    final_cited_sources = chunk["cited_sources"]
+                
+                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+        except StopIteration:
+            pass
+        except Exception as e:
+            logger.error(f"Stream error: {e}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        # Finalize: Save AI message and update session
+        new_db = next(get_db()) # Get fresh DB session for the background save
+        try:
+            # Parse HITL if present in full text
+            hitl_match = re.search(r"<HITL>(.*?)</HITL>", full_text, re.DOTALL)
+            final_text = full_text
+            if hitl_match:
+                from ..models.hitl_request import HitlRequest, HitlStatus
+                hitl_reason = hitl_match.group(1).strip()
+                final_text = re.sub(r"<HITL>.*?</HITL>", "", full_text, flags=re.DOTALL).strip()
+                new_db.add(HitlRequest(tenant_id=current_user.tenant_id, session_id=session.id, user_message=message, ai_response=final_text, hitl_reason=hitl_reason, status=HitlStatus.pending))
+
+            cited_sources_json = [{"uri": s.get("uri"), "title": s.get("title")} for s in final_cited_sources] if final_cited_sources else None
+            assistant_message = Message(session_id=session.id, tenant_id=current_user.tenant_id, role=MessageRole.ASSISTANT, content=final_text, cited_sources_json=cited_sources_json)
+            new_db.add(assistant_message)
+            
+            # Update title if first exchange
+            msg_count = new_db.query(Message).filter(Message.session_id == session.id).count()
+            if msg_count <= 2:
+                session_obj = new_db.query(ChatSession).filter(ChatSession.id == session.id).first()
+                if session_obj: session_obj.title = message[:50] + ("..." if len(message) > 50 else "")
+            
+            new_db.commit()
+        except Exception as e:
+            logger.error(f"Error saving stream results: {e}")
+            new_db.rollback()
+        finally:
+            new_db.close()
+
+    return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
 
 @router.post("/template-message", response_model=ChatResponse)
