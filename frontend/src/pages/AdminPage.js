@@ -25,7 +25,7 @@ import {
 import CalendarPage from './CalendarPage';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
-import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI } from '../services/api';
+import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
 import {
   SmartToy as SmartToyIcon,
   TuneOutlined as TuneIcon,
@@ -1129,20 +1129,6 @@ function HITLPanel() {
   );
 }
 
-const INIT_CLASSES = [
-  { id: 1, name: '중등 영어반 A', code: 'MID-ENG-A', grade_level: '중등', subject: '영어', teacher_name: '김지혜', day_of_week: '월수금', start_time: '15:00', end_time: '17:00', capacity: 10, status: 'active', memo: '' },
-  { id: 2, name: '고등 수학반 B', code: 'HIGH-MATH-B', grade_level: '고등', subject: '수학', teacher_name: '이민준', day_of_week: '화목', start_time: '17:00', end_time: '19:30', capacity: 8, status: 'active', memo: '' },
-  { id: 3, name: '초등 국어반 C', code: 'ELEM-KOR-C', grade_level: '초등', subject: '국어', teacher_name: '박소연', day_of_week: '토', start_time: '10:00', end_time: '12:00', capacity: 15, status: 'closed', memo: '방학 이후 재개 예정' },
-];
-
-const INIT_STUDENTS = [
-  { id: 1, student_no: '2024001', name: '홍길동', birth_date: '2010-03-15', school_name: '서울중학교', grade: '2학년', class_id: 1, phone: '010-1234-5678', status: 'active', memo: '', updated_at: '2024-03-20' },
-  { id: 2, student_no: '2024002', name: '김민지', birth_date: '2010-07-22', school_name: '광화문중학교', grade: '2학년', class_id: 1, phone: '010-2345-6789', status: 'active', memo: '', updated_at: '2024-03-18' },
-  { id: 3, student_no: '2024003', name: '이준혁', birth_date: '2009-11-08', school_name: '강남고등학교', grade: '1학년', class_id: 2, phone: '010-3456-7890', status: 'active', memo: '', updated_at: '2024-03-15' },
-  { id: 4, student_no: '2024004', name: '박서연', birth_date: '2009-05-30', school_name: '마포고등학교', grade: '1학년', class_id: 2, phone: '010-4567-8901', status: 'inactive', memo: '일시 휴강', updated_at: '2024-02-28' },
-  { id: 5, student_no: '2024005', name: '최유진', birth_date: '2013-09-12', school_name: '한강초등학교', grade: '4학년', class_id: 3, phone: '010-5678-9012', status: 'active', memo: '', updated_at: '2024-03-10' },
-  { id: 6, student_no: '2024006', name: '정태양', birth_date: '2010-01-25', school_name: '서울중학교', grade: '2학년', class_id: 1, phone: '010-6789-0123', status: 'graduated', memo: '', updated_at: '2024-01-30' },
-];
 
 const STUDENT_STATUS_MAP = {
   active:    { label: '재원',   bgcolor: 'rgba(34,197,94,0.15)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
@@ -1173,10 +1159,10 @@ function ClassStatusChip({ status }) {
 }
 
 function StudentManagementPanel() {
-  const [classes, setClasses] = useState(INIT_CLASSES);
-  const [students, setStudents] = useState(INIT_STUDENTS);
+  const [classes, setClasses] = useState([]);
+  const [students, setStudents] = useState([]);
   const [studentSubTab, setStudentSubTab] = useState(0);
-  const [expandedClasses, setExpandedClasses] = useState(new Set(INIT_CLASSES.map(c => c.id)));
+  const [expandedClasses, setExpandedClasses] = useState(new Set());
 
   const [classDialogOpen, setClassDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
@@ -1197,6 +1183,23 @@ function StudentManagementPanel() {
 
   const showSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [classRes, studentRes] = await Promise.all([
+          studentAPI.listClasses(),
+          studentAPI.listStudents(),
+        ]);
+        setClasses(classRes.data);
+        setStudents(studentRes.data);
+        setExpandedClasses(new Set(classRes.data.map(c => c.id)));
+      } catch (err) {
+        showSnack('데이터를 불러오지 못했습니다.', 'error');
+      }
+    };
+    fetchData();
+  }, []);
+
   const toggleClassExpanded = (id) => {
     setExpandedClasses(prev => {
       const next = new Set(prev);
@@ -1208,59 +1211,80 @@ function StudentManagementPanel() {
   const openAddClass = () => { setEditingClass(null); setClassForm(EMPTY_CLASS_FORM); setClassDialogOpen(true); };
   const openEditClass = (cls) => { setEditingClass(cls); setClassForm({ ...cls }); setClassDialogOpen(true); };
 
-  const saveClass = () => {
+  const saveClass = async () => {
     if (!classForm.name.trim()) { showSnack('분반명을 입력해주세요.', 'error'); return; }
-    if (editingClass) {
-      setClasses(prev => prev.map(c => c.id === editingClass.id ? { ...c, ...classForm } : c));
-      showSnack('분반이 수정되었습니다.');
-    } else {
-      const newId = classes.length > 0 ? Math.max(...classes.map(c => c.id)) + 1 : 1;
-      setClasses(prev => [...prev, { ...classForm, id: newId }]);
-      setExpandedClasses(prev => new Set([...prev, newId]));
-      showSnack('분반이 추가되었습니다.');
+    try {
+      if (editingClass) {
+        const res = await studentAPI.updateClass(editingClass.id, classForm);
+        setClasses(prev => prev.map(c => c.id === editingClass.id ? res.data : c));
+        showSnack('분반이 수정되었습니다.');
+      } else {
+        const res = await studentAPI.createClass(classForm);
+        setClasses(prev => [...prev, res.data]);
+        setExpandedClasses(prev => new Set([...prev, res.data.id]));
+        showSnack('분반이 추가되었습니다.');
+      }
+      setClassDialogOpen(false);
+    } catch (err) {
+      showSnack(err.response?.data?.detail || '저장에 실패했습니다.', 'error');
     }
-    setClassDialogOpen(false);
   };
 
-  const confirmDeleteClass = () => {
-    setClasses(prev => prev.filter(c => c.id !== deleteClassId));
-    setStudents(prev => prev.filter(s => s.class_id !== deleteClassId));
-    setDeleteClassId(null);
-    showSnack('분반이 삭제되었습니다.');
+  const confirmDeleteClass = async () => {
+    try {
+      await studentAPI.deleteClass(deleteClassId);
+      setClasses(prev => prev.filter(c => c.id !== deleteClassId));
+      setStudents(prev => prev.map(s => s.class_id === deleteClassId ? { ...s, class_id: null } : s));
+      setDeleteClassId(null);
+      showSnack('분반이 삭제되었습니다.');
+    } catch (err) {
+      showSnack('삭제에 실패했습니다.', 'error');
+    }
   };
 
   const openAddStudent = () => { setEditingStudent(null); setStudentForm(EMPTY_STUDENT_FORM); setStudentDialogOpen(true); };
   const openEditStudent = (stu) => { setEditingStudent(stu); setStudentForm({ ...stu }); setStudentDialogOpen(true); };
 
-  const saveStudent = () => {
+  const saveStudent = async () => {
     if (!studentForm.student_no.trim()) { showSnack('학번을 입력해주세요.', 'error'); return; }
     if (!studentForm.name.trim()) { showSnack('이름을 입력해주세요.', 'error'); return; }
-    if (!studentForm.birth_date.trim()) { showSnack('생년월일을 입력해주세요.', 'error'); return; }
-    const duplicate = students.find(s => s.student_no === studentForm.student_no && (!editingStudent || s.id !== editingStudent.id));
-    if (duplicate) { showSnack('이미 존재하는 학번입니다.', 'error'); return; }
-    const today = new Date().toISOString().slice(0, 10);
-    if (editingStudent) {
-      setStudents(prev => prev.map(s => s.id === editingStudent.id ? { ...s, ...studentForm, updated_at: today } : s));
-      showSnack('학생 정보가 수정되었습니다.');
-    } else {
-      const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-      setStudents(prev => [...prev, { ...studentForm, id: newId, updated_at: today }]);
-      showSnack('학생이 추가되었습니다.');
+    if (!studentForm.birth_date) { showSnack('생년월일을 입력해주세요.', 'error'); return; }
+    try {
+      if (editingStudent) {
+        const res = await studentAPI.updateStudent(editingStudent.id, studentForm);
+        setStudents(prev => prev.map(s => s.id === editingStudent.id ? res.data : s));
+        showSnack('학생 정보가 수정되었습니다.');
+      } else {
+        const res = await studentAPI.createStudent(studentForm);
+        setStudents(prev => [...prev, res.data]);
+        showSnack('학생이 추가되었습니다.');
+      }
+      setStudentDialogOpen(false);
+    } catch (err) {
+      showSnack(err.response?.data?.detail || '저장에 실패했습니다.', 'error');
     }
-    setStudentDialogOpen(false);
   };
 
-  const confirmDeleteStudent = () => {
-    setStudents(prev => prev.filter(s => s.id !== deleteStudentId));
-    setDeleteStudentId(null);
-    showSnack('학생이 삭제되었습니다.');
+  const confirmDeleteStudent = async () => {
+    try {
+      await studentAPI.deleteStudent(deleteStudentId);
+      setStudents(prev => prev.filter(s => s.id !== deleteStudentId));
+      setDeleteStudentId(null);
+      showSnack('학생이 삭제되었습니다.');
+    } catch (err) {
+      showSnack('삭제에 실패했습니다.', 'error');
+    }
   };
 
-  const toggleStudentStatus = (stu) => {
+  const toggleStudentStatus = async (stu) => {
     if (stu.status === 'graduated') return;
     const next = stu.status === 'active' ? 'inactive' : 'active';
-    const today = new Date().toISOString().slice(0, 10);
-    setStudents(prev => prev.map(s => s.id === stu.id ? { ...s, status: next, updated_at: today } : s));
+    try {
+      const res = await studentAPI.updateStudent(stu.id, { status: next });
+      setStudents(prev => prev.map(s => s.id === stu.id ? res.data : s));
+    } catch (err) {
+      showSnack('상태 변경에 실패했습니다.', 'error');
+    }
   };
 
   const filteredStudents = students.filter(s => {
@@ -1467,7 +1491,7 @@ function StudentManagementPanel() {
                           <Box onClick={() => toggleStudentStatus(stu)} sx={{ cursor: stu.status !== 'graduated' ? 'pointer' : 'default' }}>
                             <StudentStatusChip status={stu.status} />
                           </Box>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{stu.updated_at}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#52525B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#71717A', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
                             <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#71717A', '&:hover': { color: '#fca5a5', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
