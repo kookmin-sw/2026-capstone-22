@@ -53,7 +53,7 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      sh -c "alembic upgrade head 2>/dev/null || alembic stamp head &&
+      sh -c "alembic upgrade head &&
              gunicorn app.main:app -w ${GUNICORN_WORKERS:-2} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload --timeout 600 --graceful-timeout 30 --forwarded-allow-ips='*'"
 
   nginx:
