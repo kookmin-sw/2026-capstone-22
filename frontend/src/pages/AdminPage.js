@@ -1566,7 +1566,7 @@ function StudentManagementPanel() {
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           {editingClass ? '분반 수정' : '분반 추가'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent sx={{ '&&': { pt: 2.5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <TextField label="분반명 *" size="small" value={classForm.name} onChange={e => setClassForm(p => ({ ...p, name: e.target.value }))} sx={inputSx} />
             <TextField label="분반코드" size="small" value={classForm.code} onChange={e => setClassForm(p => ({ ...p, code: e.target.value }))} sx={inputSx} />
@@ -1607,9 +1607,28 @@ function StudentManagementPanel() {
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           {editingStudent ? '학생 수정' : '학생 추가'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent sx={{ '&&': { pt: 2.5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <TextField label="학생 ID" size="small" value={editingStudent ? editingStudent.id : '자동 부여'} disabled sx={{ ...inputSx, '& .MuiOutlinedInput-root': { ...inputSx['& .MuiOutlinedInput-root'], opacity: 0.5 } }} />
+            <TextField
+              label="학생 ID"
+              size="small"
+              value={editingStudent ? editingStudent.id : '자동 부여'}
+              disabled
+              sx={{
+                ...inputSx,
+                '& .MuiOutlinedInput-root': {
+                  ...inputSx['& .MuiOutlinedInput-root'],
+                  opacity: 1,
+                },
+                '& .MuiInputBase-input.Mui-disabled': {
+                  color: '#A1A1AA',
+                  WebkitTextFillColor: '#A1A1AA',
+                },
+                '& .MuiInputLabel-root.Mui-disabled': {
+                  color: '#71717A',
+                },
+              }}
+            />
             <TextField label="이름 *" size="small" value={studentForm.name} onChange={e => setStudentForm(p => ({ ...p, name: e.target.value }))} sx={inputSx} />
             <TextField label="생년월일 *" size="small" type="date" value={studentForm.birth_date} onChange={e => setStudentForm(p => ({ ...p, birth_date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
             <TextField label="학교명" size="small" value={studentForm.school_name} onChange={e => setStudentForm(p => ({ ...p, school_name: e.target.value }))} sx={inputSx} />
