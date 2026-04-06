@@ -65,13 +65,14 @@ class StudentClassResponse(StudentClassBase):
 
 
 class StudentBase(BaseModel):
-    student_no: str
     name: str
     birth_date: date
     school_name: Optional[str] = None
     grade: Optional[str] = None
     class_id: Optional[int] = None
     phone: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
     status: StudentStatus = StudentStatus.active
     memo: Optional[str] = None
 
@@ -81,13 +82,14 @@ class StudentCreate(StudentBase):
 
 
 class StudentUpdate(BaseModel):
-    student_no: Optional[str] = None
     name: Optional[str] = None
     birth_date: Optional[date] = None
     school_name: Optional[str] = None
     grade: Optional[str] = None
     class_id: Optional[int] = None
     phone: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
     status: Optional[StudentStatus] = None
     memo: Optional[str] = None
 

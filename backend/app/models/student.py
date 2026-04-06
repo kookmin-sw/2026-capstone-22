@@ -77,12 +77,13 @@ class Student(Base):
         index=True,
     )
 
-    student_no = Column(String(50), nullable=False)
     name = Column(String(100), nullable=False)
     birth_date = Column(Date, nullable=False)
     school_name = Column(String(100), nullable=True)
     grade = Column(String(50), nullable=True)
     phone = Column(String(30), nullable=True)
+    parent_name = Column(String(50), nullable=True)
+    parent_phone = Column(String(30), nullable=True)
     status = Column(
         SQLAlchemyEnum(StudentStatus, name="student_status"),
         default=StudentStatus.active,
@@ -93,10 +94,6 @@ class Student(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
-
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "student_no", name="uq_student_no_tenant"),
-    )
 
     tenant = relationship("Tenant", back_populates="students")
     student_class = relationship("StudentClass", back_populates="students")
