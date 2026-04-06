@@ -1142,7 +1142,7 @@ const CLASS_STATUS_MAP = {
 };
 
 const EMPTY_CLASS_FORM = { name: '', code: '', grade_level: '', subject: '', teacher_name: '', day_of_week: '', start_time: '', end_time: '', capacity: '', status: 'active', memo: '' };
-const EMPTY_STUDENT_FORM = { student_no: '', name: '', birth_date: '', school_name: '', grade: '', class_id: '', phone: '', status: 'active', memo: '' };
+const EMPTY_STUDENT_FORM = { name: '', birth_date: '', school_name: '', grade: '', class_id: '', phone: '', parent_name: '', parent_phone: '', status: 'active', memo: '' };
 
 function StudentStatusChip({ status }) {
   const s = STUDENT_STATUS_MAP[status] || STUDENT_STATUS_MAP.active;
@@ -1246,7 +1246,6 @@ function StudentManagementPanel() {
   const openEditStudent = (stu) => { setEditingStudent(stu); setStudentForm({ ...stu }); setStudentDialogOpen(true); };
 
   const saveStudent = async () => {
-    if (!studentForm.student_no.trim()) { showSnack('학번을 입력해주세요.', 'error'); return; }
     if (!studentForm.name.trim()) { showSnack('이름을 입력해주세요.', 'error'); return; }
     if (!studentForm.birth_date) { showSnack('생년월일을 입력해주세요.', 'error'); return; }
     try {
@@ -1288,7 +1287,7 @@ function StudentManagementPanel() {
   };
 
   const filteredStudents = students.filter(s => {
-    const matchSearch = !studentSearch || s.name.includes(studentSearch) || s.student_no.includes(studentSearch);
+    const matchSearch = !studentSearch || s.name.includes(studentSearch);
     const matchClass = classFilter === 'all' || s.class_id === Number(classFilter);
     const matchStatus = statusFilter === 'all' || s.status === statusFilter;
     const matchGrade = gradeFilter === 'all' || s.grade === gradeFilter;
@@ -1465,8 +1464,8 @@ function StudentManagementPanel() {
 
                   {isExpanded && (
                     <Box>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '100px 1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1, bgcolor: '#111113', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                        {['학번', '이름', '학교/학년', '분반', '연락처', '상태', '수정일', '액션'].map(h => (
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1, bgcolor: '#111113', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        {['이름', '학교/학년', '분반', '연락처', '상태', '수정일', '액션'].map(h => (
                           <Typography key={h} sx={colHeaderSx}>{h}</Typography>
                         ))}
                       </Box>
@@ -1476,8 +1475,7 @@ function StudentManagementPanel() {
                         </Box>
                       )}
                       {clsStudents.map((stu) => (
-                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '100px 1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#71717A', fontFamily: 'JetBrains Mono, monospace' }}>{stu.student_no}</Typography>
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
                             <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#FAFAFA' }}>{stu.name}</Typography>
@@ -1554,12 +1552,14 @@ function StudentManagementPanel() {
         </DialogTitle>
         <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <TextField label="학번 *" size="small" value={studentForm.student_no} onChange={e => setStudentForm(p => ({ ...p, student_no: e.target.value }))} sx={inputSx} />
+            <TextField label="학생 ID" size="small" value={editingStudent ? editingStudent.id : '자동 부여'} disabled sx={{ ...inputSx, '& .MuiOutlinedInput-root': { ...inputSx['& .MuiOutlinedInput-root'], opacity: 0.5 } }} />
             <TextField label="이름 *" size="small" value={studentForm.name} onChange={e => setStudentForm(p => ({ ...p, name: e.target.value }))} sx={inputSx} />
             <TextField label="생년월일 *" size="small" type="date" value={studentForm.birth_date} onChange={e => setStudentForm(p => ({ ...p, birth_date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
             <TextField label="학교명" size="small" value={studentForm.school_name} onChange={e => setStudentForm(p => ({ ...p, school_name: e.target.value }))} sx={inputSx} />
             <TextField label="학년" size="small" value={studentForm.grade} onChange={e => setStudentForm(p => ({ ...p, grade: e.target.value }))} sx={inputSx} />
             <TextField label="연락처" size="small" value={studentForm.phone} onChange={e => setStudentForm(p => ({ ...p, phone: e.target.value }))} sx={inputSx} />
+            <TextField label="학부모 이름" size="small" value={studentForm.parent_name} onChange={e => setStudentForm(p => ({ ...p, parent_name: e.target.value }))} sx={inputSx} />
+            <TextField label="학부모 연락처" size="small" value={studentForm.parent_phone} onChange={e => setStudentForm(p => ({ ...p, parent_phone: e.target.value }))} sx={inputSx} />
             <FormControl size="small">
               <Select value={studentForm.class_id} onChange={e => setStudentForm(p => ({ ...p, class_id: e.target.value }))} displayEmpty sx={selectSx} MenuProps={menuProps}>
                 <MenuItem value="">분반 선택</MenuItem>
