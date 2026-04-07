@@ -1,4 +1,4 @@
-# 🎓 캡스톤 22조 결과물 소개: ReadyTalk KMU
+# 🎓 캡스톤 22조 결과물 소개: ReadyTalk for Academy
 
 ## 1. 프로젝트 소개
 **ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 에이전트 시스템입니다. 
@@ -9,13 +9,45 @@
 [![ReadyTalk KMU 소개 영상]]
 
 ## 3. 팀 소개
-| 이름 | 담당 역할 | GitHub |
-| :--- | :--- | :--- |
-| **양지웅** | 팀장, 백엔드 | [yangjiwoong1](https://github.com/yangjiwoong1) |
-| **정유미** | AI Agent 개발, 프론트엔드 | [ume24](https://github.com/ume24) |
-| **이윤서** | AI Agent 개발 | [yunseo1011](https://github.com/yunseo1011) |
-| **양승일** | 문서 정리, 개발 보조 | [seungil0909](https://github.com/seungil0909) |
-| **유혜성** | AI Agent QA | [hyeforest7](https://github.com/hyeforest7) |
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/yangjiwoong1">
+        <img src="https://github.com/yangjiwoong1.png" width="100px;" alt=""/><br />
+        <sub><b>양지웅</b></sub>
+      </a><br />
+      <sub>팀장, 백엔드</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/ume24">
+        <img src="https://github.com/ume24.png" width="100px;" alt=""/><br />
+        <sub><b>정유미</b></sub>
+      </a><br />
+      <sub>AI Agent 개발<br>프론트엔드</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/yunseo1011">
+        <img src="https://github.com/yunseo1011.png" width="100px;" alt=""/><br />
+        <sub><b>이윤서</b></sub>
+      </a><br />
+      <sub>AI Agent 개발</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/seungil0909">
+        <img src="https://github.com/seungil0909.png" width="100px;" alt=""/><br />
+        <sub><b>양승일</b></sub>
+      </a><br />
+      <sub>문서 정리<br>개발 보조</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/hyeforest7">
+        <img src="https://github.com/hyeforest7.png" width="100px;" alt=""/><br />
+        <sub><b>유혜성</b></sub>
+      </a><br />
+      <sub>AI Agent QA</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
