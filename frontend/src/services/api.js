@@ -226,4 +226,17 @@ export const hitlAPI = {
   resolve: (id) => api.patch(`/hitl/${id}`),
 };
 
+export const studentAPI = {
+  // 분반
+  listClasses: () => api.get('/admin/students/classes'),
+  createClass: (data) => api.post('/admin/students/classes', data),
+  updateClass: (id, data) => api.put(`/admin/students/classes/${id}`, data),
+  deleteClass: (id) => api.delete(`/admin/students/classes/${id}`),
+  // 학생
+  listStudents: (params) => api.get('/admin/students/students', { params }),
+  createStudent: (data) => api.post('/admin/students/students', data),
+  updateStudent: (id, data) => api.put(`/admin/students/students/${id}`, data),
+  deleteStudent: (id) => api.delete(`/admin/students/students/${id}`),
+};
+
 export default api;

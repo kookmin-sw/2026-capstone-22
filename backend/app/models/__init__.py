@@ -10,6 +10,7 @@ from .platform_setting import PlatformSetting
 from .usage import UsageRecord
 from .chatbot_settings import ChatbotSettings
 from .hitl_request import HitlRequest, HitlStatus
+from .student import StudentClass, StudentClassStatus, Student, StudentStatus
 
 __all__ = [
     "Tenant",
@@ -30,4 +31,8 @@ __all__ = [
     "ChatbotSettings",
     "HitlRequest",
     "HitlStatus",
+    "StudentClass",
+    "StudentClassStatus",
+    "Student",
+    "StudentStatus",
 ]
