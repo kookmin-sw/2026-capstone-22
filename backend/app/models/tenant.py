@@ -43,6 +43,8 @@ class Tenant(Base):
     )
     users = relationship("User", back_populates="tenant")
     groups = relationship("Group", back_populates="tenant")
+    student_classes = relationship("StudentClass", back_populates="tenant")
+    students = relationship("Student", back_populates="tenant")
     corpora = relationship("Corpus", back_populates="tenant")
     chatbot_settings = relationship(
         "ChatbotSettings",

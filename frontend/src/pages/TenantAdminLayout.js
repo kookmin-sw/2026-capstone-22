@@ -174,32 +174,34 @@ export default function TenantAdminLayout() {
 
       {/* Back button + Brand */}
       <Box sx={{ px: 2, pt: 2, pb: 1.5 }}>
-        <Box
-          onClick={() => handleNavClick(`${basePath}/admin/stores`)}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            px: 1,
-            py: 0.75,
-            borderRadius: '8px',
-            mb: 1.5,
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' },
-          }}
-        >
-          <ArrowBackIcon sx={{ fontSize: 16, color: '#71717A' }} />
-          <Typography
+        {isAdmin && (
+          <Box
+            onClick={() => handleNavClick(`${basePath}/admin/stores`)}
             sx={{
-              color: '#71717A',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 1,
+              py: 0.75,
+              borderRadius: '8px',
+              mb: 1.5,
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' },
             }}
           >
-            콘솔로 돌아가기
-          </Typography>
-        </Box>
+            <ArrowBackIcon sx={{ fontSize: 16, color: '#71717A' }} />
+            <Typography
+              sx={{
+                color: '#71717A',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              콘솔로 돌아가기
+            </Typography>
+          </Box>
+        )}
 
         {/* New Chat Button */}
         <Button

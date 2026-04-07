@@ -53,7 +53,7 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      sh -c "alembic upgrade head 2>/dev/null || alembic stamp head &&
+      sh -c "alembic upgrade head &&
              gunicorn app.main:app -w ${GUNICORN_WORKERS:-2} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload --timeout 600 --graceful-timeout 30 --forwarded-allow-ips='*'"
 
   nginx:
@@ -63,7 +63,7 @@ services:
     volumes:
       - ./nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "80:80"
+      - "8888:80"
     depends_on:
       - backend
       - frontend
@@ -92,7 +92,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL:-https://academy.ready.talk}
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8888}
     container_name: readytalk-frontend
     restart: always
     expose:

@@ -15,6 +15,7 @@ from .routers import (
     calendar,
     chatbot_settings,
     hitl,
+    students,
 )
 from .utils.init_data import init_database
 import logging
@@ -133,6 +134,7 @@ app.include_router(
     chatbot_settings.router, prefix="/api/chatbot-settings", tags=["Chatbot Settings"]
 )
 app.include_router(hitl.router, prefix="/api/hitl", tags=["HITL"])
+app.include_router(students.router, prefix="/api/admin/students", tags=["Students"])
 
 
 @app.get("/")
