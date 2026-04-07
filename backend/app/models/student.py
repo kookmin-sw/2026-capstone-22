@@ -97,3 +97,6 @@ class Student(Base):
 
     tenant = relationship("Tenant", back_populates="students")
     student_class = relationship("StudentClass", back_populates="students")
+    access_links = relationship(
+        "StudentAccessLink", back_populates="student", cascade="all, delete-orphan"
+    )

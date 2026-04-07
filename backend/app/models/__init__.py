@@ -11,6 +11,13 @@ from .usage import UsageRecord
 from .chatbot_settings import ChatbotSettings
 from .hitl_request import HitlRequest, HitlStatus
 from .student import StudentClass, StudentClassStatus, Student, StudentStatus
+from .student_access_link import (
+    StudentAccessLink,
+    RelationshipType,
+    AccessLinkStatus,
+    VerifiedBy,
+)
+from .verification_challenge import VerificationChallenge
 
 __all__ = [
     "Tenant",
@@ -35,4 +42,9 @@ __all__ = [
     "StudentClassStatus",
     "Student",
     "StudentStatus",
+    "StudentAccessLink",
+    "RelationshipType",
+    "AccessLinkStatus",
+    "VerifiedBy",
+    "VerificationChallenge",
 ]

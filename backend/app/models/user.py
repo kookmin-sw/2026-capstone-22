@@ -38,3 +38,9 @@ class User(Base):
         "ChatSession", back_populates="user", cascade="all, delete-orphan"
     )
     corpora = relationship("Corpus", back_populates="creator")
+    student_access_links = relationship(
+        "StudentAccessLink", back_populates="user", cascade="all, delete-orphan"
+    )
+    verification_challenges = relationship(
+        "VerificationChallenge", back_populates="user", cascade="all, delete-orphan"
+    )
