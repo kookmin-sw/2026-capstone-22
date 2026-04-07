@@ -33,19 +33,21 @@ class RouterAgent:
 
 [에이전트 타입 및 역할]
 1. CONSULTING: 학원 매뉴얼 안내. 위치, 수강료, 입학 절차, 커리큘럼 소개 등 일반 정보.
-2. PERSONAL: 개인 일정 및 출결. "수업 시간", "결석/보강", "출석 확인" 관련.
-3. REPORT: **개인 성적 및 성취도 데이터.** "내 점수 어때?", "성적표 보여줘", "성취도 리포트" 등 이미 발생한 데이터 조회 및 분석.
-4. ACADEMIC: **학습 콘텐츠 및 문제 처리.** "문제 만들어줘", "문제 유형 분류해줘", "유사 문제", "기출 문제", "오답 정리" 관련. (문제가 언급되면 무조건 여기로!)
+2. PERSONAL: 나의 개인 정보/일정/출결. "내 수업", "내 분반", "내 반", "내 시간표", "내 출결", "결석", "보강", "내 정보", "내 일정", "내 선생님" 관련. 질문에 '내'(나의)가 붙어 개인 데이터를 묻는 경우 무조건 PERSONAL.
+3. REPORT: 개인 성적/성취도 데이터. "내 점수", "성적표", "성취도 리포트", "내 성적" 등.
+4. ACADEMIC: 학습 콘텐츠 및 문제 처리. "문제 만들어줘", "유사 문제", "기출 문제", "오답 정리" 관련. (문제가 언급되면 무조건 여기로!)
 5. ADMIN: 관리 운영. "상담 요약", "통계", "설정 변경" 관련.
 
 [라우팅 규칙 - 우선순위]
-1. 질문에 **'문제', '유사', '유형', '기출'** 단어가 있으면 무조건 **ACADEMIC**을 선택하세요.
-2. 질문에 '성적', '점수', '리포트'가 있고 개인 데이터 조회가 목적이면 **REPORT**를 선택하세요.
-3. 질문에 '결석', '보강', '시간'이 있으면 **PERSONAL**을 선택하세요.
+1. 질문에 **'문제', '유사', '유형', '기출'** 단어가 있으면 무조건 **ACADEMIC**.
+2. 질문에 **'내'(나의)** 가 붙어 개인 데이터를 묻는다면:
+   - 성적/점수/리포트 → **REPORT**
+   - 그 외 모든 '내 ~' (내 수업, 내 분반, 내 반, 내 일정, 내 출결 등) → **PERSONAL**
+3. 질문에 '결석', '보강', '시간표', '분반' 이 있으면 **PERSONAL**.
 4. 판단이 모호하면 CONSULTING을 선택하세요.
 
 [출력]
-- 오직 에이전트 타입 이름(예: ACADEMIC)만 답변하세요.
+- 오직 에이전트 타입 이름(예: PERSONAL)만 답변하세요.
 """
 
     @staticmethod
@@ -73,7 +75,7 @@ class RouterAgent:
             logger.info(f"RouterAgent classified: '{query}' -> {agent_type} (Auth: {is_authenticated})")
             
             # Validation: Fallback to CONSULTING if LLM returns unexpected text
-            valid_types = [AgentType.CONSULTING, AgentType.PERSONAL, AgentType.REPORT, AgentType.ADMIN]
+            valid_types = [AgentType.CONSULTING, AgentType.PERSONAL, AgentType.REPORT, AgentType.ACADEMIC, AgentType.ADMIN]
             if agent_type not in valid_types:
                 logger.warning(f"Router returned invalid agent type: {agent_type}. Falling back to CONSULTING.")
                 return AgentType.CONSULTING
@@ -461,6 +463,8 @@ class ChatService:
                 contents = query
 
             # --- [Router Step] Determine specialized agent ---
+            # user_id는 JWT 인증을 통과한 실제 로그인 사용자에게만 주입됨.
+            # None이면 비로그인(게스트) 사용자 → CONSULTING 전용.
             is_authenticated = user_id is not None
             agent_type = RouterAgent.determine_agent(query, is_authenticated, model_name=model_name)
             logger.info(
@@ -1062,7 +1066,10 @@ class ChatService:
 
         except Exception as e:
             logger.error(f"Error in smart query: {e}")
-            raise
+            return {
+                "text": "죄송합니다. 답변 생성 중 오류가 발생했습니다.",
+                "used_calendar": False,
+            }
 
     @staticmethod
     def query_smart_stream(
