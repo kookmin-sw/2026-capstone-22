@@ -1365,7 +1365,7 @@ function StudentManagementPanel() {
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             <Button onClick={openAddClass} startIcon={<Add />} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 600, fontSize: '0.8125rem', px: 2.5, borderRadius: '10px', textTransform: 'none', '&:hover': { opacity: 0.9 } }}>
-              + 분반 추가
+              분반 추가
             </Button>
           </Box>
 
