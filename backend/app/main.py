@@ -16,6 +16,7 @@ from .routers import (
     chatbot_settings,
     hitl,
     students,
+    verification,
 )
 from .utils.init_data import init_database
 import logging
@@ -135,6 +136,7 @@ app.include_router(
 )
 app.include_router(hitl.router, prefix="/api/hitl", tags=["HITL"])
 app.include_router(students.router, prefix="/api/admin/students", tags=["Students"])
+app.include_router(verification.router, prefix="/api", tags=["Verification"])
 
 
 @app.get("/")
