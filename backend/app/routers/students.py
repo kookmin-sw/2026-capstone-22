@@ -146,9 +146,7 @@ async def list_students(
     if student_status:
         query = query.filter(Student.status == student_status)
     if search:
-        query = query.filter(
-            Student.name.contains(search) | Student.student_no.contains(search)
-        )
+        query = query.filter(Student.name.contains(search))
 
     return query.order_by(Student.name).all()
 
