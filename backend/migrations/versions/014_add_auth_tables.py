@@ -15,7 +15,7 @@ depends_on = None
 def upgrade():
     op.create_table(
         "student_access_links",
-        sa.Column("id", sa.BigInteger(), nullable=False),
+        sa.Column("id", sa.BigInteger(), primary_key=True, autoincrement=True),
         sa.Column("tenant_id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("student_id", sa.BigInteger(), nullable=False),
@@ -52,7 +52,6 @@ def upgrade():
         sa.ForeignKeyConstraint(["student_id"], ["students.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
             "tenant_id", "user_id", "student_id", name="uq_student_access_link"
         ),
@@ -61,7 +60,7 @@ def upgrade():
 
     op.create_table(
         "verification_challenges",
-        sa.Column("id", sa.BigInteger(), nullable=False),
+        sa.Column("id", sa.BigInteger(), primary_key=True, autoincrement=True),
         sa.Column("tenant_id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("target_phone", sa.String(30), nullable=False),
@@ -77,7 +76,6 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
         op.f("ix_verification_challenges_id"), "verification_challenges", ["id"]
