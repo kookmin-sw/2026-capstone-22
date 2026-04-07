@@ -1,3 +1,24 @@
+# 🎓 캡스톤 22조 결과물 소개: ReadyTalk KMU
+
+## 1. 프로젝트 소개
+**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 에이전트 시스템입니다. 
+비인증 사용자에게는 상담 매뉴얼 기반 안내와 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 리포트 등 개인화된 서비스를 제공합니다. 또한 기출 문제 유형 분류 및 유사 문제 생성을 통해 학습을 지원하며, 관리자는 상담 내용을 저장·요약하여 운영 효율을 높일 수 있습니다.
+
+## 2. 소개 영상
+<!-- 프로젝트를 소개하는 영상을 여기에 추가하세요 (YouTube 링크 등) -->
+[![ReadyTalk KMU 소개 영상]]
+
+## 3. 팀 소개
+| 이름 | 담당 역할 | GitHub |
+| :--- | :--- | :--- |
+| **양지웅** | 팀장, 백엔드 | [yangjiwoong1](https://github.com/yangjiwoong1) |
+| **정유미** | AI Agent 개발, 프론트엔드 | [ume24](https://github.com/ume24) |
+| **이윤서** | AI Agent 개발 | [yunseo1011](https://github.com/yunseo1011) |
+| **양승일** | 문서 정리, 개발 보조 | [seungil0909](https://github.com/seungil0909) |
+| **유혜성** | AI Agent QA | [hyeforest7](https://github.com/hyeforest7) |
+
+---
+
 # ReadyTalk KMU
 
 Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼 (국민대 해커톤)
