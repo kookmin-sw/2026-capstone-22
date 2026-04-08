@@ -474,6 +474,7 @@ class ChatService:
         web_search_enabled: bool = False,
         has_calendar: bool = False,
         tenant_name: str = "ReadyTalk",
+        tenant_slug: str = None,
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
