@@ -282,6 +282,8 @@ async def send_message(
 
     # Query Gemini with conversation history
     cited_sources = []
+    verification_required = False
+    verification_url = None
     user_group_name = current_user.group.name if current_user.group else None
     try:
         model_name = model or session.model_used or _get_default_model(db)
@@ -398,6 +400,8 @@ async def send_message(
         "user_message": user_message,
         "assistant_message": assistant_message,
         "cited_sources": cited_sources,
+        "verification_required": verification_required,
+        "verification_url": verification_url,
     }
 
 
