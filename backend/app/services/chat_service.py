@@ -50,15 +50,45 @@ class RouterAgent:
 - 오직 에이전트 타입 이름(예: PERSONAL)만 답변하세요.
 """
 
+    # 키워드 기반 사전 분류 규칙 (LLM 호출 전 확정)
+    _KEYWORD_RULES = [
+        # (우선순위, 키워드 집합, 대상 에이전트)
+        (1, {"문제", "유사문제", "기출", "유사 문제", "유형"}, AgentType.ACADEMIC),
+        (2, {"내 성적", "내성적", "성적표", "성취도", "내 점수", "내점수"}, AgentType.REPORT),
+        (3, {
+            "내 분반", "내분반", "내 반", "내반", "내 수업", "내수업",
+            "내 시간표", "내시간표", "내 출결", "내출결", "내 선생님", "내선생님",
+            "내 일정", "내일정", "내 정보", "내정보", "결석", "보강", "분반",
+        }, AgentType.PERSONAL),
+    ]
+
+    @staticmethod
+    def _keyword_classify(query: str) -> Optional[str]:
+        """키워드 매칭으로 에이전트를 사전 결정한다. 매칭 없으면 None."""
+        q = query.strip()
+        for _, keywords, agent in RouterAgent._KEYWORD_RULES:
+            for kw in keywords:
+                if kw in q:
+                    return agent
+        return None
+
     @staticmethod
     def determine_agent(
         query: str, is_authenticated: bool, model_name: str = "gemini-1.5-flash"
     ) -> str:
         """Classify intent using a lightweight LLM call."""
         try:
-            # If not authenticated, most requests should go to CONSULTING
-            # (unless it's a general greeting, etc.)
+            # 1. 키워드 사전 분류 (LLM 보다 빠르고 확실함)
+            keyword_result = RouterAgent._keyword_classify(query)
+            if keyword_result:
+                # 비인증 사용자는 PERSONAL/REPORT 차단
+                if not is_authenticated and keyword_result in [AgentType.PERSONAL, AgentType.REPORT]:
+                    logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}, blocked (unauthenticated) -> CONSULTING")
+                    return AgentType.CONSULTING
+                logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}")
+                return keyword_result
 
+            # 2. LLM 분류 (키워드로 결정 안 된 경우)
             prompt = f"사용자 질문: \"{query}\"\n인증 상태: {'로그인됨' if is_authenticated else '비인증'}\n\n위 질문에 가장 적합한 에이전트 타입은?"
 
             gen_params = _get_model_generation_params()
