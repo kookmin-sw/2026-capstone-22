@@ -326,6 +326,7 @@ async def send_message(
                     web_search_enabled=web_search_enabled,
                     has_calendar=has_calendar,
                     tenant_name=tenant_name,
+                    tenant_slug=_tenant.slug if _tenant else "",
                     user_id=current_user.id,
                     session_id=session.id,
                     chatbot_settings=chatbot_settings,
@@ -333,6 +334,8 @@ async def send_message(
             )
             response_text = smart_result.get("text", "답변을 생성할 수 없습니다.")
             cited_sources = smart_result.get("cited_sources", [])
+            verification_required = smart_result.get("verification_required", False)
+            verification_url = smart_result.get("verification_url", None)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error from Gemini: {str(e)}")
     finally:
