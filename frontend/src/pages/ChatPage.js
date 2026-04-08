@@ -283,7 +283,9 @@ export default function ChatPage() {
       const assistantMessage = {
         ...response.data.assistant_message,
         cited_sources: response.data.cited_sources || [],
-        realtime_file_list: response.data.realtime_file_list || null
+        realtime_file_list: response.data.realtime_file_list || null,
+        verification_required: response.data.verification_required || false,
+        verification_url: response.data.verification_url || null,
       };
 
       setMessages(prev => {
@@ -414,7 +416,9 @@ export default function ChatPage() {
       const assistantMessage = {
         ...response.data.assistant_message,
         cited_sources: response.data.cited_sources || [],
-        realtime_file_list: response.data.realtime_file_list || null
+        realtime_file_list: response.data.realtime_file_list || null,
+        verification_required: response.data.verification_required || false,
+        verification_url: response.data.verification_url || null,
       };
 
       setMessages(prev => {
