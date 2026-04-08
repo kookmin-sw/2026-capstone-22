@@ -9,6 +9,7 @@ import Register from './components/Auth/Register';
 import ChatPage from './pages/ChatPage';
 import AdminPage from './pages/AdminPage';
 import CalendarPage from './pages/CalendarPage';
+import VerifyPage from './pages/VerifyPage';
 import TenantAdminLayout from './pages/TenantAdminLayout';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
 import DashboardPage from './pages/superadmin/DashboardPage';
@@ -209,6 +210,8 @@ function App() {
                 <Route path="register" element={<Register />} />
                 {/* Calendar is public (accessible without login, e.g. from KakaoTalk) */}
                 <Route path="calendar" element={<CalendarPage />} />
+                {/* Verify is public — phone OTP verification for parent access */}
+                <Route path="verify" element={<VerifyPage />} />
                 {/* All authenticated routes use TenantAdminLayout sidebar */}
                 <Route element={<PrivateRoute><TenantAdminLayout /></PrivateRoute>}>
                   <Route index element={<ChatPage />} />

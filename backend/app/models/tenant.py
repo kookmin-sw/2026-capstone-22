@@ -46,6 +46,10 @@ class Tenant(Base):
     student_classes = relationship("StudentClass", back_populates="tenant")
     students = relationship("Student", back_populates="tenant")
     corpora = relationship("Corpus", back_populates="tenant")
+    student_access_links = relationship("StudentAccessLink", back_populates="tenant")
+    verification_challenges = relationship(
+        "VerificationChallenge", back_populates="tenant"
+    )
     chatbot_settings = relationship(
         "ChatbotSettings",
         back_populates="tenant",

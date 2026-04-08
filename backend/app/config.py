@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     # Site URL (for KakaoTalk admin links etc.)
     REACT_APP_API_URL: str = "http://localhost:8888"
 
+    # Verification (Auth)
+    APP_BASE_URL: str = "http://localhost:8888"
+    VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 10
+    OTP_EXPIRE_MINUTES: int = 5
+    OTP_MAX_ATTEMPTS: int = 5
+
     # File Upload
     UPLOAD_DIR: str = "/app/uploads"
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB

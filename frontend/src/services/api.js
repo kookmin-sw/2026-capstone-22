@@ -226,6 +226,14 @@ export const hitlAPI = {
   resolve: (id) => api.patch(`/hitl/${id}`),
 };
 
+export const verifyAPI = {
+  debugToken: (slug) => api.get(`/verify/${slug}/debug-token`),
+  request: (slug, token, phone) =>
+    api.post(`/verify/${slug}/request`, { token, phone }),
+  confirm: (slug, token, phone, code) =>
+    api.post(`/verify/${slug}/confirm`, { token, phone, code }),
+};
+
 export const studentAPI = {
   // 분반
   listClasses: () => api.get('/admin/students/classes'),
