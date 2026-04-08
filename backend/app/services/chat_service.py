@@ -506,6 +506,38 @@ class ChatService:
                 f"Routed query to agent: {agent_type} (Authenticated: {is_authenticated})"
             )
 
+            # --- [Policy Check] PERSONAL 에이전트: student_access_links 검사 ---
+            # 인증된 사용자라도 OTP 인증된 student_access_links가 없으면 접근 차단.
+            # allowed_student_ids=None → 관리자(전체 허용), list → 허용된 학생 ID 목록.
+            allowed_student_ids = None
+            if agent_type == AgentType.PERSONAL and db_session and user_id and tenant_id:
+                from ..models.user import User as _User
+                from .policy_service import check_personal_access
+
+                _user = db_session.query(_User).filter(_User.id == user_id).first()
+                if _user:
+                    policy_result = check_personal_access(
+                        db_session, _user, tenant_id, tenant_slug or ""
+                    )
+                    if not policy_result.allowed:
+                        denied = policy_result.denied_response
+                        early_result = {
+                            "text": denied.message,
+                            "used_calendar": False,
+                            "cited_sources": [],
+                            "verification_required": False,
+                            "verification_url": None,
+                        }
+                        if hasattr(denied, "verification_url"):
+                            early_result["verification_required"] = True
+                            early_result["verification_url"] = denied.verification_url
+                        return early_result
+                    allowed_student_ids = policy_result.allowed_student_ids
+                    logger.info(
+                        f"PERSONAL access granted: user_id={user_id}, "
+                        f"allowed_student_ids={allowed_student_ids}"
+                    )
+
             # Build function declarations based on assigned agent
             function_declarations = []
 
