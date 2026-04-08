@@ -1051,6 +1051,32 @@ export default function ChatPage() {
                           {msg.content}
                         </ReactMarkdown>
 
+                        {/* 본인 확인 버튼 — PERSONAL 접근 차단 시 표시 */}
+                        {msg.verification_required && msg.verification_url && (
+                          <Box sx={{ mt: 2 }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              href={msg.verification_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: 'white',
+                                fontWeight: 700,
+                                borderRadius: 2,
+                                px: 2,
+                                py: 0.8,
+                                '&:hover': {
+                                  background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8a 100%)',
+                                },
+                              }}
+                            >
+                              본인 확인하기
+                            </Button>
+                          </Box>
+                        )}
+
                         {/* RAG References Section - Collapsible */}
                         {msg.cited_sources && msg.cited_sources.length > 0 && (
                           <Box
