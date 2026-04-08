@@ -106,6 +106,8 @@ class ChatResponse(BaseModel):
     user_message: MessageResponse
     assistant_message: MessageResponse
     cited_sources: List[CitedSource] = []
+    verification_required: bool = False
+    verification_url: Optional[str] = None
 
 
 class FeedbackRequest(BaseModel):
