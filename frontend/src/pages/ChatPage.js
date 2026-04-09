@@ -942,16 +942,15 @@ export default function ChatPage() {
                               );
                             },
                             a({ node, children, href, ...props }) {
-                              // Open Google Drive links in new tab
-                              const isGDriveLink = href && href.includes('drive.google.com');
                               return (
                                 <a
                                   href={href}
-                                  target={isGDriveLink ? '_blank' : undefined}
-                                  rel={isGDriveLink ? 'noopener noreferrer' : undefined}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   style={{
                                     color: '#a78bfa',
                                     textDecoration: 'underline',
+                                    fontWeight: 600,
                                   }}
                                   {...props}
                                 >
