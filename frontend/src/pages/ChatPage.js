@@ -325,7 +325,21 @@ export default function ChatPage() {
     try {
       const response = await chatAPI.getSession(sessionId);
       setCurrentSession(response.data);
-      setMessages(response.data.messages || []);
+      // DB에서 불러온 메시지는 verification_required 필드가 없으므로
+      // 메시지 content 안의 마크다운 링크 패턴으로 복원한다.
+      const verifyUrlRegex = /\(([^)]+\/verify\?token=[^)]+)\)/;
+      const messages = (response.data.messages || []).map(msg => {
+        const match = msg.content && verifyUrlRegex.exec(msg.content);
+        if (match) {
+          return {
+            ...msg,
+            verification_required: true,
+            verification_url: match[1],
+          };
+        }
+        return msg;
+      });
+      setMessages(messages);
     } catch (error) {
       console.error('세션 로딩 오류:', error);
     }
