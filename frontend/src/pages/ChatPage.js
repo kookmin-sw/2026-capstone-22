@@ -426,14 +426,6 @@ export default function ChatPage() {
         web_search_enabled: webSearchEnabled
       }, filesToUpload, abortControllerRef.current.signal);
 
-      if (!currentSession) {
-        setCurrentSession({ id: response.data.session_id });
-        outletContext?.setCurrentSessionId?.(response.data.session_id);
-        outletContext?.onSessionCreated?.();
-      }
-
-      setIsTyping(false);
-
       // Add cited_sources and realtime_file_list to assistant message if available
       const assistantMessage = {
         ...response.data.assistant_message,
@@ -442,6 +434,15 @@ export default function ChatPage() {
         verification_required: response.data.verification_required || false,
         verification_url: response.data.verification_url || null,
       };
+
+      setIsTyping(false);
+
+      if (!currentSession) {
+        skipNextLoadRef.current = true;
+        setCurrentSession({ id: response.data.session_id });
+        outletContext?.setCurrentSessionId?.(response.data.session_id);
+        outletContext?.onSessionCreated?.();
+      }
 
       setMessages(prev => {
         const withoutTemp = prev.slice(0, -1);
