@@ -54,6 +54,8 @@ export default function ChatPage() {
   const dragCounterRef = useRef(0);
   const recognitionRef = useRef(null);
   const abortControllerRef = useRef(null);
+  // 첫 메시지로 새 세션 생성 시, setCurrentSessionId 변경이 loadSession을 트리거하지 않도록 막는 플래그
+  const skipNextLoadRef = useRef(false);
 
   useEffect(() => {
     loadModels();
@@ -65,6 +67,10 @@ export default function ChatPage() {
   useEffect(() => {
     const sessionId = outletContext?.currentSessionId;
     if (sessionId) {
+      if (skipNextLoadRef.current) {
+        skipNextLoadRef.current = false;
+        return;
+      }
       loadSession(sessionId);
     } else if (sessionId === null) {
       // New chat requested
