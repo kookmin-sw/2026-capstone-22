@@ -280,6 +280,7 @@ export default function ChatPage() {
 
       const assistantMessage = {
         ...response.data.assistant_message,
+        content: (response.data.assistant_message?.content || '').replace(/<!--\s*verify:\S+\s*-->/g, '').trim(),
         cited_sources: response.data.cited_sources || [],
         realtime_file_list: response.data.realtime_file_list || null,
         verification_required: response.data.verification_required || false,
@@ -431,6 +432,7 @@ export default function ChatPage() {
       // Add cited_sources and realtime_file_list to assistant message if available
       const assistantMessage = {
         ...response.data.assistant_message,
+        content: (response.data.assistant_message?.content || '').replace(/<!--\s*verify:\S+\s*-->/g, '').trim(),
         cited_sources: response.data.cited_sources || [],
         realtime_file_list: response.data.realtime_file_list || null,
         verification_required: response.data.verification_required || false,
