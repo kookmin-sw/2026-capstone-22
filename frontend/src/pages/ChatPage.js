@@ -278,14 +278,6 @@ export default function ChatPage() {
         web_search_enabled: webSearchEnabled
       }, [], abortControllerRef.current.signal);
 
-      if (!currentSession) {
-        setCurrentSession({ id: response.data.session_id });
-        outletContext?.setCurrentSessionId?.(response.data.session_id);
-        outletContext?.onSessionCreated?.();
-      }
-
-      setIsTyping(false);
-
       const assistantMessage = {
         ...response.data.assistant_message,
         cited_sources: response.data.cited_sources || [],
@@ -293,6 +285,16 @@ export default function ChatPage() {
         verification_required: response.data.verification_required || false,
         verification_url: response.data.verification_url || null,
       };
+
+      setIsTyping(false);
+
+      if (!currentSession) {
+        // 새 세션 생성 시 setCurrentSessionId 변경으로 인한 loadSession 호출을 막는다
+        skipNextLoadRef.current = true;
+        setCurrentSession({ id: response.data.session_id });
+        outletContext?.setCurrentSessionId?.(response.data.session_id);
+        outletContext?.onSessionCreated?.();
+      }
 
       setMessages(prev => {
         const withoutTemp = prev.slice(0, -1);
