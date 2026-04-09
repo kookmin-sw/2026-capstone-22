@@ -545,19 +545,29 @@ class ChatService:
             }
             if is_authenticated and user_id and tenant_id and db_session:
                 if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
-                    from .verification_service import create_verification_token
-                    from ..config import settings as _settings
+                    logger.info(f"Verify-query detected for user_id={user_id}")
+                    try:
+                        from .verification_service import create_verification_token
+                        from ..config import settings as _settings
 
-                    _vtoken = create_verification_token(user_id, tenant_id)
-                    _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
-                    logger.info(f"Verify-query detected, returning verification URL for user_id={user_id}")
-                    return {
-                        "text": f"본인 확인은 아래 링크를 통해 하실 수 있습니다.\n\n[📱 본인 확인하기]({_vurl})",
-                        "used_calendar": False,
-                        "cited_sources": [],
-                        "verification_required": True,
-                        "verification_url": _vurl,
-                    }
+                        _vtoken = create_verification_token(user_id, tenant_id)
+                        _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
+                        return {
+                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.\n\n[📱 본인 확인하기]({_vurl})",
+                            "used_calendar": False,
+                            "cited_sources": [],
+                            "verification_required": True,
+                            "verification_url": _vurl,
+                        }
+                    except Exception as _ve:
+                        logger.error(f"Verify-query URL generation failed: {_ve}")
+                        return {
+                            "text": "본인 확인은 채팅 화면의 '본인 확인하기' 버튼을 통해 하실 수 있습니다. 먼저 개인 정보가 필요한 질문(예: '내 분반 알려줘')을 입력하시면 버튼이 표시됩니다.",
+                            "used_calendar": False,
+                            "cited_sources": [],
+                            "verification_required": False,
+                            "verification_url": None,
+                        }
 
             # --- [Policy Check] PERSONAL 에이전트: student_access_links 검사 ---
             # 인증된 사용자라도 OTP 인증된 student_access_links가 없으면 접근 차단.
