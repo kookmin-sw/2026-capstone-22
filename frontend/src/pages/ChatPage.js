@@ -334,13 +334,15 @@ export default function ChatPage() {
       const response = await chatAPI.getSession(sessionId);
       setCurrentSession(response.data);
       // DB에서 불러온 메시지는 verification_required 필드가 없으므로
-      // 메시지 content 안의 마크다운 링크 패턴으로 복원한다.
-      const verifyUrlRegex = /\(([^)]+\/verify\?token=[^)]+)\)/;
+      // 메시지 content 안의 HTML 주석 패턴 <!-- verify:URL --> 으로 복원한다.
+      const verifyCommentRegex = /<!--\s*verify:(\S+)\s*-->/;
       const messages = (response.data.messages || []).map(msg => {
-        const match = msg.content && verifyUrlRegex.exec(msg.content);
+        const match = msg.content && verifyCommentRegex.exec(msg.content);
         if (match) {
           return {
             ...msg,
+            // 화면에 표시할 content에서 주석 제거
+            content: msg.content.replace(verifyCommentRegex, '').trim(),
             verification_required: true,
             verification_url: match[1],
           };

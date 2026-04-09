@@ -553,7 +553,7 @@ class ChatService:
                         _vtoken = create_verification_token(user_id, tenant_id)
                         _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
                         return {
-                            "text": "본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
+                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.<!-- verify:{_vurl} -->",
                             "used_calendar": False,
                             "cited_sources": [],
                             "verification_required": True,
@@ -590,6 +590,8 @@ class ChatService:
                         # 메시지에 마크다운 링크 포함 — ReactMarkdown이 직접 렌더링
                         # 하므로 JS 상태에 의존하지 않아도 항상 클릭 가능
                         text = denied.message
+                        if ver_url:
+                            text += f"<!-- verify:{ver_url} -->"
                         logger.info(
                             f"PERSONAL access denied: user_id={user_id}, "
                             f"reason={denied.__class__.__name__}"
