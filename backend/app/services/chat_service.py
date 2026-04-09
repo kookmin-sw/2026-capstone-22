@@ -536,9 +536,34 @@ class ChatService:
                 f"Routed query to agent: {agent_type} (Authenticated: {is_authenticated})"
             )
 
+            # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
+            # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
+            # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
+            _VERIFY_QUERY_KEYWORDS = {
+                "본인확인", "본인 확인", "인증 방법", "인증방법", "어떻게 인증",
+                "인증 어떻게", "verify", "인증하는 방법", "인증은 어떻게",
+            }
+            if is_authenticated and user_id and tenant_id and db_session:
+                if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
+                    from .verification_service import create_verification_token
+                    from ..config import settings as _settings
+
+                    _vtoken = create_verification_token(user_id, tenant_id)
+                    _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
+                    logger.info(f"Verify-query detected, returning verification URL for user_id={user_id}")
+                    return {
+                        "text": f"본인 확인은 아래 링크를 통해 하실 수 있습니다.\n\n[📱 본인 확인하기]({_vurl})",
+                        "used_calendar": False,
+                        "cited_sources": [],
+                        "verification_required": True,
+                        "verification_url": _vurl,
+                    }
+
             # --- [Policy Check] PERSONAL 에이전트: student_access_links 검사 ---
             # 인증된 사용자라도 OTP 인증된 student_access_links가 없으면 접근 차단.
             # allowed_student_ids=None → 관리자(전체 허용), list → 허용된 학생 ID 목록.
+            # 거부 시 메시지 안에 마크다운 링크를 포함 → ReactMarkdown이 클릭 가능한
+            # 링크로 렌더링하므로 DB 저장 후 재로드해도 링크가 살아있다.
             allowed_student_ids = None
             if agent_type == AgentType.PERSONAL and db_session and user_id and tenant_id:
                 from ..models.user import User as _User
@@ -551,17 +576,23 @@ class ChatService:
                     )
                     if not policy_result.allowed:
                         denied = policy_result.denied_response
-                        early_result = {
-                            "text": denied.message,
+                        ver_url = getattr(denied, "verification_url", None)
+                        # 메시지에 마크다운 링크 포함 — ReactMarkdown이 직접 렌더링
+                        # 하므로 JS 상태에 의존하지 않아도 항상 클릭 가능
+                        text = denied.message
+                        if ver_url:
+                            text += f"\n\n[📱 본인 확인하기]({ver_url})"
+                        logger.info(
+                            f"PERSONAL access denied: user_id={user_id}, "
+                            f"reason={denied.__class__.__name__}"
+                        )
+                        return {
+                            "text": text,
                             "used_calendar": False,
                             "cited_sources": [],
-                            "verification_required": False,
-                            "verification_url": None,
+                            "verification_required": bool(ver_url),
+                            "verification_url": ver_url,
                         }
-                        if hasattr(denied, "verification_url"):
-                            early_result["verification_required"] = True
-                            early_result["verification_url"] = denied.verification_url
-                        return early_result
                     allowed_student_ids = policy_result.allowed_student_ids
                     logger.info(
                         f"PERSONAL access granted: user_id={user_id}, "
