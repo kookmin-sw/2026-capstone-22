@@ -1690,6 +1690,7 @@ const SECTION_TAB_MAP = {
   calendar: 4,
   chatbot: 5,
   students: 8,
+  'exam-analysis': 9,
 };
 
 export default function AdminPage({ section = 'stores' }) {
@@ -4567,6 +4568,7 @@ export default function AdminPage({ section = 'stores' }) {
       {/* ============ Tab Panel 7: 상담 대기 (HITL) ============ */}
       {tabValue === 7 && <HITLPanel />}
       {tabValue === 8 && <StudentManagementPanel />}
+      {tabValue === 9 && <ExamAnalysisPage />}
     </Box>
   );
 }
