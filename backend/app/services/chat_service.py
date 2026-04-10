@@ -81,8 +81,8 @@ class RouterAgent:
             # 1. 키워드 사전 분류 (LLM 보다 빠르고 확실함)
             keyword_result = RouterAgent._keyword_classify(query)
             if keyword_result:
-                # 비인증 사용자는 PERSONAL/REPORT 차단
-                if not is_authenticated and keyword_result in [AgentType.PERSONAL, AgentType.REPORT]:
+                # 비인증 사용자는 PERSONAL 차단
+                if not is_authenticated and keyword_result in [AgentType.PERSONAL]:
                     logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}, blocked (unauthenticated) -> CONSULTING")
                     return AgentType.CONSULTING
                 logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}")
