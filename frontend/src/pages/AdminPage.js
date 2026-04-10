@@ -23,6 +23,7 @@ import {
   CheckCircleOutline as CheckCircleOutlineIcon,
 } from '@mui/icons-material';
 import CalendarPage from './CalendarPage';
+import ExamAnalysisPage from './ExamAnalysisPage';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
