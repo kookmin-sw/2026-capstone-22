@@ -55,7 +55,7 @@
 
 # ReadyTalk for Academy
 
-Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼 (국민대 해커톤)
+Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼
 
 ## Architecture Overview
 
