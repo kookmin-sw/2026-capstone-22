@@ -116,7 +116,6 @@ class RouterAgent:
             valid_types = [
                 AgentType.CONSULTING,
                 AgentType.PERSONAL,
-                AgentType.REPORT,
                 AgentType.ACADEMIC,
                 AgentType.ADMIN,
             ]
@@ -126,11 +125,8 @@ class RouterAgent:
                 )
                 return AgentType.CONSULTING
 
-            # Security Guard: If not authenticated but requesting PERSONAL/REPORT, route back to CONSULTING
-            if not is_authenticated and agent_type in [
-                AgentType.PERSONAL,
-                AgentType.REPORT,
-            ]:
+            # Security Guard: If not authenticated but requesting PERSONAL, route back to CONSULTING
+            if not is_authenticated and agent_type in [AgentType.PERSONAL]:
                 logger.info(
                     f"Unauthenticated access to {agent_type} blocked. Routing to CONSULTING."
                 )
@@ -621,11 +617,10 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
-            # 2. Document search: Available to CONSULTING, PERSONAL, and REPORT
+            # 2. Document search: Available to CONSULTING and PERSONAL
             if agent_type in [
                 AgentType.CONSULTING,
                 AgentType.PERSONAL,
-                AgentType.REPORT,
             ]:
                 function_declarations.append(
                     {
@@ -698,8 +693,6 @@ class ChatService:
                 agent_persona = f"\n## 배정된 역할: 개인화 관리 에이전트\n- 당신은 현재 로그인한 사용자의 전용 비서입니다.\n- 수업 일정 확인, 결석 신고, 보강 날짜 잡기 업무를 처리하세요.\n- 답변 시 사용자의 이름을 부르며 친절하게 응대하세요."
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
-            elif agent_type == AgentType.REPORT:
-                agent_persona = f"\n## 배정된 역할: 학습 분석 에이전트\n- 당신은 학생의 성취도를 분석하는 데이터 전문가입니다.\n- 성적 및 리포트 데이터를 기반으로 객관적인 피드백을 제공하세요."
 
             effective_instruction = base_instruction + agent_persona
 
@@ -1258,7 +1251,6 @@ class ChatService:
             if agent_type in [
                 AgentType.CONSULTING,
                 AgentType.PERSONAL,
-                AgentType.REPORT,
             ]:
                 function_declarations.append(
                     {
@@ -1330,8 +1322,6 @@ class ChatService:
                 agent_persona = f"\n## 배정된 역할: 개인화 관리 에이전트\n- 당신은 현재 로그인한 사용자의 전용 비서입니다.\n- 수업 일정 확인, 결석 신고, 보강 날짜 잡기 업무를 처리하세요.\n- 답변 시 사용자의 이름을 부르며 친절하게 응대하세요."
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
-            elif agent_type == AgentType.REPORT:
-                agent_persona = f"\n## 배정된 역할: 학습 분석 에이전트\n- 당신은 학생의 성취도를 분석하는 데이터 전문가입니다.\n- 성적 및 리포트 데이터를 기반으로 객관적인 피드백을 제공하세요."
 
             effective_instruction = base_instruction + agent_persona
             gen_params = _get_model_generation_params()
