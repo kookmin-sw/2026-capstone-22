@@ -23,7 +23,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPage.css';
 
 export default function ChatPage() {
-  const { user } = useAuth();
+  const { user, checkAuth } = useAuth();
   const { currentSlug, tenant } = useTenant();
   const outletContext = useOutletContext();
   const [currentSession, setCurrentSession] = useState(null);
@@ -62,6 +62,33 @@ export default function ChatPage() {
     loadPromptTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 본인 인증 후 탭 복귀 감지: VerifyPage에서 confirm API 성공 시 localStorage 플래그를 쓰고,
+  // 이 탭이 다시 활성화될 때 플래그를 확인해 auth 갱신 + 성공 메시지 1회 표시
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const flag = localStorage.getItem('verification_done');
+      if (flag !== '1') return;
+
+      localStorage.removeItem('verification_done');
+
+      const updatedUser = await checkAuth();
+
+      if (updatedUser?.has_verified_access) {
+        const systemMsg = {
+          role: 'assistant',
+          content: '본인 인증이 완료되었습니다. 이제 학생 정보 관련 질문을 하실 수 있습니다.',
+          created_at: new Date().toISOString(),
+          isVerificationSuccess: true,
+        };
+        setMessages(prev => [...prev, systemMsg]);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [checkAuth]);
 
   // React to session changes from layout sidebar
   useEffect(() => {
@@ -805,6 +832,41 @@ export default function ChatPage() {
             <>
               {messages.map((msg, idx) => (
                 <Slide direction="up" in={true} key={idx} timeout={300}>
+                  {/* 본인 인증 완료 시스템 안내 메시지 */}
+                  {msg.isVerificationSuccess ? (
+                    <Box
+                      sx={{
+                        mb: 2.5,
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          px: 2.5,
+                          py: 1.25,
+                          borderRadius: 3,
+                          bgcolor: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          maxWidth: 480,
+                        }}
+                      >
+                        <Check sx={{ fontSize: 16, color: '#10b981', flexShrink: 0 }} />
+                        <Typography
+                          sx={{
+                            fontSize: '0.875rem',
+                            color: 'rgba(255,255,255,0.85)',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {msg.content}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ) : (
                   <Box
                     sx={{
                       mb: 2.5,
@@ -1614,6 +1676,7 @@ export default function ChatPage() {
                       </Box>
                     </Box>
                   </Box>
+                  )}
                 </Slide>
               ))}
               {isTyping && (
