@@ -155,9 +155,28 @@ async def refresh_token(token_data: TokenRefresh, db: Session = Depends(get_db))
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_user)):
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Get current user information"""
-    return current_user
+    from ..models.student_access_link import StudentAccessLink, AccessLinkStatus
+
+    has_verified = (
+        not current_user.is_admin
+        and db.query(StudentAccessLink)
+        .filter(
+            StudentAccessLink.user_id == current_user.id,
+            StudentAccessLink.status == AccessLinkStatus.active,
+        )
+        .first()
+        is not None
+    )
+    # ORM 인스턴스 동적 속성은 Pydantic v2 직렬화에서 무시되므로,
+    # model_validate로 Pydantic 인스턴스를 먼저 만든 뒤 model_copy로 값을 주입한다.
+    return UserResponse.model_validate(current_user).model_copy(
+        update={"has_verified_access": has_verified}
+    )
 
 
 @router.post("/external-login", response_model=Token)
