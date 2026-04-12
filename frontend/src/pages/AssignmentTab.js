@@ -229,6 +229,7 @@ export default function AssignmentTab() {
     subject: 'all',
     dateStart: '',
     dateEnd: '',
+    quickFilter: 'all', // 'all', 'ongoing', 'dueToday'
   });
 
   // 다이얼로그 상태
@@ -246,7 +247,7 @@ export default function AssignmentTab() {
   // 요약 정보 계산
   const summary = useMemo(() => {
     const now = new Date().toISOString().slice(0, 10);
-    const active = assignments.length;
+    const active = assignments.filter(a => a.due_date >= now).length;
     const dueToday = assignments.filter(a => a.due_date === now).length;
     const totalSubmissions = submissions.length;
     const missing = submissions.filter(s => s.status === 'missing').length;
@@ -256,7 +257,10 @@ export default function AssignmentTab() {
 
   // 필터링된 과제 목록
   const filteredAssignments = useMemo(() => {
+    const now = new Date().toISOString().slice(0, 10);
     return assignments.filter(a => {
+      if (filters.quickFilter === 'ongoing' && a.due_date < now) return false;
+      if (filters.quickFilter === 'dueToday' && a.due_date !== now) return false;
       if (filters.class_id !== 'all' && a.class_id !== Number(filters.class_id)) return false;
       if (filters.subject !== 'all' && a.subject !== filters.subject) return false;
       if (filters.dateStart && a.due_date < filters.dateStart) return false;
@@ -372,25 +376,43 @@ export default function AssignmentTab() {
     setTimeout(() => setSnack({ open: false, message: '' }), 2500);
   };
 
+  const handleQuickFilter = (type) => {
+    setFilters(prev => ({
+      ...prev,
+      quickFilter: prev.quickFilter === type ? 'all' : type
+    }));
+  };
+
   return (
     <Box sx={{ animation: 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
       
       {/* ── 1. 상단 요약 카드 ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: '진행중 과제', value: summary.active, color: '#a78bfa', icon: <AssignmentIcon /> },
-          { label: '오늘 마감', value: summary.dueToday, color: '#f59e0b', icon: <CalendarIcon /> },
-          { label: '미제출 건수', value: summary.missing, color: '#ef4444', icon: <TrendingUpIcon /> },
-          { label: '지연 제출', value: summary.late, color: '#fb923c', icon: <AccessTimeIcon /> },
+          { id: 'ongoing', label: '진행중 과제', value: summary.active, color: '#a78bfa', icon: <AssignmentIcon /> },
+          { id: 'dueToday', label: '오늘 마감', value: summary.dueToday, color: '#f59e0b', icon: <CalendarIcon /> },
+          { id: 'missing', label: '미제출 건수', value: summary.missing, color: '#ef4444', icon: <TrendingUpIcon /> },
+          { id: 'late', label: '지연 제출', value: summary.late, color: '#fb923c', icon: <AccessTimeIcon /> },
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
-            <Box sx={{
-              bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '16px', p: 3,
-              display: 'flex', alignItems: 'center', gap: 2.5,
-              transition: 'all 0.25s ease',
-              '&:hover': { transform: 'translateY(-4px)', borderColor: 'rgba(255,255,255,0.12)' },
-            }}>
+            <Box 
+              onClick={() => (item.id === 'ongoing' || item.id === 'dueToday') && handleQuickFilter(item.id)}
+              sx={{
+                bgcolor: '#18181B', 
+                border: filters.quickFilter === item.id 
+                  ? `2px solid ${item.color}` 
+                  : '1px solid rgba(255,255,255,0.06)',
+                borderRadius: '16px', p: 3,
+                display: 'flex', alignItems: 'center', gap: 2.5,
+                transition: 'all 0.25s ease',
+                cursor: (item.id === 'ongoing' || item.id === 'dueToday') ? 'pointer' : 'default',
+                bgcolor: filters.quickFilter === item.id ? `${item.color}08` : '#18181B',
+                '&:hover': { 
+                  transform: (item.id === 'ongoing' || item.id === 'dueToday') ? 'translateY(-4px)' : 'none', 
+                  borderColor: (item.id === 'ongoing' || item.id === 'dueToday') ? item.color : 'rgba(255,255,255,0.12)' 
+                },
+              }}
+            >
               <Box sx={{
                 width: 48, height: 48, borderRadius: '12px',
                 bgcolor: `${item.color}15`, color: item.color,
@@ -491,7 +513,9 @@ export default function AssignmentTab() {
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AssignmentIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-              <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>과제 목록</Typography>
+              <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>
+                과제 목록 {filters.quickFilter === 'ongoing' ? '(진행중)' : filters.quickFilter === 'dueToday' ? '(오늘 마감)' : ''}
+              </Typography>
             </Box>
             <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>전체 {filteredAssignments.length}개</Typography>
           </Box>
