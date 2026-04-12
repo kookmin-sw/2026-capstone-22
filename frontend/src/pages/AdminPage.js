@@ -1294,7 +1294,14 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
   };
 
   const filteredStudents = students.filter(s => {
-    const matchSearch = !studentSearch || s.name.includes(studentSearch);
+    const searchLower = studentSearch.toLowerCase();
+    const searchDigits = studentSearch.replace(/[^0-9]/g, '');
+    
+    const matchSearch = !studentSearch || 
+      s.name.toLowerCase().includes(searchLower) || 
+      (s.school_name && s.school_name.toLowerCase().includes(searchLower)) ||
+      (searchDigits && s.phone && s.phone.replace(/[^0-9]/g, '').includes(searchDigits));
+
     const matchClass = classFilter === 'all' || s.class_id === Number(classFilter);
     const matchStatus = statusFilter === 'all' || s.status === statusFilter;
     const matchGrade = gradeFilter === 'all' || s.grade === gradeFilter;
@@ -1414,7 +1421,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <TextField
               size="small"
-              placeholder="이름 또는 학번 검색"
+              placeholder="이름, 학교명 또는 연락처 검색"
               value={studentSearch}
               onChange={e => setStudentSearch(e.target.value)}
               InputProps={{ startAdornment: <Search sx={{ fontSize: 16, color: '#52525B', mr: 0.5 }} /> }}
