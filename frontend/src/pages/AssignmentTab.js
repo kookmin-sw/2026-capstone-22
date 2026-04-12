@@ -677,8 +677,16 @@ export default function AssignmentTab() {
                           onChange={(e) => handleUpdateSubmission(item.id, { submitted_at: e.target.value })}
                           placeholder="YYYY-MM-DD"
                           sx={{ 
-                            '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
-                            '& .MuiOutlinedInput-input': { p: 0.5 }
+                            '& .MuiOutlinedInput-root': { 
+                              bgcolor: 'rgba(255,255,255,0.02)', 
+                              fontSize: '0.75rem',
+                              color: '#FAFAFA',
+                              '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
+                            },
+                            '& .MuiOutlinedInput-input': { 
+                              p: 0.5,
+                              '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
+                            }
                           }}
                         />
                       </TableCell>
@@ -690,7 +698,13 @@ export default function AssignmentTab() {
                           onChange={(e) => handleUpdateSubmission(item.id, { score: e.target.value === '' ? null : Number(e.target.value) })}
                           sx={{ 
                             width: 50,
-                            '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
+                            '& .MuiOutlinedInput-root': { 
+                              bgcolor: 'rgba(255,255,255,0.02)', 
+                              fontSize: '0.75rem',
+                              color: '#a78bfa',
+                              fontWeight: 700,
+                              '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
+                            },
                             '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' }
                           }}
                         />
@@ -702,8 +716,16 @@ export default function AssignmentTab() {
                           value={item.submission.feedback || ''} 
                           onChange={(e) => handleUpdateSubmission(item.id, { feedback: e.target.value })}
                           sx={{ 
-                            '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
-                            '& .MuiOutlinedInput-input': { p: 0.5 }
+                            '& .MuiOutlinedInput-root': { 
+                              bgcolor: 'rgba(255,255,255,0.02)', 
+                              fontSize: '0.75rem',
+                              color: '#FAFAFA',
+                              '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
+                            },
+                            '& .MuiOutlinedInput-input': { 
+                              p: 0.5,
+                              '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
+                            }
                           }}
                         />
                       </TableCell>
@@ -714,8 +736,16 @@ export default function AssignmentTab() {
                           value={item.submission.memo || ''} 
                           onChange={(e) => handleUpdateSubmission(item.id, { memo: e.target.value })}
                           sx={{ 
-                            '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
-                            '& .MuiOutlinedInput-input': { p: 0.5 }
+                            '& .MuiOutlinedInput-root': { 
+                              bgcolor: 'rgba(255,255,255,0.02)', 
+                              fontSize: '0.75rem',
+                              color: '#FAFAFA',
+                              '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
+                            },
+                            '& .MuiOutlinedInput-input': { 
+                              p: 0.5,
+                              '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
+                            }
                           }}
                         />
                       </TableCell>
