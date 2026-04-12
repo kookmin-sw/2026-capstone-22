@@ -445,6 +445,24 @@ async def _process_kakao_callback(
 
         outputs = _build_kakao_outputs(chunks, valid_sources)
 
+        # Append verification button if required
+        if verification_required and verification_url and len(outputs) < 3:
+            outputs.append(
+                {
+                    "textCard": {
+                        "title": "본인 확인",
+                        "description": "개인 정보 조회를 위해 본인 확인이 필요합니다.",
+                        "buttons": [
+                            {
+                                "action": "webLink",
+                                "label": "본인 확인하기",
+                                "webLinkUrl": verification_url,
+                            }
+                        ],
+                    }
+                }
+            )
+
         # Append calendar link card only when calendar functions were actually called
         if used_calendar and len(outputs) < 3:
             _tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
