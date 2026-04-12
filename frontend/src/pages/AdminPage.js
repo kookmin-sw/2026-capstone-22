@@ -26,6 +26,7 @@ import CalendarPage from './CalendarPage';
 import ExamAnalysisPage from './ExamAnalysisPage';
 import AttendanceTab from './AttendanceTab';
 import AssignmentTab from './AssignmentTab';
+import ExamTab from './ExamTab';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
@@ -1674,24 +1675,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
 
       {studentSubTab === 2 && <AttendanceTab />}
       {studentSubTab === 3 && <AssignmentTab />}
-
-      {studentSubTab === 4 && (
-        <Box sx={{ py: 10, textAlign: 'center' }}>
-          <Box sx={{
-            width: 48, height: 48, borderRadius: '12px', mx: 'auto', mb: 2,
-            background: 'linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(124,58,237,0.1) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Typography sx={{ fontSize: '1.25rem' }}>{'📝'}</Typography>
-          </Box>
-          <Typography sx={{ color: '#FAFAFA', fontWeight: 600, fontSize: '0.9375rem', mb: 0.75 }}>
-            {'시험 관리'} 준비 중
-          </Typography>
-          <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>
-            다음 스프린트에서 제공될 예정입니다
-          </Typography>
-        </Box>
-      )}
+      {studentSubTab === 4 && <ExamTab />}
 
       {snack.open && (
         <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, color: snack.severity === 'error' ? '#fca5a5' : '#86efac', px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600 }}
