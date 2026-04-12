@@ -254,4 +254,26 @@ export const studentAPI = {
   deleteStudent: (id) => api.delete(`/admin/students/students/${id}`),
 };
 
+export const attendanceAPI = {
+  // 날짜 기준 roster 조회 (active 학생 + left join)
+  // params: { attendance_date, class_id?, student_id?, status? }
+  listRoster: (params) => api.get('/admin/students/attendance', { params }),
+
+  // 날짜 기준 요약 통계
+  // params: { attendance_date, class_id? }
+  getSummary: (params) => api.get('/admin/students/attendance/summary', { params }),
+
+  // 출결 일괄 upsert
+  // body: { attendance_date, records: [{ student_id, status, memo? }] }
+  bulkUpsert: (data) => api.post('/admin/students/attendance/bulk-upsert', data),
+
+  // 분반 전원 출석 초기화
+  // body: { attendance_date, class_id }
+  initPresent: (data) => api.post('/admin/students/attendance/init-present', data),
+
+  // 단건 수정
+  // body: { status?, memo? }
+  update: (recordId, data) => api.put(`/admin/students/attendance/${recordId}`, data),
+};
+
 export default api;
