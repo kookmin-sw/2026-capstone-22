@@ -1345,13 +1345,13 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
           </Box>
           <Box>
             <Typography sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#FAFAFA' }}>학생 관리</Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>분반 및 학생 정보를 관리합니다</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>분반 · 학생 · 출결 · 과제 · 시험을 관리합니다</Typography>
           </Box>
         </Box>
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        {['분반 관리', '학생 관리', '출결 관리'].map((label, i) => (
+        {['분반', '학생', '출결', '과제', '시험'].map((label, i) => (
           <Box key={i} onClick={() => setStudentSubTab(i)} sx={{
             px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
             bgcolor: studentSubTab === i ? 'rgba(167,139,250,0.12)' : 'transparent',
@@ -1672,6 +1672,24 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       </Dialog>
 
       {studentSubTab === 2 && <AttendanceTab />}
+
+      {(studentSubTab === 3 || studentSubTab === 4) && (
+        <Box sx={{ py: 10, textAlign: 'center' }}>
+          <Box sx={{
+            width: 48, height: 48, borderRadius: '12px', mx: 'auto', mb: 2,
+            background: 'linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(124,58,237,0.1) 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Typography sx={{ fontSize: '1.25rem' }}>{studentSubTab === 3 ? '📋' : '📝'}</Typography>
+          </Box>
+          <Typography sx={{ color: '#FAFAFA', fontWeight: 600, fontSize: '0.9375rem', mb: 0.75 }}>
+            {studentSubTab === 3 ? '과제 관리' : '시험 관리'} 준비 중
+          </Typography>
+          <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>
+            다음 스프린트에서 제공될 예정입니다
+          </Typography>
+        </Box>
+      )}
 
       {snack.open && (
         <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, color: snack.severity === 'error' ? '#fca5a5' : '#86efac', px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600 }}
