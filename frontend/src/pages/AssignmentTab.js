@@ -140,21 +140,21 @@ const DUMMY_ASSIGNMENTS = [
 
 const DUMMY_SUBMISSIONS = [
   // Assignment 1 (Math A)
-  { id: 1, assignment_id: 1, student_id: 1, status: 'submitted', submitted_at: '2026-04-07 14:00', score: 95, feedback: '잘 풀었습니다.', memo: '' },
-  { id: 2, assignment_id: 1, student_id: 2, status: 'submitted', submitted_at: '2026-04-08 09:00', score: 88, feedback: '공식을 정확히 이해하고 있네요.', memo: '' },
-  { id: 3, assignment_id: 1, student_id: 3, status: 'late', submitted_at: '2026-04-09 10:00', score: 70, feedback: '다음부턴 제시간에 제출하세요.', memo: '병원 방문으로 늦음' },
+  { id: 1, assignment_id: 1, student_id: 1, status: 'submitted', submitted_at: '2026-04-07', score: 95, feedback: '잘 풀었습니다.', memo: '' },
+  { id: 2, assignment_id: 1, student_id: 2, status: 'submitted', submitted_at: '2026-04-08', score: 88, feedback: '공식을 정확히 이해하고 있네요.', memo: '' },
+  { id: 3, assignment_id: 1, student_id: 3, status: 'late', submitted_at: '2026-04-09', score: 70, feedback: '다음부턴 제시간에 제출하세요.', memo: '병원 방문으로 늦음' },
   { id: 4, assignment_id: 1, student_id: 4, status: 'missing', submitted_at: null, score: 0, feedback: '', memo: '' },
   // Assignment 2 (Math A)
   { id: 5, assignment_id: 2, student_id: 1, status: 'assigned', submitted_at: null, score: null, feedback: '', memo: '' },
-  { id: 6, assignment_id: 2, student_id: 2, status: 'submitted', submitted_at: '2026-04-11 18:30', score: 92, feedback: '', memo: '' },
+  { id: 6, assignment_id: 2, student_id: 2, status: 'submitted', submitted_at: '2026-04-11', score: 92, feedback: '', memo: '' },
   // Assignment 3 (English B)
-  { id: 7, assignment_id: 3, student_id: 5, status: 'submitted', submitted_at: '2026-04-08 22:00', score: 90, feedback: 'Good job!', memo: '' },
+  { id: 7, assignment_id: 3, student_id: 5, status: 'submitted', submitted_at: '2026-04-08', score: 90, feedback: 'Good job!', memo: '' },
   { id: 8, assignment_id: 3, student_id: 6, status: 'exempt', submitted_at: null, score: null, feedback: '', memo: '대회 참가로 면제' },
   { id: 9, assignment_id: 3, student_id: 7, status: 'missing', submitted_at: null, score: 0, feedback: '', memo: '' },
   // Assignment 5 (Science C)
-  { id: 10, assignment_id: 5, student_id: 8, status: 'submitted', submitted_at: '2026-04-09 15:00', score: 85, feedback: '', memo: '' },
-  { id: 11, assignment_id: 5, student_id: 9, status: 'submitted', submitted_at: '2026-04-10 17:00', score: 78, feedback: '', memo: '' },
-  { id: 12, assignment_id: 5, student_id: 10, status: 'late', submitted_at: '2026-04-11 11:00', score: 65, feedback: '', memo: '' },
+  { id: 10, assignment_id: 5, student_id: 8, status: 'submitted', submitted_at: '2026-04-09', score: 85, feedback: '', memo: '' },
+  { id: 11, assignment_id: 5, student_id: 9, status: 'submitted', submitted_at: '2026-04-10', score: 78, feedback: '', memo: '' },
+  { id: 12, assignment_id: 5, student_id: 10, status: 'late', submitted_at: '2026-04-11', score: 65, feedback: '', memo: '' },
 ];
 
 // ── 공통 스타일 ──────────────────────────────────────────────────────────────
@@ -229,7 +229,7 @@ export default function AssignmentTab() {
     subject: 'all',
     dateStart: '',
     dateEnd: '',
-    quickFilter: 'all', // 'all', 'ongoing', 'dueToday'
+    quickFilter: 'all', // 'all', 'ongoing', 'dueToday', 'missing', 'late'
   });
 
   // 다이얼로그 상태
@@ -249,7 +249,6 @@ export default function AssignmentTab() {
     const now = new Date().toISOString().slice(0, 10);
     const active = assignments.filter(a => a.due_date >= now).length;
     const dueToday = assignments.filter(a => a.due_date === now).length;
-    const totalSubmissions = submissions.length;
     const missing = submissions.filter(s => s.status === 'missing').length;
     const late = submissions.filter(s => s.status === 'late').length;
     return { active, dueToday, missing, late };
@@ -259,15 +258,27 @@ export default function AssignmentTab() {
   const filteredAssignments = useMemo(() => {
     const now = new Date().toISOString().slice(0, 10);
     return assignments.filter(a => {
+      // 퀵 필터 로직
       if (filters.quickFilter === 'ongoing' && a.due_date < now) return false;
       if (filters.quickFilter === 'dueToday' && a.due_date !== now) return false;
+      
+      // 미제출/지연 제출 필터: 해당 과제의 제출 데이터 중 하나라도 해당 상태가 있는지 확인
+      if (filters.quickFilter === 'missing') {
+        const hasMissing = submissions.some(s => s.assignment_id === a.id && s.status === 'missing');
+        if (!hasMissing) return false;
+      }
+      if (filters.quickFilter === 'late') {
+        const hasLate = submissions.some(s => s.assignment_id === a.id && s.status === 'late');
+        if (!hasLate) return false;
+      }
+
       if (filters.class_id !== 'all' && a.class_id !== Number(filters.class_id)) return false;
       if (filters.subject !== 'all' && a.subject !== filters.subject) return false;
       if (filters.dateStart && a.due_date < filters.dateStart) return false;
       if (filters.dateEnd && a.due_date > filters.dateEnd) return false;
       return true;
     });
-  }, [assignments, filters]);
+  }, [assignments, submissions, filters]);
 
   const selectedAssignment = useMemo(() => 
     assignments.find(a => a.id === selectedAssignmentId), [assignments, selectedAssignmentId]
@@ -396,7 +407,7 @@ export default function AssignmentTab() {
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
             <Box 
-              onClick={() => (item.id === 'ongoing' || item.id === 'dueToday') && handleQuickFilter(item.id)}
+              onClick={() => handleQuickFilter(item.id)}
               sx={{
                 bgcolor: '#18181B', 
                 border: filters.quickFilter === item.id 
@@ -405,11 +416,11 @@ export default function AssignmentTab() {
                 borderRadius: '16px', p: 3,
                 display: 'flex', alignItems: 'center', gap: 2.5,
                 transition: 'all 0.25s ease',
-                cursor: (item.id === 'ongoing' || item.id === 'dueToday') ? 'pointer' : 'default',
+                cursor: 'pointer',
                 bgcolor: filters.quickFilter === item.id ? `${item.color}08` : '#18181B',
                 '&:hover': { 
-                  transform: (item.id === 'ongoing' || item.id === 'dueToday') ? 'translateY(-4px)' : 'none', 
-                  borderColor: (item.id === 'ongoing' || item.id === 'dueToday') ? item.color : 'rgba(255,255,255,0.12)' 
+                  transform: 'translateY(-4px)', 
+                  borderColor: item.color 
                 },
               }}
             >
@@ -514,7 +525,12 @@ export default function AssignmentTab() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AssignmentIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
               <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>
-                과제 목록 {filters.quickFilter === 'ongoing' ? '(진행중)' : filters.quickFilter === 'dueToday' ? '(오늘 마감)' : ''}
+                과제 목록 {
+                  filters.quickFilter === 'ongoing' ? '(진행중)' : 
+                  filters.quickFilter === 'dueToday' ? '(오늘 마감)' : 
+                  filters.quickFilter === 'missing' ? '(미제출 포함)' :
+                  filters.quickFilter === 'late' ? '(지연 제출 포함)' : ''
+                }
               </Typography>
             </Box>
             <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>전체 {filteredAssignments.length}개</Typography>
@@ -624,7 +640,8 @@ export default function AssignmentTab() {
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>제출 상태</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>제출 일시</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>점수</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>피드백 / 메모</TableCell>
+                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>피드백</TableCell>
+                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>메모</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -658,7 +675,7 @@ export default function AssignmentTab() {
                           size="small" 
                           value={item.submission.submitted_at || ''} 
                           onChange={(e) => handleUpdateSubmission(item.id, { submitted_at: e.target.value })}
-                          placeholder="YYYY-MM-DD HH:MM"
+                          placeholder="YYYY-MM-DD"
                           sx={{ 
                             '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
                             '& .MuiOutlinedInput-input': { p: 0.5 }
@@ -672,7 +689,7 @@ export default function AssignmentTab() {
                           value={item.submission.score ?? ''} 
                           onChange={(e) => handleUpdateSubmission(item.id, { score: e.target.value === '' ? null : Number(e.target.value) })}
                           sx={{ 
-                            width: 60,
+                            width: 50,
                             '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
                             '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' }
                           }}
@@ -680,11 +697,22 @@ export default function AssignmentTab() {
                       </TableCell>
                       <TableCell>
                         <TextField 
-                          fullWidth
                           size="small" 
-                          placeholder="피드백 입력..."
+                          placeholder="피드백..."
                           value={item.submission.feedback || ''} 
                           onChange={(e) => handleUpdateSubmission(item.id, { feedback: e.target.value })}
+                          sx={{ 
+                            '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
+                            '& .MuiOutlinedInput-input': { p: 0.5 }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField 
+                          size="small" 
+                          placeholder="메모..."
+                          value={item.submission.memo || ''} 
+                          onChange={(e) => handleUpdateSubmission(item.id, { memo: e.target.value })}
                           sx={{ 
                             '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.75rem' },
                             '& .MuiOutlinedInput-input': { p: 0.5 }
