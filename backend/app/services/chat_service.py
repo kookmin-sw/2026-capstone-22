@@ -70,59 +70,37 @@ CONSULTING (일반 안내로 충분):
 에이전트 타입 이름 하나만 출력하세요. 예: PERSONAL
 """
 
-    # 키워드 기반 사전 분류 규칙 (LLM 호출 전 확정)
-    _KEYWORD_RULES = [
-        # (우선순위, 키워드 집합, 대상 에이전트)
-        (1, {"문제", "유사문제", "기출", "유사 문제", "유형"}, AgentType.ACADEMIC),
-        (2, {
-            # --- 아이/자녀 복합 표현 ---
-            "아이 수업", "아이수업", "아이 반", "아이반", "아이 분반", "아이분반",
-            "아이 시간표", "아이시간표", "아이 출결", "아이출결", "아이 선생님", "아이선생님",
-            "아이 일정", "아이일정", "아이 정보", "아이정보",
-            "자녀 수업", "자녀수업", "자녀 반", "자녀반", "자녀 분반", "자녀분반",
-            "자녀 시간표", "자녀시간표", "자녀 출결", "자녀출결", "자녀 선생님", "자녀선생님",
-            "자녀 일정", "자녀일정", "자녀 정보", "자녀정보",
-            # --- 주체 호칭 단독 표현 (중간 단어 낀 경우 커버) ---
-            "우리 아이", "우리아이", "내 아이", "내아이",
-            "우리 애", "우리애", "제 아이", "제아이",
-            "우리 자녀", "우리자녀",
-            # --- 담당 교사 ---
-            "담당 선생님", "담당선생님",
-            # --- 단독 업무 키워드 (기존 페르소나 변경 전에도 있던 핵심 키워드) ---
-            "결석", "보강", "분반",
-            # --- 단독 정보 키워드 (페르소나 변경으로 "내 시간표" 등 삭제되면서 누락됨) ---
-            "시간표", "출결",
-        }, AgentType.PERSONAL),
-    ]
+    # ACADEMIC 전용 키워드 사전 분류 — 단어 자체로 의도가 명확한 경우만 여기서 처리.
+    # PERSONAL은 뉘앙스 판단이 필요하므로 항상 LLM 라우터에 위임한다.
+    _ACADEMIC_KEYWORDS = {"문제", "유사문제", "기출", "유사 문제", "유형", "오답"}
 
     @staticmethod
     def _keyword_classify(query: str) -> Optional[str]:
-        """키워드 매칭으로 에이전트를 사전 결정한다. 매칭 없으면 None."""
+        """ACADEMIC 키워드만 사전 분류. PERSONAL은 LLM 판단에 위임."""
         q = query.strip()
-        for _, keywords, agent in RouterAgent._KEYWORD_RULES:
-            for kw in keywords:
-                if kw in q:
-                    return agent
+        for kw in RouterAgent._ACADEMIC_KEYWORDS:
+            if kw in q:
+                return AgentType.ACADEMIC
         return None
 
     @staticmethod
     def determine_agent(
         query: str, is_authenticated: bool, model_name: str = "gemini-1.5-flash"
     ) -> str:
-        """Classify intent using a lightweight LLM call."""
+        """Classify intent using a lightweight LLM call.
+
+        ACADEMIC은 키워드로 빠르게 확정하고, PERSONAL 여부는 LLM이 뉘앙스로 판단한다.
+        키워드 열거 방식은 표현의 다양성을 따라가지 못하므로 PERSONAL 분류는 LLM 전담.
+        """
         try:
-            # 1. 키워드 사전 분류 (LLM 보다 빠르고 확실함)
+            # 1. ACADEMIC 키워드 사전 분류 (단어 자체가 의도를 확정하는 경우)
             keyword_result = RouterAgent._keyword_classify(query)
             if keyword_result:
-                # 비인증 사용자는 PERSONAL 차단
-                if not is_authenticated and keyword_result in [AgentType.PERSONAL]:
-                    logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}, blocked (unauthenticated) -> CONSULTING")
-                    return AgentType.CONSULTING
                 logger.info(f"Keyword pre-classified '{query}' -> {keyword_result}")
                 return keyword_result
 
-            # 2. LLM 분류 (키워드로 결정 안 된 경우)
-            prompt = f"사용자 질문: \"{query}\"\n인증 상태: {'로그인됨' if is_authenticated else '비인증'}\n\n위 질문에 가장 적합한 에이전트 타입은?"
+            # 2. LLM 분류 — PERSONAL 여부를 뉘앙스로 판단
+            prompt = f"학부모 질문: \"{query}\"\n\n위 질문에 가장 적합한 에이전트 타입은?"
 
             gen_params = _get_model_generation_params()
             # Use provided model (usually a flash model) for fast and cheap routing
