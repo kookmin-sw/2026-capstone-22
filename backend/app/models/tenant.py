@@ -56,6 +56,7 @@ class Tenant(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    attendance_records = relationship("AttendanceRecord", back_populates="tenant")
 
 
 class TenantGcpConfig(Base):
