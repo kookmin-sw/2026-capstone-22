@@ -234,6 +234,13 @@ export const verifyAPI = {
     api.post(`/verify/${slug}/confirm`, { token, phone, code }),
 };
 
+export const examAnalysisAPI = {
+  list: () => api.get('/exam-analysis'),
+  upload: (formData) => api.post('/exam-analysis/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+};
+
 export const studentAPI = {
   // 분반
   listClasses: () => api.get('/admin/students/classes'),

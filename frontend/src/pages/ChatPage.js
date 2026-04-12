@@ -54,6 +54,8 @@ export default function ChatPage() {
   const dragCounterRef = useRef(0);
   const recognitionRef = useRef(null);
   const abortControllerRef = useRef(null);
+  // 첫 메시지로 새 세션 생성 시, setCurrentSessionId 변경이 loadSession을 트리거하지 않도록 막는 플래그
+  const skipNextLoadRef = useRef(false);
 
   useEffect(() => {
     loadModels();
@@ -65,6 +67,10 @@ export default function ChatPage() {
   useEffect(() => {
     const sessionId = outletContext?.currentSessionId;
     if (sessionId) {
+      if (skipNextLoadRef.current) {
+        skipNextLoadRef.current = false;
+        return;
+      }
       loadSession(sessionId);
     } else if (sessionId === null) {
       // New chat requested
@@ -272,19 +278,24 @@ export default function ChatPage() {
         web_search_enabled: webSearchEnabled
       }, [], abortControllerRef.current.signal);
 
+      const assistantMessage = {
+        ...response.data.assistant_message,
+        content: (response.data.assistant_message?.content || '').replace(/<!--\s*verify:\S+\s*-->/g, '').trim(),
+        cited_sources: response.data.cited_sources || [],
+        realtime_file_list: response.data.realtime_file_list || null,
+        verification_required: response.data.verification_required || false,
+        verification_url: response.data.verification_url || null,
+      };
+
+      setIsTyping(false);
+
       if (!currentSession) {
+        // 새 세션 생성 시 setCurrentSessionId 변경으로 인한 loadSession 호출을 막는다
+        skipNextLoadRef.current = true;
         setCurrentSession({ id: response.data.session_id });
         outletContext?.setCurrentSessionId?.(response.data.session_id);
         outletContext?.onSessionCreated?.();
       }
-
-      setIsTyping(false);
-
-      const assistantMessage = {
-        ...response.data.assistant_message,
-        cited_sources: response.data.cited_sources || [],
-        realtime_file_list: response.data.realtime_file_list || null
-      };
 
       setMessages(prev => {
         const withoutTemp = prev.slice(0, -1);
@@ -323,7 +334,23 @@ export default function ChatPage() {
     try {
       const response = await chatAPI.getSession(sessionId);
       setCurrentSession(response.data);
-      setMessages(response.data.messages || []);
+      // DB에서 불러온 메시지는 verification_required 필드가 없으므로
+      // 메시지 content 안의 HTML 주석 패턴 <!-- verify:URL --> 으로 복원한다.
+      const verifyCommentRegex = /<!--\s*verify:(\S+)\s*-->/;
+      const messages = (response.data.messages || []).map(msg => {
+        const match = msg.content && verifyCommentRegex.exec(msg.content);
+        if (match) {
+          return {
+            ...msg,
+            // 화면에 표시할 content에서 주석 제거
+            content: msg.content.replace(verifyCommentRegex, '').trim(),
+            verification_required: true,
+            verification_url: match[1],
+          };
+        }
+        return msg;
+      });
+      setMessages(messages);
     } catch (error) {
       console.error('세션 로딩 오류:', error);
     }
@@ -402,20 +429,24 @@ export default function ChatPage() {
         web_search_enabled: webSearchEnabled
       }, filesToUpload, abortControllerRef.current.signal);
 
+      // Add cited_sources and realtime_file_list to assistant message if available
+      const assistantMessage = {
+        ...response.data.assistant_message,
+        content: (response.data.assistant_message?.content || '').replace(/<!--\s*verify:\S+\s*-->/g, '').trim(),
+        cited_sources: response.data.cited_sources || [],
+        realtime_file_list: response.data.realtime_file_list || null,
+        verification_required: response.data.verification_required || false,
+        verification_url: response.data.verification_url || null,
+      };
+
+      setIsTyping(false);
+
       if (!currentSession) {
+        skipNextLoadRef.current = true;
         setCurrentSession({ id: response.data.session_id });
         outletContext?.setCurrentSessionId?.(response.data.session_id);
         outletContext?.onSessionCreated?.();
       }
-
-      setIsTyping(false);
-
-      // Add cited_sources and realtime_file_list to assistant message if available
-      const assistantMessage = {
-        ...response.data.assistant_message,
-        cited_sources: response.data.cited_sources || [],
-        realtime_file_list: response.data.realtime_file_list || null
-      };
 
       setMessages(prev => {
         const withoutTemp = prev.slice(0, -1);
@@ -938,16 +969,15 @@ export default function ChatPage() {
                               );
                             },
                             a({ node, children, href, ...props }) {
-                              // Open Google Drive links in new tab
-                              const isGDriveLink = href && href.includes('drive.google.com');
                               return (
                                 <a
                                   href={href}
-                                  target={isGDriveLink ? '_blank' : undefined}
-                                  rel={isGDriveLink ? 'noopener noreferrer' : undefined}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   style={{
                                     color: '#a78bfa',
                                     textDecoration: 'underline',
+                                    fontWeight: 600,
                                   }}
                                   {...props}
                                 >
@@ -1046,6 +1076,32 @@ export default function ChatPage() {
                         >
                           {msg.content}
                         </ReactMarkdown>
+
+                        {/* 본인 확인 버튼 — PERSONAL 접근 차단 시 표시 */}
+                        {msg.verification_required && msg.verification_url && (
+                          <Box sx={{ mt: 2 }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              href={msg.verification_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: 'white',
+                                fontWeight: 700,
+                                borderRadius: 2,
+                                px: 2,
+                                py: 0.8,
+                                '&:hover': {
+                                  background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8a 100%)',
+                                },
+                              }}
+                            >
+                              본인 확인하기
+                            </Button>
+                          </Box>
+                        )}
 
                         {/* RAG References Section - Collapsible */}
                         {msg.cited_sources && msg.cited_sources.length > 0 && (

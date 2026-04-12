@@ -23,6 +23,7 @@ import {
   CheckCircleOutline as CheckCircleOutlineIcon,
 } from '@mui/icons-material';
 import CalendarPage from './CalendarPage';
+import ExamAnalysisPage from './ExamAnalysisPage';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
@@ -1365,7 +1366,7 @@ function StudentManagementPanel() {
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             <Button onClick={openAddClass} startIcon={<Add />} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 600, fontSize: '0.8125rem', px: 2.5, borderRadius: '10px', textTransform: 'none', '&:hover': { opacity: 0.9 } }}>
-              + 분반 추가
+              분반 추가
             </Button>
           </Box>
 
@@ -1689,6 +1690,7 @@ const SECTION_TAB_MAP = {
   calendar: 4,
   chatbot: 5,
   students: 8,
+  'exam-analysis': 9,
 };
 
 export default function AdminPage({ section = 'stores' }) {
@@ -4566,6 +4568,7 @@ export default function AdminPage({ section = 'stores' }) {
       {/* ============ Tab Panel 7: 상담 대기 (HITL) ============ */}
       {tabValue === 7 && <HITLPanel />}
       {tabValue === 8 && <StudentManagementPanel />}
+      {tabValue === 9 && <ExamAnalysisPage />}
     </Box>
   );
 }

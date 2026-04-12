@@ -34,6 +34,7 @@ import {
   Dashboard as DashboardIcon,
   SupportAgent as SupportAgentIcon,
   School as SchoolIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
@@ -81,6 +82,7 @@ export default function TenantAdminLayout() {
         { text: '문서 저장소', icon: <FolderIcon />, path: `${basePath}/admin/stores` },
         { text: '그룹 & 유저', icon: <PeopleIcon />, path: `${basePath}/admin/users` },
         { text: '학생 관리', icon: <SchoolIcon />, path: `${basePath}/admin/students` },
+        { text: '문제 분석', icon: <QuizIcon />, path: `${basePath}/admin/exam-analysis` },
         { text: '프롬프트 템플릿', icon: <ArticleIcon />, path: `${basePath}/admin/templates` },
       ],
     },
