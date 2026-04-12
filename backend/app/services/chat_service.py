@@ -136,10 +136,12 @@ CONSULTING (일반 안내로 충분):
                 )
                 return AgentType.CONSULTING
 
-            # Security Guard: If not authenticated but requesting PERSONAL, route back to CONSULTING
-            if not is_authenticated and agent_type in [AgentType.PERSONAL]:
+            # Security Guard: 게스트(tenant 없는 비인증) 사용자가 PERSONAL로 분류됐어도
+            # 실제 학생 데이터 없이 LLM만 실행되면 일반 응답을 반환하게 된다.
+            # 이를 방지하기 위해 비인증 사용자는 무조건 CONSULTING으로 내린다.
+            if not is_authenticated and agent_type == AgentType.PERSONAL:
                 logger.info(
-                    f"Unauthenticated access to {agent_type} blocked. Routing to CONSULTING."
+                    f"Unauthenticated user's PERSONAL query blocked -> CONSULTING: '{query}'"
                 )
                 return AgentType.CONSULTING
 
