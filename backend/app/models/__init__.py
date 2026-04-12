@@ -11,6 +11,7 @@ from .usage import UsageRecord
 from .chatbot_settings import ChatbotSettings
 from .hitl_request import HitlRequest, HitlStatus
 from .student import StudentClass, StudentClassStatus, Student, StudentStatus
+from .attendance import AttendanceRecord, AttendanceStatus
 from .student_access_link import (
     StudentAccessLink,
     RelationshipType,
@@ -42,6 +43,8 @@ __all__ = [
     "StudentClassStatus",
     "Student",
     "StudentStatus",
+    "AttendanceRecord",
+    "AttendanceStatus",
     "StudentAccessLink",
     "RelationshipType",
     "AccessLinkStatus",

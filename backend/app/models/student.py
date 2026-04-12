@@ -63,6 +63,9 @@ class StudentClass(Base):
     students = relationship(
         "Student", back_populates="student_class", passive_deletes=True
     )
+    attendance_records = relationship(
+        "AttendanceRecord", back_populates="student_class", passive_deletes=True
+    )
 
 
 class Student(Base):
@@ -99,4 +102,7 @@ class Student(Base):
     student_class = relationship("StudentClass", back_populates="students")
     access_links = relationship(
         "StudentAccessLink", back_populates="student", cascade="all, delete-orphan"
+    )
+    attendance_records = relationship(
+        "AttendanceRecord", back_populates="student", cascade="all, delete-orphan"
     )

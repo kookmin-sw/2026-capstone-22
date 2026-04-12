@@ -16,6 +16,7 @@ from .routers import (
     chatbot_settings,
     hitl,
     students,
+    attendance,
     verification,
 )
 from .utils.init_data import init_database
@@ -136,6 +137,11 @@ app.include_router(
 )
 app.include_router(hitl.router, prefix="/api/hitl", tags=["HITL"])
 app.include_router(students.router, prefix="/api/admin/students", tags=["Students"])
+app.include_router(
+    attendance.router,
+    prefix="/api/admin/students/attendance",
+    tags=["Attendance"],
+)
 app.include_router(verification.router, prefix="/api", tags=["Verification"])
 
 
