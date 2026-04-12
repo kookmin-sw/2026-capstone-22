@@ -1160,10 +1160,10 @@ function ClassStatusChip({ status }) {
   );
 }
 
-function StudentManagementPanel() {
+function StudentManagementPanel({ initialSubTab = 0 }) {
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [studentSubTab, setStudentSubTab] = useState(0);
+  const [studentSubTab, setStudentSubTab] = useState(initialSubTab);
   const [expandedClasses, setExpandedClasses] = useState(new Set());
 
   const [classDialogOpen, setClassDialogOpen] = useState(false);
@@ -1351,7 +1351,7 @@ function StudentManagementPanel() {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        {['분반 관리', '학생 관리'].map((label, i) => (
+        {['분반 관리', '학생 관리', '출결 관리'].map((label, i) => (
           <Box key={i} onClick={() => setStudentSubTab(i)} sx={{
             px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
             bgcolor: studentSubTab === i ? 'rgba(167,139,250,0.12)' : 'transparent',
@@ -1671,6 +1671,8 @@ function StudentManagementPanel() {
         </DialogActions>
       </Dialog>
 
+      {studentSubTab === 2 && <AttendanceTab />}
+
       {snack.open && (
         <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, color: snack.severity === 'error' ? '#fca5a5' : '#86efac', px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600 }}
           onClick={() => setSnack(p => ({ ...p, open: false }))}>
@@ -1692,10 +1694,9 @@ const SECTION_TAB_MAP = {
   chatbot: 5,
   students: 8,
   'exam-analysis': 9,
-  attendance: 10,
 };
 
-export default function AdminPage({ section = 'stores' }) {
+export default function AdminPage({ section = 'stores', initialStudentSubTab = 0 }) {
   const { currentSlug } = useTenant();
   const { addUpload } = useUpload();
   const tabValue = SECTION_TAB_MAP[section] ?? 0;
@@ -4569,9 +4570,8 @@ export default function AdminPage({ section = 'stores' }) {
 
       {/* ============ Tab Panel 7: 상담 대기 (HITL) ============ */}
       {tabValue === 7 && <HITLPanel />}
-      {tabValue === 8 && <StudentManagementPanel />}
+      {tabValue === 8 && <StudentManagementPanel initialSubTab={initialStudentSubTab} />}
       {tabValue === 9 && <ExamAnalysisPage />}
-      {tabValue === 10 && <AttendanceTab />}
     </Box>
   );
 }
