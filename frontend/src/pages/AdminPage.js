@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import CalendarPage from './CalendarPage';
 import ExamAnalysisPage from './ExamAnalysisPage';
+import AttendanceTab from './AttendanceTab';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
@@ -1691,6 +1692,7 @@ const SECTION_TAB_MAP = {
   chatbot: 5,
   students: 8,
   'exam-analysis': 9,
+  attendance: 10,
 };
 
 export default function AdminPage({ section = 'stores' }) {
@@ -4569,6 +4571,7 @@ export default function AdminPage({ section = 'stores' }) {
       {tabValue === 7 && <HITLPanel />}
       {tabValue === 8 && <StudentManagementPanel />}
       {tabValue === 9 && <ExamAnalysisPage />}
+      {tabValue === 10 && <AttendanceTab />}
     </Box>
   );
 }
