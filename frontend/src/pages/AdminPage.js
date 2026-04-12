@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField,
   Paper, Table, TableBody, TableCell, TableHead, TableRow,
@@ -25,6 +26,8 @@ import {
 import CalendarPage from './CalendarPage';
 import ExamAnalysisPage from './ExamAnalysisPage';
 import AttendanceTab from './AttendanceTab';
+import AssignmentTab from './AssignmentTab';
+import ExamTab from './ExamTab';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
@@ -1161,9 +1164,35 @@ function ClassStatusChip({ status }) {
 }
 
 function StudentManagementPanel({ initialSubTab = 0 }) {
+  const navigate = useNavigate();
+  const { currentSlug } = useTenant();
+  const basePath = `/${currentSlug}/admin/students`;
+  
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [studentSubTab, setStudentSubTab] = useState(initialSubTab);
+
+  // Sync state with prop if it changes (for direct URL navigation)
+  useEffect(() => {
+    setStudentSubTab(initialSubTab);
+  }, [initialSubTab]);
+
+  const handleSubTabChange = (index) => {
+    setStudentSubTab(index);
+    const subPaths = ['', '/attendance', '/assignments', '/exams'];
+    if (index === 0) navigate(basePath);
+    else if (index === 1) navigate(basePath); // '학생' is index 1 but maps to default or needs specific path? 
+    // Wait, labels are ['분반', '학생', '출결', '과제', '시험']
+    // index 0: 분반, 1: 학생, 2: 출결, 3: 과제, 4: 시험
+    const paths = {
+      0: '',
+      1: '',
+      2: '/attendance',
+      3: '/assignments',
+      4: '/exams'
+    };
+    navigate(`${basePath}${paths[index]}`);
+  };
   const [expandedClasses, setExpandedClasses] = useState(new Set());
 
   const [classDialogOpen, setClassDialogOpen] = useState(false);
@@ -1352,7 +1381,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         {['분반', '학생', '출결', '과제', '시험'].map((label, i) => (
-          <Box key={i} onClick={() => setStudentSubTab(i)} sx={{
+          <Box key={i} onClick={() => handleSubTabChange(i)} sx={{
             px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
             bgcolor: studentSubTab === i ? 'rgba(167,139,250,0.12)' : 'transparent',
             color: studentSubTab === i ? '#a78bfa' : '#71717A',
@@ -1672,24 +1701,8 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       </Dialog>
 
       {studentSubTab === 2 && <AttendanceTab />}
-
-      {(studentSubTab === 3 || studentSubTab === 4) && (
-        <Box sx={{ py: 10, textAlign: 'center' }}>
-          <Box sx={{
-            width: 48, height: 48, borderRadius: '12px', mx: 'auto', mb: 2,
-            background: 'linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(124,58,237,0.1) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Typography sx={{ fontSize: '1.25rem' }}>{studentSubTab === 3 ? '📋' : '📝'}</Typography>
-          </Box>
-          <Typography sx={{ color: '#FAFAFA', fontWeight: 600, fontSize: '0.9375rem', mb: 0.75 }}>
-            {studentSubTab === 3 ? '과제 관리' : '시험 관리'} 준비 중
-          </Typography>
-          <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>
-            다음 스프린트에서 제공될 예정입니다
-          </Typography>
-        </Box>
-      )}
+      {studentSubTab === 3 && <AssignmentTab />}
+      {studentSubTab === 4 && <ExamTab />}
 
       {snack.open && (
         <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, color: snack.severity === 'error' ? '#fca5a5' : '#86efac', px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600 }}
