@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   EventNote as EventNoteIcon,
@@ -31,6 +32,7 @@ import {
   AccessTime as AccessTimeIcon,
   InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
+import { attendanceAPI, studentAPI } from '../services/api';
 
 // ── 상태 옵션 (내부 코드값 및 UI 레이블 정리) ───────────────────────────────────
 export const STATUS_OPTIONS = [
@@ -40,42 +42,11 @@ export const STATUS_OPTIONS = [
   { value: 'early_leave', label: '조퇴', color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  border: 'rgba(251,146,60,0.3)'  },
 ];
 
-// ── 목데이터 ──────────────────────────────────────────────────────────────────
-export const DUMMY_STUDENTS = [
-  { id: 1,  name: '김민준', school: '강남중학교',   grade: 2, class_name: 'A반' },
-  { id: 2,  name: '이서연', school: '서초초등학교', grade: 6, class_name: 'A반' },
-  { id: 3,  name: '박지호', school: '역삼중학교',   grade: 1, class_name: 'A반' },
-  { id: 4,  name: '최유나', school: '논현중학교',   grade: 3, class_name: 'B반' },
-  { id: 5,  name: '정하은', school: '청담중학교',   grade: 2, class_name: 'B반' },
-  { id: 6,  name: '강서준', school: '압구정중학교', grade: 1, class_name: 'B반' },
-  { id: 7,  name: '윤채원', school: '언주중학교',   grade: 3, class_name: 'C반' },
-  { id: 8,  name: '한도현', school: '대치중학교',   grade: 2, class_name: 'C반' },
-  { id: 9,  name: '임소율', school: '중동중학교',   grade: 1, class_name: 'C반' },
-  { id: 10, name: '오재원', school: '수서중학교',   grade: 3, class_name: 'A반' },
-];
-
-const _today = new Date().toISOString().slice(0, 10);
-const _now   = new Date().toISOString();
-
-export const DUMMY_ATTENDANCE = [
-  { id: 1,  student_id: 1,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 2,  student_id: 2,  date: _today, status: 'absent',      memo: '연락 없음', updated_at: _now  },
-  { id: 3,  student_id: 3,  date: _today, status: 'late',        memo: '30분 지각', updated_at: _now  },
-  { id: 4,  student_id: 4,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 5,  student_id: 5,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 6,  student_id: 6,  date: _today, status: 'early_leave', memo: '병원 방문', updated_at: _now  },
-  { id: 7,  student_id: 7,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 8,  student_id: 8,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 9,  student_id: 9,  date: _today, status: 'present',     memo: '',        updated_at: _now  },
-  { id: 10, student_id: 10, date: _today, status: 'absent',      memo: '무단 결석', updated_at: _now  },
-];
+// 미입력 표시용 상수
+const UNRECORDED_STYLE = { color: '#52525B', bg: 'transparent', border: 'rgba(255,255,255,0.08)' };
 
 // ── 유틸 및 공통 스타일 ────────────────────────────────────────────────────────
 function todayStr() { return new Date().toISOString().slice(0, 10); }
-
-export function recordsToMap(records) {
-  return Object.fromEntries(records.map(r => [r.student_id, r]));
-}
 
 const inputSx = {
   '& .MuiOutlinedInput-root': {
@@ -142,126 +113,220 @@ function StatusChip({ opt, active, onClick }) {
 }
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
-export default function AttendanceTab({
-  students = DUMMY_STUDENTS,
-  initialAttendance = DUMMY_ATTENDANCE,
-}) {
+export default function AttendanceTab() {
   // ── 필터 및 데이터 상태 ─────────────────────────────────────────────────────
   const [filters, setFilters] = useState({
     date: todayStr(),
-    className: 'all',
+    classId: 'all',   // classId 기반 (number | 'all')
     name: '',
     status: 'all',
   });
   const setFilter = (key, val) => setFilters(prev => ({ ...prev, [key]: val }));
 
-  const [attendance, setAttendance] = useState(() => ({
-    [_today]: recordsToMap(initialAttendance),
-  }));
-
-  // 새 날짜 선택 시 기본 '출석'으로 초기화 (UX: 기본값 전원 출석)
-  useEffect(() => {
-    setAttendance(prev => {
-      if (prev[filters.date]) return prev;
-      const newDayMap = Object.fromEntries(students.map(s => [
-        s.id,
-        { id: null, student_id: s.id, date: filters.date, status: 'present', memo: '', updated_at: null },
-      ]));
-      return { ...prev, [filters.date]: newDayMap };
-    });
-  }, [filters.date, students]);
+  const [roster, setRoster] = useState([]);          // AttendanceRosterItem[]
+  const [classes, setClasses] = useState([]);        // { id, name }[]
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveWarn, setSaveWarn] = useState(false);
+  const [draft, setDraft] = useState({});            // { [student_id]: { status?, memo? } }
 
   // ── UI 제어 상태 ───────────────────────────────────────────────────────────
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const [formDialog, setFormDialog] = useState(null); // { mode: 'add' | 'edit', student: any } | null
+  const [formDialog, setFormDialog] = useState(null);
   const [formData, setFormData] = useState({ student_id: '', status: 'present', memo: '' });
   const [saveSnack, setSaveSnack] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
+  // ── 분반 목록 1회 로드 ─────────────────────────────────────────────────────
+  useEffect(() => {
+    studentAPI.listClasses()
+      .then(res => setClasses(res.data))
+      .catch(() => {});
+  }, []);
+
+  // ── Roster + Summary fetch ─────────────────────────────────────────────────
+  const fetchRoster = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    setDraft({});
+    try {
+      // 'unassigned'는 클라이언트 센티넬 — 서버에는 class_id 파라미터 없이 전체 요청 후 클라이언트 필터링
+      const params = {
+        attendance_date: filters.date,
+        ...(typeof filters.classId === 'number' ? { class_id: filters.classId } : {}),
+      };
+      const rosterRes = await attendanceAPI.listRoster(params);
+      setRoster(rosterRes.data);
+    } catch {
+      // 실패 시 stale roster 제거 — 잘못된 날짜로 저장되는 것 방지
+      setRoster([]);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters.date, filters.classId]);
+
+  useEffect(() => {
+    fetchRoster();
+  }, [fetchRoster]);
+
+  // ── 헬퍼: draft와 서버 상태 병합 ──────────────────────────────────────────
+  const getMerged = useCallback((studentId) => {
+    const serverItem = roster.find(r => r.student_id === studentId);
+    const draftItem = draft[studentId];
+    return {
+      status: draftItem?.status !== undefined ? draftItem.status : (serverItem?.status ?? null),
+      memo: draftItem?.memo !== undefined ? draftItem.memo : (serverItem?.memo ?? ''),
+      record_id: serverItem?.record_id ?? null,
+      updated_at: serverItem?.updated_at ?? null,
+    };
+  }, [roster, draft]);
 
   // ── 파생 연산 ──────────────────────────────────────────────────────────────
-  const currentAttendance = useMemo(() => attendance[filters.date] ?? {}, [attendance, filters.date]);
-
-  const classes = useMemo(() => [...new Set(students.map(s => s.class_name))].sort(), [students]);
-
-  const filteredStudents = useMemo(() => {
-    return students.filter(s => {
-      if (filters.className !== 'all' && s.class_name !== filters.className) return false;
-      if (filters.name && !s.name.includes(filters.name)) return false;
+  const filteredRoster = useMemo(() => {
+    return roster.filter(item => {
+      // 'unassigned' 센티넬: 분반 없는 학생만 표시 (클라이언트 필터)
+      if (filters.classId === 'unassigned' && item.class_id !== null) return false;
+      if (filters.name && !item.student_name.includes(filters.name)) return false;
       if (filters.status !== 'all') {
-        const st = currentAttendance[s.id]?.status ?? 'present';
+        const draftItem = draft[item.student_id];
+        const st = draftItem?.status !== undefined ? draftItem.status : item.status;
         if (st !== filters.status) return false;
       }
       return true;
     });
-  }, [students, filters, currentAttendance]);
+  }, [roster, filters.classId, filters.name, filters.status, draft]);
 
-  const summary = useMemo(() => {
+  // KPI 상단 카드용 집계 — 항상 roster + draft 기반 (draft 변경 즉시 반영, 우측 분반 요약과 동일 기준)
+  const displayedSummary = useMemo(() => {
+    // 'unassigned'는 클라이언트 필터 적용, 나머지는 server가 이미 scope에 맞는 roster를 반환
+    const scopedRoster = filters.classId === 'unassigned'
+      ? roster.filter(r => r.class_id === null)
+      : roster;
     const counts = { present: 0, absent: 0, late: 0, early_leave: 0 };
-    students.forEach(s => {
-      const st = currentAttendance[s.id]?.status ?? 'present';
-      if (counts[st] !== undefined) counts[st]++;
+    scopedRoster.forEach(item => {
+      const draftItem = draft[item.student_id];
+      const st = draftItem?.status !== undefined ? draftItem.status : item.status;
+      if (st && counts[st] !== undefined) counts[st]++;
     });
-    return counts;
-  }, [students, currentAttendance]);
+    const recorded = Object.values(counts).reduce((a, b) => a + b, 0);
+    return {
+      ...counts,
+      total_students: scopedRoster.length,
+      unrecorded_count: scopedRoster.length - recorded,
+    };
+  }, [roster, draft, filters.classId]);
 
   const classSummary = useMemo(() => {
-    return classes.map(c => {
-      const cs = students.filter(s => s.class_name === c);
-      const counts = { present: 0, absent: 0, late: 0, early_leave: 0 };
-      cs.forEach(s => {
-        const st = currentAttendance[s.id]?.status ?? 'present';
-        if (counts[st] !== undefined) counts[st]++;
-      });
-      return { className: c, total: cs.length, ...counts };
+    const classMap = {};
+    roster.forEach(item => {
+      // class_id를 key로 사용 — 동명 분반 중복 방지
+      const key = item.class_id ?? 'unassigned';
+      if (!classMap[key]) {
+        classMap[key] = {
+          classId: item.class_id ?? 'unassigned', // null 대신 센티넬 사용
+          className: item.class_name ?? '미배정',
+          total: 0, present: 0, absent: 0, late: 0, early_leave: 0,
+        };
+      }
+      classMap[key].total++;
+      const draftItem = draft[item.student_id];
+      const st = draftItem?.status !== undefined ? draftItem.status : item.status;
+      if (st && classMap[key][st] !== undefined) classMap[key][st]++;
     });
-  }, [classes, students, currentAttendance]);
+    return Object.values(classMap).sort((a, b) => a.className.localeCompare(b.className));
+  }, [roster, draft]);
 
-  const selectedStudent = selectedStudentId ? students.find(s => s.id === selectedStudentId) : null;
-  const selectedRec = selectedStudent ? currentAttendance[selectedStudent.id] : null;
+  const selectedStudent = selectedStudentId
+    ? roster.find(r => r.student_id === selectedStudentId)
+    : null;
 
   // ── 핸들러 ─────────────────────────────────────────────────────────────────
-  const updateRecord = (studentId, patch) => {
-    setAttendance(prev => {
-      const dayMap = prev[filters.date] ?? {};
-      const existing = dayMap[studentId] ?? {
-        id: null, student_id: studentId, date: filters.date, status: 'present', memo: '', updated_at: null,
-      };
-      return {
-        ...prev,
-        [filters.date]: {
-          ...dayMap,
-          [studentId]: { ...existing, ...patch, updated_at: new Date().toISOString() },
-        },
-      };
-    });
+  const updateDraft = (studentId, patch) => {
+    setDraft(prev => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] ?? {}), ...patch },
+    }));
   };
 
-  const handleStatusChange = (studentId, status) => updateRecord(studentId, { status });
-  const handleMemoChange = (studentId, memo) => updateRecord(studentId, { memo });
+  const handleStatusChange = (studentId, status) => updateDraft(studentId, { status });
+  const handleMemoChange = (studentId, memo) => updateDraft(studentId, { memo });
 
-  const handleMarkAllPresent = () => {
-    const now = new Date().toISOString();
-    setAttendance(prev => {
-      const dayMap = prev[filters.date] ?? {};
-      const next = { ...dayMap };
-      filteredStudents.forEach(s => {
-        next[s.id] = {
-          ...(dayMap[s.id] ?? { id: null, student_id: s.id, date: filters.date, memo: '', updated_at: null }),
-          status: 'present', updated_at: now,
-        };
+  const handleMarkAllPresent = async () => {
+    if (filters.classId === 'all') return;
+    try {
+      await attendanceAPI.initPresent({
+        attendance_date: filters.date,
+        class_id: filters.classId,
       });
-      return { ...prev, [filters.date]: next };
-    });
+      await fetchRoster();
+    } catch {
+      // 에러 처리
+    }
   };
 
-  const handleSaveAll = () => {
-    setSaveSnack(true);
-    setTimeout(() => setSaveSnack(false), 2500);
+  const handleSaveAll = async () => {
+    // 변경된 항목만 수집
+    let skippedDueToNullStatus = 0;
+    const changed = Object.entries(draft)
+      .map(([studentIdStr, changes]) => {
+        const studentId = parseInt(studentIdStr, 10);
+        const serverItem = roster.find(r => r.student_id === studentId);
+        const serverStatus = serverItem?.status ?? null;
+        const serverMemo = serverItem?.memo ?? '';
+        const hasChange =
+          (changes.status !== undefined && changes.status !== serverStatus) ||
+          (changes.memo !== undefined && changes.memo !== serverMemo);
+        if (!hasChange) return null;
+
+        const merged = getMerged(studentId);
+        // 미입력(status=null) 학생에게 status 변경 없이 메모만 바뀐 경우 skip
+        // — 상태 없이 메모만 저장하면 암묵적 present가 생성되므로 허용하지 않음
+        if (merged.status === null) {
+          skippedDueToNullStatus++;
+          return null;
+        }
+
+        return { student_id: studentId, status: merged.status, memo: merged.memo || null };
+      })
+      .filter(Boolean);
+
+    if (changed.length === 0) {
+      // skip만 있고 저장할 항목이 없는 경우 — 경고 또는 no-op 피드백
+      if (skippedDueToNullStatus > 0) {
+        setSaveWarn(true);
+        setTimeout(() => setSaveWarn(false), 3000);
+      } else {
+        setSaveSnack(true);
+        setTimeout(() => setSaveSnack(false), 2500);
+      }
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await attendanceAPI.bulkUpsert({ attendance_date: filters.date, records: changed });
+      await fetchRoster();
+      setSaveSnack(true);
+      setTimeout(() => setSaveSnack(false), 2500);
+      // 저장 성공했더라도 skip된 항목이 있으면 경고 함께 표시
+      if (skippedDueToNullStatus > 0) {
+        setSaveWarn(true);
+        setTimeout(() => setSaveWarn(false), 3500);
+      }
+    } catch {
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openForm = (mode, student = null) => {
     if (mode === 'edit' && student) {
-      const rec = currentAttendance[student.id];
-      setFormData({ student_id: student.id, status: rec?.status ?? 'present', memo: rec?.memo ?? '' });
+      const merged = getMerged(student.student_id);
+      setFormData({ student_id: student.student_id, status: merged.status ?? 'present', memo: merged.memo ?? '' });
       setFormDialog({ mode: 'edit', student });
     } else {
       setFormData({ student_id: '', status: 'present', memo: '' });
@@ -270,9 +335,9 @@ export default function AttendanceTab({
   };
 
   const handleFormSave = () => {
-    const targetId = formDialog.mode === 'edit' ? formDialog.student.id : formData.student_id;
+    const targetId = formDialog.mode === 'edit' ? formDialog.student.student_id : formData.student_id;
     if (!targetId) return;
-    updateRecord(targetId, { status: formData.status, memo: formData.memo });
+    updateDraft(targetId, { status: formData.status, memo: formData.memo });
     setFormDialog(null);
   };
 
@@ -308,10 +373,10 @@ export default function AttendanceTab({
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                 <Typography sx={{ fontSize: '2.25rem', fontWeight: 900, color: opt.color, lineHeight: 1 }}>
-                  {summary[opt.value]}
+                  {displayedSummary?.[opt.value] ?? 0}
                 </Typography>
                 <Typography sx={{ fontSize: '0.8125rem', color: '#52525B', fontWeight: 600 }}>
-                  / {students.length}명
+                  / {displayedSummary?.total_students ?? 0}명
                 </Typography>
               </Box>
               {/* 장식용 배경 아이콘 */}
@@ -336,9 +401,15 @@ export default function AttendanceTab({
         />
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>분반 필터</InputLabel>
-          <Select value={filters.className} onChange={e => setFilter('className', e.target.value)} label="분반 필터" sx={selectSx} MenuProps={menuProps}>
+          <Select
+            value={filters.classId}
+            onChange={e => setFilter('classId', e.target.value)}
+            label="분반 필터"
+            sx={selectSx}
+            MenuProps={menuProps}
+          >
             <MenuItem value="all">전체 분반</MenuItem>
-            {classes.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+            {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
           </Select>
         </FormControl>
         <TextField
@@ -366,23 +437,30 @@ export default function AttendanceTab({
           >
             출결 등록
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
-            onClick={handleMarkAllPresent}
-            sx={{
-              borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa',
-              fontWeight: 600, fontSize: '0.8125rem', borderRadius: '10px',
-              px: 2, py: 1, textTransform: 'none',
-              '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' },
-            }}
-          >
-            전원 출석
-          </Button>
+          <Tooltip title={(filters.classId === 'all' || filters.classId === 'unassigned') ? '분반을 선택해야 사용할 수 있습니다' : ''} arrow>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
+                onClick={handleMarkAllPresent}
+                disabled={filters.classId === 'all' || filters.classId === 'unassigned'}
+                sx={{
+                  borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa',
+                  fontWeight: 600, fontSize: '0.8125rem', borderRadius: '10px',
+                  px: 2, py: 1, textTransform: 'none',
+                  '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' },
+                  '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.08)', color: '#3F3F46' },
+                }}
+              >
+                전원 출석
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             variant="contained"
-            startIcon={<SaveIcon sx={{ fontSize: 18 }} />}
+            startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon sx={{ fontSize: 18 }} />}
             onClick={handleSaveAll}
+            disabled={saving}
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               fontWeight: 700, fontSize: '0.8125rem', borderRadius: '10px',
@@ -422,7 +500,11 @@ export default function AttendanceTab({
 
             {/* 목록 영역 */}
             <Box sx={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
-              {filteredStudents.length === 0 ? (
+              {loading ? (
+                <Box sx={{ py: 12, display: 'flex', justifyContent: 'center' }}>
+                  <CircularProgress size={32} sx={{ color: '#a78bfa' }} />
+                </Box>
+              ) : filteredRoster.length === 0 ? (
                 <Box sx={{ py: 12, textAlign: 'center' }}>
                   <EventNoteIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} />
                   <Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>
@@ -430,20 +512,20 @@ export default function AttendanceTab({
                   </Typography>
                 </Box>
               ) : (
-                filteredStudents.map((student, idx) => {
-                  const rec = currentAttendance[student.id];
-                  const currentStatus = rec?.status ?? 'present';
-                  const isSelected = selectedStudentId === student.id;
+                filteredRoster.map((student, idx) => {
+                  const merged = getMerged(student.student_id);
+                  const currentStatus = merged.status; // null = 미입력
+                  const isSelected = selectedStudentId === student.student_id;
                   return (
                     <Box
-                      key={student.id}
-                      onClick={() => setSelectedStudentId(isSelected ? null : student.id)}
+                      key={student.student_id}
+                      onClick={() => setSelectedStudentId(isSelected ? null : student.student_id)}
                       sx={{
                         display: 'grid',
                         gridTemplateColumns: '1.8fr 0.8fr 2.2fr 1.8fr 0.8fr 48px',
                         gap: 2, px: 3, py: 2,
                         alignItems: 'center',
-                        borderBottom: idx < filteredStudents.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                        borderBottom: idx < filteredRoster.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         borderLeft: isSelected ? '4px solid #a78bfa' : '4px solid transparent',
@@ -459,13 +541,13 @@ export default function AttendanceTab({
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '0.875rem', fontWeight: 800, color: '#fff',
                         }}>
-                          {student.name[0]}
+                          {student.student_name[0]}
                         </Box>
                         <Box>
                           <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#FAFAFA', lineHeight: 1.2 }}>
-                            {student.name}
+                            {student.student_name}
                           </Typography>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>{student.school}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>{student.school_name}</Typography>
                         </Box>
                       </Box>
 
@@ -474,14 +556,14 @@ export default function AttendanceTab({
                         {student.class_name}
                       </Typography>
 
-                      {/* 상태 버튼형 칩 */}
+                      {/* 상태 버튼형 칩 — null이면 모두 비활성 */}
                       <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
                         {STATUS_OPTIONS.map(opt => (
                           <StatusChip
                             key={opt.value}
                             opt={opt}
                             active={currentStatus === opt.value}
-                            onClick={() => handleStatusChange(student.id, opt.value)}
+                            onClick={() => handleStatusChange(student.student_id, opt.value)}
                           />
                         ))}
                       </Box>
@@ -490,8 +572,8 @@ export default function AttendanceTab({
                       <TextField
                         size="small"
                         placeholder="메모 입력..."
-                        value={rec?.memo ?? ''}
-                        onChange={e => handleMemoChange(student.id, e.target.value)}
+                        value={merged.memo ?? ''}
+                        onChange={e => handleMemoChange(student.student_id, e.target.value)}
                         onClick={e => e.stopPropagation()}
                         autoComplete="off"
                         sx={{
@@ -509,8 +591,8 @@ export default function AttendanceTab({
                       />
 
                       {/* 수정일 */}
-                      <Typography sx={{ fontSize: '0.75rem', color: rec?.updated_at ? '#71717A' : '#3F3F46', fontWeight: 500 }}>
-                        {formatTime(rec?.updated_at)}
+                      <Typography sx={{ fontSize: '0.75rem', color: merged.updated_at ? '#71717A' : '#3F3F46', fontWeight: 500 }}>
+                        {formatTime(merged.updated_at)}
                       </Typography>
 
                       {/* 상세 편집 */}
@@ -560,16 +642,16 @@ export default function AttendanceTab({
                   fontSize: '1.5rem', fontWeight: 900, color: '#c4b5fd',
                   border: '1px solid rgba(167,139,250,0.2)',
                 }}>
-                  {selectedStudent.name[0]}
+                  {selectedStudent.student_name[0]}
                 </Box>
                 <Typography sx={{ fontSize: '1.125rem', fontWeight: 800, color: '#FAFAFA', mb: 0.5 }}>
-                  {selectedStudent.name}
+                  {selectedStudent.student_name}
                 </Typography>
                 <Typography sx={{ fontSize: '0.8125rem', color: '#71717A', fontWeight: 600 }}>
                   {selectedStudent.class_name} · {selectedStudent.grade}학년
                 </Typography>
                 <Typography sx={{ fontSize: '0.75rem', color: '#52525B', mt: 0.5 }}>
-                  {selectedStudent.school}
+                  {selectedStudent.school_name}
                 </Typography>
               </Box>
 
@@ -578,22 +660,33 @@ export default function AttendanceTab({
                   <EventNoteIcon sx={{ fontSize: 14 }} /> 현재 출결 상태
                 </Typography>
                 {(() => {
-                  const st = selectedRec?.status ?? 'present';
-                  const opt = STATUS_OPTIONS.find(o => o.value === st);
+                  const merged = getMerged(selectedStudent.student_id);
+                  const st = merged.status;
+                  const opt = st ? STATUS_OPTIONS.find(o => o.value === st) : null;
                   return (
                     <Box>
-                      <Box sx={{
-                        display: 'inline-flex', px: 2, py: 0.75, borderRadius: '8px',
-                        bgcolor: opt.bg, border: `1px solid ${opt.border}`,
-                        fontSize: '0.875rem', fontWeight: 800, color: opt.color, mb: 1.5,
-                      }}>
-                        {opt.label}
-                      </Box>
-                      {selectedRec?.memo && (
+                      {opt ? (
+                        <Box sx={{
+                          display: 'inline-flex', px: 2, py: 0.75, borderRadius: '8px',
+                          bgcolor: opt.bg, border: `1px solid ${opt.border}`,
+                          fontSize: '0.875rem', fontWeight: 800, color: opt.color, mb: 1.5,
+                        }}>
+                          {opt.label}
+                        </Box>
+                      ) : (
+                        <Box sx={{
+                          display: 'inline-flex', px: 2, py: 0.75, borderRadius: '8px',
+                          bgcolor: UNRECORDED_STYLE.bg, border: `1px solid ${UNRECORDED_STYLE.border}`,
+                          fontSize: '0.875rem', fontWeight: 800, color: UNRECORDED_STYLE.color, mb: 1.5,
+                        }}>
+                          미입력
+                        </Box>
+                      )}
+                      {merged.memo && (
                         <Box sx={{ mt: 1 }}>
                           <Typography sx={{ fontSize: '0.7rem', color: '#52525B', mb: 0.5 }}>메모</Typography>
                           <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA', fontStyle: 'italic', lineHeight: 1.4 }}>
-                            "{selectedRec.memo}"
+                            "{merged.memo}"
                           </Typography>
                         </Box>
                       )}
@@ -624,33 +717,33 @@ export default function AttendanceTab({
                 <GroupsIcon sx={{ fontSize: 18, color: '#a78bfa' }} />
                 <Typography sx={{ fontSize: '0.875rem', fontWeight: 800, color: '#FAFAFA' }}>분반별 출석 통계</Typography>
               </Box>
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {classSummary.map(cs => (
                   <Box
-                    key={cs.className}
+                    key={cs.classId}
                     sx={{
                       p: 2, borderRadius: '14px',
-                      bgcolor: filters.className === cs.className ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${filters.className === cs.className ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
+                      bgcolor: filters.classId === cs.classId ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${filters.classId === cs.classId ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
                       cursor: 'pointer', transition: 'all 0.2s',
                       '&:hover': { transform: 'scale(1.02)', bgcolor: 'rgba(255,255,255,0.04)' },
                     }}
-                    onClick={() => setFilter('className', filters.className === cs.className ? 'all' : cs.className)}
+                    onClick={() => setFilter('classId', filters.classId === cs.classId ? 'all' : cs.classId)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                       <Typography sx={{ fontSize: '0.9375rem', fontWeight: 800, color: '#FAFAFA' }}>{cs.className}</Typography>
                       <Typography sx={{ fontSize: '0.75rem', color: '#71717A', fontWeight: 600 }}>총 {cs.total}명</Typography>
                     </Box>
-                    
+
                     {/* 출석 현황 인디케이터 */}
                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                       {STATUS_OPTIONS.map(opt => (
                         <Tooltip key={opt.value} title={`${opt.label}: ${cs[opt.value]}명`} arrow>
-                          <Box sx={{ 
-                            flex: cs[opt.value] || 0.1, 
-                            height: 6, 
-                            bgcolor: opt.color, 
+                          <Box sx={{
+                            flex: cs[opt.value] || 0.1,
+                            height: 6,
+                            bgcolor: opt.color,
                             borderRadius: '3px',
                             opacity: cs[opt.value] ? 1 : 0.1
                           }} />
@@ -660,11 +753,11 @@ export default function AttendanceTab({
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                         <Typography sx={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 700 }}>출석 {cs.present}</Typography>
-                         <Typography sx={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}>결석 {cs.absent}</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 700 }}>출석 {cs.present}</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}>결석 {cs.absent}</Typography>
                       </Box>
                       <Typography sx={{ fontSize: '0.8125rem', color: '#FAFAFA', fontWeight: 900 }}>
-                        {Math.round((cs.present / cs.total) * 100)}%
+                        {cs.total > 0 ? Math.round((cs.present / cs.total) * 100) : 0}%
                       </Typography>
                     </Box>
                   </Box>
@@ -688,13 +781,13 @@ export default function AttendanceTab({
         onClose={() => setFormDialog(null)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ 
-          sx: { 
-            bgcolor: '#18181B', 
-            border: '1px solid rgba(255,255,255,0.1)', 
+        PaperProps={{
+          sx: {
+            bgcolor: '#18181B',
+            border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '24px',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
-          } 
+          }
         }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#FAFAFA', fontWeight: 900, fontSize: '1.25rem', px: 4, pt: 4, pb: 2 }}>
@@ -709,8 +802,8 @@ export default function AttendanceTab({
             <Typography sx={{ fontSize: '0.75rem', color: '#71717A', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>학생 정보</Typography>
             {formDialog?.mode === 'edit' ? (
               <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#FAFAFA' }}>{formDialog.student?.name}</Typography>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#71717A' }}>{formDialog.student?.class_name} · {formDialog.student?.school}</Typography>
+                <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#FAFAFA' }}>{formDialog.student?.student_name}</Typography>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#71717A' }}>{formDialog.student?.class_name} · {formDialog.student?.school_name}</Typography>
               </Box>
             ) : (
               <FormControl fullWidth size="small" sx={selectSx}>
@@ -721,7 +814,7 @@ export default function AttendanceTab({
                   label="학생을 선택하세요"
                   MenuProps={menuProps}
                 >
-                  {students.map(s => <MenuItem key={s.id} value={s.id}>{s.name} ({s.class_name})</MenuItem>)}
+                  {roster.map(s => <MenuItem key={s.student_id} value={s.student_id}>{s.student_name} ({s.class_name})</MenuItem>)}
                 </Select>
               </FormControl>
             )}
@@ -816,6 +909,54 @@ export default function AttendanceTab({
         }}>
           <CheckCircleIcon sx={{ fontSize: 20 }} />
           <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>출결 데이터가 안전하게 저장되었습니다</Typography>
+        </Box>
+      )}
+
+      {/* ── 상태 미선택 경고 토스트 (성공 토스트 위에 표시) ── */}
+      {saveWarn && (
+        <Box sx={{
+          position: 'fixed', bottom: saveSnack ? 96 : 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999,
+          bgcolor: '#431407', border: '1px solid #f59e0b',
+          color: '#fcd34d', px: 4, py: 1.5, borderRadius: '14px',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: 1.5,
+          animation: 'fadeUp 0.3s ease-out'
+        }}>
+          <InfoIcon sx={{ fontSize: 20 }} />
+          <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>상태를 먼저 선택해야 메모를 저장할 수 있습니다</Typography>
+        </Box>
+      )}
+
+      {/* ── 조회 실패 토스트 ── */}
+      {loadError && (
+        <Box sx={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999,
+          bgcolor: '#450a0a', border: '1px solid #ef4444',
+          color: '#fca5a5', px: 4, py: 1.5, borderRadius: '14px',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: 1.5,
+          animation: 'fadeUp 0.3s ease-out'
+        }}>
+          <CloseIcon sx={{ fontSize: 20 }} />
+          <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>출결 데이터를 불러오지 못했습니다</Typography>
+        </Box>
+      )}
+
+      {/* ── 저장 실패 토스트 ── */}
+      {saveError && (
+        <Box sx={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999,
+          bgcolor: '#450a0a', border: '1px solid #ef4444',
+          color: '#fca5a5', px: 4, py: 1.5, borderRadius: '14px',
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: 1.5,
+          animation: 'fadeUp 0.3s ease-out'
+        }}>
+          <CloseIcon sx={{ fontSize: 20 }} />
+          <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>저장 중 오류가 발생했습니다</Typography>
         </Box>
       )}
 

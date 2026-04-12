@@ -95,6 +95,7 @@ class AttendanceRosterItem(BaseModel):
     student_name: str
     school_name: Optional[str] = None
     grade: Optional[str] = None
+    class_id: Optional[int] = None
     class_name: Optional[str] = None
     status: Optional[AttendanceStatus] = None
     memo: Optional[str] = None
