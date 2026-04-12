@@ -5,6 +5,7 @@ Revision ID: 015_create_attendance_records
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision = "015_create_attendance_records"
 down_revision = "014_add_auth_tables"
@@ -13,9 +14,13 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        "CREATE TYPE attendance_status AS ENUM ('present', 'absent', 'late', 'early_leave')"
-    )
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE attendance_status AS ENUM ('present', 'absent', 'late', 'early_leave');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+        """)
 
     op.create_table(
         "attendance_records",
@@ -41,7 +46,7 @@ def upgrade():
         sa.Column("attendance_date", sa.Date(), nullable=False),
         sa.Column(
             "status",
-            sa.Enum(
+            postgresql.ENUM(
                 "present",
                 "absent",
                 "late",
