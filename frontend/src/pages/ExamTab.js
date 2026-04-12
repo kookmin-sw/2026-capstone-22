@@ -428,7 +428,7 @@ export default function ExamTab() {
                     {stats.decliners > 0 ? (
                       <>
                         <TrendingDownIcon sx={{ color: '#ef4444', fontSize: 18 }} />
-                        <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography> 발견. 집중 상담 권장.</Typography>
+                        <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography></Typography>
                       </>
                     ) : (
                       <>
