@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField,
   Paper, Table, TableBody, TableCell, TableHead, TableRow,
@@ -1163,9 +1164,35 @@ function ClassStatusChip({ status }) {
 }
 
 function StudentManagementPanel({ initialSubTab = 0 }) {
+  const navigate = useNavigate();
+  const { currentSlug } = useTenant();
+  const basePath = `/${currentSlug}/admin/students`;
+  
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [studentSubTab, setStudentSubTab] = useState(initialSubTab);
+
+  // Sync state with prop if it changes (for direct URL navigation)
+  useEffect(() => {
+    setStudentSubTab(initialSubTab);
+  }, [initialSubTab]);
+
+  const handleSubTabChange = (index) => {
+    setStudentSubTab(index);
+    const subPaths = ['', '/attendance', '/assignments', '/exams'];
+    if (index === 0) navigate(basePath);
+    else if (index === 1) navigate(basePath); // '학생' is index 1 but maps to default or needs specific path? 
+    // Wait, labels are ['분반', '학생', '출결', '과제', '시험']
+    // index 0: 분반, 1: 학생, 2: 출결, 3: 과제, 4: 시험
+    const paths = {
+      0: '',
+      1: '',
+      2: '/attendance',
+      3: '/assignments',
+      4: '/exams'
+    };
+    navigate(`${basePath}${paths[index]}`);
+  };
   const [expandedClasses, setExpandedClasses] = useState(new Set());
 
   const [classDialogOpen, setClassDialogOpen] = useState(false);
@@ -1354,7 +1381,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         {['분반', '학생', '출결', '과제', '시험'].map((label, i) => (
-          <Box key={i} onClick={() => setStudentSubTab(i)} sx={{
+          <Box key={i} onClick={() => handleSubTabChange(i)} sx={{
             px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600,
             bgcolor: studentSubTab === i ? 'rgba(167,139,250,0.12)' : 'transparent',
             color: studentSubTab === i ? '#a78bfa' : '#71717A',
