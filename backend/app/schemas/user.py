@@ -42,6 +42,7 @@ class UserResponse(UserBase):
     preferred_model: str
     created_at: datetime
     group: Optional[GroupInfo] = None
+    has_verified_access: bool = False  # active student_access_links 존재 여부
 
     class Config:
         from_attributes = True

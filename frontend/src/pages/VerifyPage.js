@@ -91,6 +91,7 @@ export default function VerifyPage() {
     try {
       const res = await verifyAPI.confirm(slug, token, phone, otpCode);
       setLinkedStudents(res.data.linked_students);
+      localStorage.setItem('verification_done', '1');
       setStep(STEP.DONE);
     } catch (err) {
       const detail = err.response?.data?.detail;
