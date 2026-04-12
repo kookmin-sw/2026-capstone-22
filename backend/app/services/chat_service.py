@@ -569,7 +569,7 @@ class ChatService:
                         _vtoken = create_verification_token(user_id, tenant_id)
                         _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
                         return {
-                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.<!-- verify:{_vurl} -->",
+                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
                             "used_calendar": False,
                             "cited_sources": [],
                             "verification_required": True,
