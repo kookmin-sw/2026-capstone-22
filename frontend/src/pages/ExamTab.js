@@ -3,7 +3,7 @@ import {
   Box, Typography, TextField, Button, Select, MenuItem, FormControl,
   InputLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
   IconButton, Tooltip, Avatar, Divider, Table, TableBody, TableCell,
-  TableHead, TableRow, Paper, Chip
+  TableHead, TableRow, Paper, Chip, Autocomplete
 } from '@mui/material';
 import {
   Assignment as ExamIcon, Search as SearchIcon, CheckCircle as CheckCircleIcon,
@@ -11,7 +11,7 @@ import {
   Add as AddIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon,
   BarChart as BarChartIcon, Close as CloseIcon, EmojiEvents as TrophyIcon,
   EventNote as EventNoteIcon, School as SchoolIcon, Groups as GroupsIcon,
-  InfoOutlined as InfoIcon
+  InfoOutlined as InfoIcon, HelpOutline as HelpIcon
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -40,19 +40,17 @@ const DUMMY_EXAMS = [
   { id: 2, title: '단원 테스트: 미분과 적분', subject: '수학', date: '2026-04-05', class_id: 1, max_score: 50, type: '단원', memo: '' },
   { id: 3, title: '영어 단어 경시대회', subject: '영어', date: '2026-04-02', class_id: 2, max_score: 100, type: '이벤트', memo: '전체 분반 공통' },
   { id: 4, title: '기초 영문법 확인 테스트', subject: '영어', date: '2026-04-10', class_id: 2, max_score: 40, type: '단원', memo: '' },
-  { id: 5, title: '물리: 역학의 법칙 테스트', subject: '과학', date: '2026-04-03', class_id: 3, max_score: 100, type: '단원', memo: '' },
+  { id: 5, title: '화학 반응의 법칙 보고서', subject: '과학', date: '2026-04-03', class_id: 3, max_score: 100, type: '단원', memo: '' },
   { id: 6, title: '전국 연합 모의고사(3월)', subject: '수학', date: '2026-03-25', class_id: 1, max_score: 100, type: '외부', memo: '비교 데이터용' },
 ];
 
 const DUMMY_RESULTS = [
-  // Exam 1 Results
-  { id: 1, exam_id: 1, student_id: 1, score: 95, grade: '1', rank: 1, comment: '우수한 성적입니다.', updated_at: '2026-04-02' },
-  { id: 2, exam_id: 1, student_id: 2, score: 88, grade: '2', rank: 2, comment: '실수 보완 필요.', updated_at: '2026-04-02' },
-  { id: 3, exam_id: 1, student_id: 3, score: 72, grade: '3', rank: 4, comment: '기본기 복습 요망.', updated_at: '2026-04-02' },
-  { id: 4, exam_id: 1, student_id: 4, score: 84, grade: '2', rank: 3, comment: '지난 시험 대비 상승.', updated_at: '2026-04-02' },
-  // Exam 6 Results (for comparison)
-  { id: 100, exam_id: 6, student_id: 1, score: 92, grade: '1', rank: 1, comment: '', updated_at: '2026-03-26' },
-  { id: 101, exam_id: 6, student_id: 2, score: 90, grade: '1', rank: 2, comment: '', updated_at: '2026-03-26' },
+  { id: 1, exam_id: 1, student_id: 1, score: 95, grade: '1', comment: '우수한 성적입니다.', updated_at: '2026-04-02' },
+  { id: 2, exam_id: 1, student_id: 2, score: 88, grade: '2', comment: '실수 보완 필요.', updated_at: '2026-04-02' },
+  { id: 3, exam_id: 1, student_id: 3, score: 72, grade: '3', comment: '기본기 복습 요망.', updated_at: '2026-04-02' },
+  { id: 4, exam_id: 1, student_id: 4, score: 84, grade: '2', comment: '지난 시험 대비 상승.', updated_at: '2026-04-02' },
+  { id: 100, exam_id: 6, student_id: 1, score: 92, grade: '1', comment: '', updated_at: '2026-03-26' },
+  { id: 101, exam_id: 6, student_id: 2, score: 90, grade: '1', comment: '', updated_at: '2026-03-26' },
 ];
 
 // ── 공통 스타일 ──────────────────────────────────────────────────────────────
@@ -96,8 +94,13 @@ export default function ExamTab() {
 
   // 필터 상태
   const [filters, setFilters] = useState({
-    class_id: 'all', student_name: '', subject: 'all', exam_title: '',
-    showDeclinersOnly: false, // 퀵 필터용 (성적 하락 학생)
+    class_id: 'all', 
+    student_name: '', 
+    subject: 'all', 
+    exam_title: '',
+    exam_date: '',
+    showDeclinersOnly: false,
+    showRecentOnly: false,
   });
 
   // 다이얼로그 상태
@@ -108,83 +111,98 @@ export default function ExamTab() {
   const [examToDelete, setExamToDelete] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
 
+  // "최근 30일" 기준 계산
+  const today = useMemo(() => new Date(), []);
+  const thirtyDaysAgo = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 30);
+    return d;
+  }, [today]);
+
   const filteredExams = useMemo(() => {
     return exams.filter(e => {
       if (filters.class_id !== 'all' && e.class_id !== Number(filters.class_id)) return false;
       if (filters.subject !== 'all' && e.subject !== filters.subject) return false;
       if (filters.exam_title && !e.title.toLowerCase().includes(filters.exam_title.toLowerCase())) return false;
+      if (filters.exam_date && e.date !== filters.exam_date) return false;
+      
+      if (filters.showRecentOnly) {
+        const examDate = new Date(e.date);
+        if (examDate < thirtyDaysAgo || examDate > today) return false;
+      }
       return true;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [exams, filters]);
+  }, [exams, filters, thirtyDaysAgo, today]);
 
   const selectedExam = useMemo(() => exams.find(e => e.id === selectedExamId), [exams, selectedExamId]);
 
-  // 성적 통계 계산
+  // 통계 및 하락 학생 계산
   const stats = useMemo(() => {
     const res = results.filter(r => r.exam_id === selectedExamId);
-    if (res.length === 0) return { avg: 0, max: 0, min: 0, count: 0, decliners: 0, distribution: [] };
+    if (!selectedExam || res.length === 0) return { avg: 0, max: 0, min: 0, count: 0, decliners: 0, distribution: [], declinerIds: [] };
     
     const scores = res.map(r => r.score);
     const avg = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10;
     const max = Math.max(...scores);
     
-    // 분포 데이터 (10점 단위)
     const dist = Array(10).fill(0);
     scores.forEach(s => {
       const idx = Math.min(Math.floor(s / 10), 9);
       dist[idx]++;
     });
     const distribution = dist.map((count, i) => ({ range: `${i * 10}-${(i + 1) * 10}`, count }));
+// 성적 하락 학생 판별 (동일 과목 + 동일 시험 유형의 직전 시험 대비)
+const declinerIds = [];
+res.forEach(r => {
+  const prevExam = exams
+    .filter(e => 
+      e.subject === selectedExam.subject && 
+      e.type === selectedExam.type && 
+      e.class_id === selectedExam.class_id && 
+      new Date(e.date) < new Date(selectedExam.date)
+    )
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
-    // 성적 하락 학생 수 (전회 대비 하락 시뮬레이션)
-    // 목데이터에서는 student_id가 2, 3인 학생을 하락 학생으로 가정
-    const declinersList = res.filter(r => r.student_id === 2 || r.student_id === 3);
-    const decliners = declinersList.length;
+  if (prevExam) {
+    const prevResult = results.find(pr => pr.exam_id === prevExam.id && pr.student_id === r.student_id);
+    if (prevResult && r.score < prevResult.score) {
+      declinerIds.push(r.student_id);
+    }
+  }
+});
 
-    return { avg, max, count: res.length, decliners, distribution, declinerIds: declinersList.map(d => d.student_id) };
-  }, [results, selectedExamId]);
+    return { avg, max, count: res.length, decliners: declinerIds.length, distribution, declinerIds };
+  }, [results, selectedExamId, selectedExam, exams]);
 
-  // 상단 요약 카드 데이터
   const summary = useMemo(() => {
-    // "최근"의 기준: 2026-04-12 기준 최근 30일 이내 시험
-    const today = new Date('2026-04-12');
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    const recentCount = exams.filter(e => new Date(e.date) >= thirtyDaysAgo && new Date(e.date) <= today).length;
+    const recentCount = exams.filter(e => {
+      const d = new Date(e.date);
+      return d >= thirtyDaysAgo && d <= today;
+    }).length;
     return { recentCount, avg: stats.avg, max: stats.max, decliners: stats.decliners };
-  }, [exams, stats]);
+  }, [exams, stats, thirtyDaysAgo, today]);
 
   const currentResults = useMemo(() => {
     if (!selectedExamId) return [];
     const classStudents = DUMMY_STUDENTS.filter(s => s.class_id === selectedExam?.class_id);
     return classStudents.map(student => {
       const res = results.find(r => r.exam_id === selectedExamId && r.student_id === student.id);
-      return { ...student, result: res || { score: '', grade: '', rank: '', comment: '', updated_at: '' } };
+      return { ...student, result: res || { score: '', grade: '', comment: '', updated_at: '' } };
     }).filter(item => {
       if (filters.student_name && !item.name.includes(filters.student_name)) return false;
-      // 퀵 필터: 성적 하락 학생만 보기
       if (filters.showDeclinersOnly && !stats.declinerIds.includes(item.id)) return false;
       return true;
     });
   }, [selectedExamId, selectedExam, results, filters.student_name, filters.showDeclinersOnly, stats.declinerIds]);
 
   // 핸들러
-  const handleOpenAddExam = () => { setEditingExam(null); setExamForm({ title: '', subject: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' }); setExamDialogOpen(true); };
-  const handleOpenEditExam = (e, exam) => { e.stopPropagation(); setEditingExam(exam); setExamForm({ ...exam }); setExamDialogOpen(true); };
   const handleSaveExam = () => {
     if (editingExam) setExams(prev => prev.map(e => e.id === editingExam.id ? { ...e, ...examForm } : e));
     else setExams(prev => [...prev, { ...examForm, id: Math.max(...prev.map(ex => ex.id), 0) + 1 }]);
     setExamDialogOpen(false);
     showSnack('시험 정보가 저장되었습니다.');
   };
-  const handleDeleteClick = (e, exam) => { e.stopPropagation(); setExamToDelete(exam); setDeleteConfirmOpen(true); };
-  const handleConfirmDelete = () => {
-    setExams(prev => prev.filter(e => e.id !== examToDelete.id));
-    if (selectedExamId === examToDelete.id) setSelectedExamId(null);
-    setDeleteConfirmOpen(false);
-    showSnack('시험이 삭제되었습니다.');
-  };
+  
   const updateResult = (studentId, patch) => {
     setResults(prev => {
       const idx = prev.findIndex(r => r.exam_id === selectedExamId && r.student_id === studentId);
@@ -196,12 +214,8 @@ export default function ExamTab() {
       return [...prev, { id: Date.now(), exam_id: selectedExamId, student_id: studentId, ...patch, updated_at: new Date().toISOString().slice(0, 10) }];
     });
   };
-  const showSnack = (message) => { setSnack({ open: true, message }); setTimeout(() => setSnack({ open: false, message: '' }), 2500); };
 
-  const toggleDeclinersFilter = () => {
-    if (!selectedExamId) return;
-    setFilters(prev => ({ ...prev, showDeclinersOnly: !prev.showDeclinersOnly }));
-  };
+  const showSnack = (message) => { setSnack({ open: true, message }); setTimeout(() => setSnack({ open: false, message: '' }), 2500); };
 
   return (
     <Box sx={{ animation: 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
@@ -209,36 +223,25 @@ export default function ExamTab() {
       {/* ── 1. 상단 요약 카드 ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: '최근 30일 시험 수', value: summary.recentCount, color: '#a78bfa', icon: <ExamIcon />, clickable: false },
-          { label: '선택 시험 평균', value: summary.avg, color: '#4ade80', icon: <TrendingUpIcon />, clickable: false },
-          { label: '최고 점수', value: summary.max, color: '#f59e0b', icon: <TrophyIcon />, clickable: false },
           { 
-            label: '성적 하락 학생', 
-            value: summary.decliners, 
-            color: '#ef4444', 
-            icon: <TrendingDownIcon />, 
-            clickable: !!selectedExamId,
-            active: filters.showDeclinersOnly,
-            onClick: toggleDeclinersFilter
+            label: '최근 30일 시험 수', value: summary.recentCount, color: '#a78bfa', icon: <ExamIcon />, 
+            clickable: true, active: filters.showRecentOnly, onClick: () => setFilters(p => ({ ...p, showRecentOnly: !p.showRecentOnly }))
+          },
+          { label: '선택 시험 평균', value: summary.avg, color: '#4ade80', icon: <TrendingUpIcon />, clickable: false },
+          { label: '선택 시험 최고점', value: summary.max, color: '#f59e0b', icon: <TrophyIcon />, clickable: false },
+          { 
+            label: '성적 하락 학생', value: summary.decliners, color: '#ef4444', icon: <TrendingDownIcon />, 
+            clickable: !!selectedExamId, active: filters.showDeclinersOnly, onClick: () => setFilters(p => ({ ...p, showDeclinersOnly: !p.showDeclinersOnly }))
           },
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
-            <Box 
-              onClick={item.onClick}
-              sx={{
-                bgcolor: '#18181B', 
-                border: item.active ? `2px solid ${item.color}` : '1px solid rgba(255,255,255,0.06)', 
-                borderRadius: '16px', p: 3,
-                display: 'flex', alignItems: 'center', gap: 2.5, 
-                transition: 'all 0.2s',
+            <Box onClick={item.onClick} sx={{
+                bgcolor: '#18181B', border: item.active ? `2px solid ${item.color}` : '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', p: 3,
+                display: 'flex', alignItems: 'center', gap: 2.5, transition: 'all 0.2s',
                 cursor: item.clickable ? 'pointer' : 'default',
                 bgcolor: item.active ? `${item.color}08` : '#18181B',
-                '&:hover': item.clickable ? { 
-                  transform: 'translateY(-4px)', 
-                  borderColor: item.color 
-                } : {}
-              }}
-            >
+                '&:hover': item.clickable ? { transform: 'translateY(-4px)', borderColor: item.color } : {}
+              }}>
               <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: `${item.color}15`, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
               </Box>
@@ -267,24 +270,30 @@ export default function ExamTab() {
             <MenuItem value="수학">수학</MenuItem><MenuItem value="영어">영어</MenuItem><MenuItem value="과학">과학</MenuItem>
           </Select>
         </FormControl>
-        <TextField size="small" placeholder="시험명 검색" value={filters.exam_title} onChange={e => setFilters(p => ({ ...p, exam_title: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 200 }} />
+
+        <TextField type="date" size="small" label="시험일" value={filters.exam_date} onChange={e => setFilters(p => ({ ...p, exam_date: e.target.value }))} sx={{ ...inputSx, minWidth: 140 }} InputLabelProps={{ shrink: true }} />
+
+        <TextField size="small" placeholder="시험명 검색" value={filters.exam_title} onChange={e => setFilters(p => ({ ...p, exam_title: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
+        
         <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.06)' }} />
+        
         <TextField size="small" placeholder="학생명 검색" value={filters.student_name} onChange={e => setFilters(p => ({ ...p, student_name: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
+        
         <Box sx={{ flex: 1 }} />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAddExam} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', fontWeight: 700, borderRadius: '10px', px: 2.5, py: 1, textTransform: 'none', '&:hover': { opacity: 0.9 } }}>시험 추가</Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingExam(null); setExamForm({ title: '', subject: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' }); setExamDialogOpen(true); }} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', fontWeight: 700, borderRadius: '10px', px: 2.5, py: 1, textTransform: 'none', '&:hover': { opacity: 0.9 } }}>시험 추가</Button>
       </Box>
 
-      {/* ── 3. 메인 레이아웃 (3단 복합 구조) ── */}
+      {/* ── 3. 메인 레이아웃 ── */}
       <Grid container spacing={3}>
-        {/* 좌측/중앙: 시험 목록 및 결과 */}
         <Grid item xs={12} lg={9}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* 상단: 시험 목록 */}
             <Paper sx={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', overflow: 'hidden' }}>
               <Box sx={{ px: 3, py: 2, bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <EventNoteIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>시험 목록</Typography>
+                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>
+                    {filters.showRecentOnly ? '최근 30일 시험 목록' : '시험 목록'}
+                  </Typography>
                 </Box>
                 <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>전체 {filteredExams.length}개</Typography>
               </Box>
@@ -293,7 +302,7 @@ export default function ExamTab() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험명</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목/유형</TableCell>
+                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목 / 유형</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험일</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">만점/평균</TableCell>
@@ -304,13 +313,18 @@ export default function ExamTab() {
                     {filteredExams.map(e => (
                       <TableRow key={e.id} hover onClick={() => { setSelectedExamId(e.id); setFilters(p => ({ ...p, showDeclinersOnly: false })); }} sx={{ cursor: 'pointer', bgcolor: selectedExamId === e.id ? 'rgba(167,139,250,0.06)' : 'transparent', '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA' } }}>
                         <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{e.title}</TableCell>
-                        <TableCell><Box sx={{ display: 'flex', gap: 0.5 }}><Chip label={e.subject} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.05)', color: '#71717A' }} /><Chip label={e.type} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa' }} /></Box></TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
+                            <Chip label={e.subject} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.05)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.1)' }} />
+                            <Chip label={e.type || '일반'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }} />
+                          </Box>
+                        </TableCell>
                         <TableCell>{e.date}</TableCell>
                         <TableCell>{DUMMY_CLASSES.find(c => c.id === e.class_id)?.name}</TableCell>
                         <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{e.max_score} / {selectedExamId === e.id ? stats.avg : '-'}</Typography></TableCell>
                         <TableCell align="right" onClick={ev => ev.stopPropagation()}>
-                          <IconButton size="small" onClick={(ev) => handleOpenEditExam(ev, e)} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
-                          <IconButton size="small" onClick={(ev) => handleDeleteClick(ev, e)} sx={{ color: '#52525B', '&:hover': { color: '#ef4444' } }}><DeleteIcon fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={(ev) => { setEditingExam(e); setExamForm({...e}); setExamDialogOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={(ev) => { setExamToDelete(e); setDeleteConfirmOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#ef4444' } }}><DeleteIcon fontSize="small" /></IconButton>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -319,7 +333,6 @@ export default function ExamTab() {
               </Box>
             </Paper>
 
-            {/* 하단: 학생별 결과 */}
             <Paper sx={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', overflow: 'hidden' }}>
               <Box sx={{ px: 3, py: 2, bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -335,7 +348,7 @@ export default function ExamTab() {
                 {!selectedExamId ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}><InfoIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} /><Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>시험을 선택해주세요</Typography></Box>
                 ) : currentResults.length === 0 ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}><SearchIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} /><Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>해당하는 학생이 없습니다</Typography></Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}><SearchIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} /><Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>조건에 맞는 학생이 없습니다</Typography></Box>
                 ) : (
                   <Table size="small">
                     <TableHead>
@@ -355,24 +368,7 @@ export default function ExamTab() {
                           <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
                           <TableCell><TextField size="small" type="number" value={item.result.score} onChange={ev => updateResult(item.id, { score: Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255,255,255,0.02)', fontSize: '0.8125rem', color: '#a78bfa', fontWeight: 700, '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
                           <TableCell><Select value={item.result.grade} onChange={ev => updateResult(item.id, { grade: ev.target.value })} size="small" sx={{ ...selectSx, minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.75rem', fontWeight: 700 } }} MenuProps={menuProps}>{['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(g => <MenuItem key={g} value={g}>{g}등급</MenuItem>)}</Select></TableCell>
-                          <TableCell>
-                            <TextField 
-                              fullWidth size="small" 
-                              value={item.result.comment} 
-                              onChange={ev => updateResult(item.id, { comment: ev.target.value })} 
-                              placeholder="피드백 입력..." 
-                              sx={{ 
-                                '& .MuiOutlinedInput-root': { 
-                                  bgcolor: 'rgba(255,255,255,0.02)', 
-                                  fontSize: '0.8125rem', 
-                                  color: '#FAFAFA',
-                                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                                  '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.2)' },
-                                },
-                                '& .MuiOutlinedInput-input': { p: 0.5 }
-                              }} 
-                            />
-                          </TableCell>
+                          <TableCell><TextField fullWidth size="small" value={item.result.comment} onChange={ev => updateResult(item.id, { comment: ev.target.value })} placeholder="피드백 입력..." sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255,255,255,0.02)', fontSize: '0.8125rem', color: '#FAFAFA', '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' } } }} /></TableCell>
                           <TableCell sx={{ fontSize: '0.75rem' }}>{item.result.updated_at || '-'}</TableCell>
                         </TableRow>
                       ))}
@@ -384,14 +380,21 @@ export default function ExamTab() {
           </Box>
         </Grid>
 
-        {/* 우측: 분석 요약 패널 */}
         <Grid item xs={12} lg={3}>
           <Box sx={{ position: 'sticky', top: 20, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Paper sx={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}><BarChartIcon sx={{ color: '#a78bfa', fontSize: 20 }} /><Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.875rem' }}>점수 분포 현황</Typography></Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BarChartIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
+                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.875rem' }}>분석 요약</Typography>
+                </Box>
+                <Tooltip title="성적 하락 기준: 동일 학생/과목/시험유형의 직전 시험 대비 점수 하락">
+                  <HelpIcon sx={{ color: '#52525B', fontSize: 16, cursor: 'help' }} />
+                </Tooltip>
+              </Box>
               {selectedExamId ? (
                 <>
-                  <Box sx={{ height: 200, width: '100%', mb: 3 }}>
+                  <Box sx={{ height: 160, width: '100%', mb: 3 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.distribution} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                         <XAxis dataKey="range" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
@@ -406,47 +409,31 @@ export default function ExamTab() {
                   <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 3 }} />
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>시험 평균</Typography><Typography sx={{ color: '#a78bfa', fontWeight: 800 }}>{stats.avg}점</Typography></Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>응시 인원</Typography><Typography sx={{ color: '#FAFAFA', fontWeight: 800 }}>{stats.count}명</Typography></Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>최고 점수</Typography><Typography sx={{ color: '#f59e0b', fontWeight: 800 }}>{stats.max}점</Typography></Box>
                   </Box>
                   <Box sx={{ mt: 3, p: 2, borderRadius: '12px', bgcolor: stats.decliners > 0 ? 'rgba(239,68,68,0.05)' : 'rgba(74,222,128,0.05)', border: `1px dashed ${stats.decliners > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(74,222,128,0.2)'}`, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     {stats.decliners > 0 ? (
                       <>
                         <TrendingDownIcon sx={{ color: '#ef4444', fontSize: 18 }} />
-                        <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>
-                          전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography> 발견. 집중 상담 권장.
-                        </Typography>
+                        <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography> 발견. 집중 상담 권장.</Typography>
                       </>
                     ) : (
                       <>
                         <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 18 }} />
-                        <Typography sx={{ color: '#86efac', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>
-                          전회 대비 성적 하락 학생이 없습니다.
-                        </Typography>
+                        <Typography sx={{ color: '#86efac', fontSize: '0.75rem', fontWeight: 600 }}>전회 대비 성적 하락 학생이 없습니다.</Typography>
                       </>
                     )}
                   </Box>
                 </>
               ) : (
-                <Box sx={{ py: 10, textAlign: 'center' }}><InfoIcon sx={{ fontSize: 32, color: '#27272A', mb: 1.5 }} /><Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>시험을 선택하면<br/>상세 분석이 표시됩니다</Typography></Box>
+                <Box sx={{ py: 5, textAlign: 'center' }}><InfoIcon sx={{ fontSize: 32, color: '#27272A', mb: 1.5 }} /><Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>시험을 선택하면<br/>상세 분석이 표시됩니다</Typography></Box>
               )}
-            </Paper>
-            <Paper sx={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}><GroupsIcon sx={{ color: '#a78bfa', fontSize: 20 }} /><Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.875rem' }}>분반별 평균 비교</Typography></Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {DUMMY_CLASSES.map(c => (
-                  <Box key={c.id} sx={{ p: 1.5, borderRadius: '10px', bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}><Typography sx={{ fontSize: '0.75rem', color: '#A1A1AA' }}>{c.name}</Typography><Typography sx={{ fontSize: '0.75rem', color: '#FAFAFA', fontWeight: 700 }}>{80 + c.id * 2}점</Typography></Box>
-                    <Box sx={{ height: 4, width: '100%', bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2 }}><Box sx={{ width: `${80 + c.id * 2}%`, height: '100%', bgcolor: c.id === 1 ? '#a78bfa' : '#3f3f46', borderRadius: 2 }} /></Box>
-                  </Box>
-                ))}
-              </Box>
             </Paper>
           </Box>
         </Grid>
       </Grid>
 
-      {/* ── 시험 추가/수정 다이얼로그 ── */}
+      {/* ── 시험 등록/수정 다이얼로그 ── */}
       <Dialog open={examDialogOpen} onClose={() => setExamDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px' } }}>
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 900 }}>{editingExam ? '시험 정보 수정' : '새 시험 등록'}</DialogTitle>
         <DialogContent sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -456,7 +443,41 @@ export default function ExamTab() {
             <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel><Select value={examForm.class_id} onChange={e => setExamForm(p => ({ ...p, class_id: e.target.value }))} label="대상 분반 *" sx={selectSx} MenuProps={menuProps}>{DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</Select></FormControl>
             <TextField label="시험일" type="date" size="small" fullWidth value={examForm.date} onChange={e => setExamForm(p => ({ ...p, date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
             <TextField label="만점 *" type="number" size="small" fullWidth value={examForm.max_score} onChange={e => setExamForm(p => ({ ...p, max_score: Number(e.target.value) }))} sx={inputSx} />
-            <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>시험 유형</InputLabel><Select value={examForm.type} onChange={e => setExamForm(p => ({ ...p, type: e.target.value }))} label="시험 유형" sx={selectSx} MenuProps={menuProps}><MenuItem value="정기">정기</MenuItem><MenuItem value="단원">단원</MenuItem><MenuItem value="외부">외부</MenuItem><MenuItem value="이벤트">이벤트</MenuItem></Select></FormControl>
+            <Autocomplete
+              freeSolo
+              options={Array.from(new Set(exams.map(e => e.type).filter(Boolean)))}
+              value={examForm.type || ''}
+              onChange={(event, newValue) => {
+                setExamForm(p => ({ ...p, type: newValue }));
+              }}
+              onInputChange={(event, newValue) => {
+                setExamForm(p => ({ ...p, type: newValue }));
+              }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: '#18181B',
+                    color: '#A1A1AA',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    '& .MuiAutocomplete-option': {
+                      fontSize: '0.8125rem',
+                      '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' },
+                      '&[aria-selected="true"]': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' },
+                      '&.Mui-focused': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' },
+                    },
+                  }
+                }
+              }}
+              renderInput={(params) => (
+                <TextField 
+                  {...params} 
+                  label="시험 유형" 
+                  placeholder="예: 레벨테스트, 단원평가, 모의고사"
+                  sx={inputSx} 
+                />
+              )}
+            />
           </Box>
           <TextField label="메모" multiline rows={2} fullWidth size="small" value={examForm.memo} onChange={e => setExamForm(p => ({ ...p, memo: e.target.value }))} sx={inputSx} />
         </DialogContent>
@@ -466,7 +487,7 @@ export default function ExamTab() {
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 800 }}>시험 삭제</DialogTitle>
         <DialogContent><Typography sx={{ color: '#A1A1AA', fontSize: '0.875rem' }}>이 시험과 모든 학생 성적 데이터가 삭제됩니다. 계속하시겠습니까?</Typography></DialogContent>
-        <DialogActions sx={{ p: 2.5 }}><Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#71717A' }}>취소</Button><Button onClick={handleConfirmDelete} sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 700 }}>삭제</Button></DialogActions>
+        <DialogActions sx={{ p: 2.5 }}><Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#71717A' }}>취소</Button><Button onClick={() => { setExams(p => p.filter(ex => ex.id !== examToDelete.id)); setDeleteConfirmOpen(false); setSelectedExamId(null); showSnack('삭제되었습니다.'); }} sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 700 }}>삭제</Button></DialogActions>
       </Dialog>
 
       {snack.open && (<Box sx={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: '#14532d', border: '1px solid #22c55e', color: '#86efac', px: 4, py: 1.5, borderRadius: '14px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', gap: 1.5, animation: 'fadeUp 0.3s ease-out' }}><CheckCircleIcon sx={{ fontSize: 20 }} /><Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>{snack.message}</Typography></Box>)}
