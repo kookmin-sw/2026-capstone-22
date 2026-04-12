@@ -388,6 +388,9 @@ async def _process_kakao_callback(
             .first()
         )
 
+        _tenant_obj = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        tenant_slug = _tenant_obj.slug if _tenant_obj else None
+
         loop = asyncio.get_event_loop()
 
         smart_result = await loop.run_in_executor(
@@ -401,12 +404,17 @@ async def _process_kakao_callback(
                 history=history,
                 has_calendar=has_calendar,
                 tenant_name=tenant_name,
+                tenant_slug=tenant_slug,
+                user_id=user_id,
+                session_id=session_id,
                 chatbot_settings=cb_settings,
             ),
         )
         raw_text = smart_result.get("text", "답변을 생성할 수 없습니다.")
         used_calendar = smart_result.get("used_calendar", False)
         cited_sources = smart_result.get("cited_sources", [])
+        verification_required = smart_result.get("verification_required", False)
+        verification_url = smart_result.get("verification_url", None)
 
         # Filter to sources that have valid URIs from grounding_metadata
         valid_sources = [s for s in cited_sources if s.get("uri")]
@@ -755,12 +763,17 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
                 history=history or [],
                 has_calendar=has_calendar,
                 tenant_name=tenant_name,
+                tenant_slug=_tenant_obj.slug if _tenant_obj else None,
+                user_id=user.id if user else None,
+                session_id=session.id if session else None,
                 chatbot_settings=chatbot_settings,
             ),
         )
         raw_text = smart_result.get("text", "답변을 생성할 수 없습니다.")
         used_calendar = smart_result.get("used_calendar", False)
         cited_sources = smart_result.get("cited_sources", [])
+        verification_required = smart_result.get("verification_required", False)
+        verification_url = smart_result.get("verification_url", None)
         valid_sources = [s for s in cited_sources if s.get("uri")]
 
         # Fallback: parse [cite: "..."] from text and resolve via DB
@@ -786,6 +799,24 @@ async def kakao_chat(request: Request, db: Session = Depends(get_db)):
             _save_messages(db, session.id, tenant_id, utterance, raw_text)
 
         outputs = _build_kakao_outputs(chunks, valid_sources)
+
+        # Append verification button if required
+        if verification_required and verification_url and len(outputs) < 3:
+            outputs.append(
+                {
+                    "textCard": {
+                        "title": "본인 확인",
+                        "description": "개인 정보 조회를 위해 본인 확인이 필요합니다.",
+                        "buttons": [
+                            {
+                                "action": "webLink",
+                                "label": "본인 확인하기",
+                                "webLinkUrl": verification_url,
+                            }
+                        ],
+                    }
+                }
+            )
 
         # Append calendar link card only when calendar functions were actually called
         if used_calendar and len(outputs) < 3:
