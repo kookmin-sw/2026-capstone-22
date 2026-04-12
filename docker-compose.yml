@@ -22,7 +22,6 @@ services:
       - GOOGLE_CALENDAR_CLIENT_SECRET=${GOOGLE_CALENDAR_CLIENT_SECRET:-}
       - GOOGLE_CALENDAR_REDIRECT_URI=${GOOGLE_CALENDAR_REDIRECT_URI:-http://localhost:8888/api/calendar/callback}
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8888}
-      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8888}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/readytalk-kmu-credentials.json
     volumes:
       - ./backend:/app
