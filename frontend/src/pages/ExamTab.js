@@ -96,7 +96,8 @@ export default function ExamTab() {
 
   // 필터 상태
   const [filters, setFilters] = useState({
-    class_id: 'all', student_name: '', subject: 'all', dateStart: '', dateEnd: '',
+    class_id: 'all', student_name: '', subject: 'all', exam_title: '',
+    showDeclinersOnly: false, // 퀵 필터용 (성적 하락 학생)
   });
 
   // 다이얼로그 상태
@@ -111,8 +112,7 @@ export default function ExamTab() {
     return exams.filter(e => {
       if (filters.class_id !== 'all' && e.class_id !== Number(filters.class_id)) return false;
       if (filters.subject !== 'all' && e.subject !== filters.subject) return false;
-      if (filters.dateStart && e.date < filters.dateStart) return false;
-      if (filters.dateEnd && e.date > filters.dateEnd) return false;
+      if (filters.exam_title && !e.title.toLowerCase().includes(filters.exam_title.toLowerCase())) return false;
       return true;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [exams, filters]);
@@ -136,15 +136,22 @@ export default function ExamTab() {
     });
     const distribution = dist.map((count, i) => ({ range: `${i * 10}-${(i + 1) * 10}`, count }));
 
-    // 성적 하락 학생 수 (이전 시험 대비) - 목데이터 기준 시뮬레이션
-    const decliners = res.filter(r => r.id === 2 || r.id === 3).length; // 임의 지정
+    // 성적 하락 학생 수 (전회 대비 하락 시뮬레이션)
+    // 목데이터에서는 student_id가 2, 3인 학생을 하락 학생으로 가정
+    const declinersList = res.filter(r => r.student_id === 2 || r.student_id === 3);
+    const decliners = declinersList.length;
 
-    return { avg, max, count: res.length, decliners, distribution };
+    return { avg, max, count: res.length, decliners, distribution, declinerIds: declinersList.map(d => d.student_id) };
   }, [results, selectedExamId]);
 
   // 상단 요약 카드 데이터
   const summary = useMemo(() => {
-    const recentCount = exams.filter(e => new Date(e.date) > new Date('2026-03-01')).length;
+    // "최근"의 기준: 2026-04-12 기준 최근 30일 이내 시험
+    const today = new Date('2026-04-12');
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    const recentCount = exams.filter(e => new Date(e.date) >= thirtyDaysAgo && new Date(e.date) <= today).length;
     return { recentCount, avg: stats.avg, max: stats.max, decliners: stats.decliners };
   }, [exams, stats]);
 
@@ -154,8 +161,13 @@ export default function ExamTab() {
     return classStudents.map(student => {
       const res = results.find(r => r.exam_id === selectedExamId && r.student_id === student.id);
       return { ...student, result: res || { score: '', grade: '', rank: '', comment: '', updated_at: '' } };
-    }).filter(item => !filters.student_name || item.name.includes(filters.student_name));
-  }, [selectedExamId, selectedExam, results, filters.student_name]);
+    }).filter(item => {
+      if (filters.student_name && !item.name.includes(filters.student_name)) return false;
+      // 퀵 필터: 성적 하락 학생만 보기
+      if (filters.showDeclinersOnly && !stats.declinerIds.includes(item.id)) return false;
+      return true;
+    });
+  }, [selectedExamId, selectedExam, results, filters.student_name, filters.showDeclinersOnly, stats.declinerIds]);
 
   // 핸들러
   const handleOpenAddExam = () => { setEditingExam(null); setExamForm({ title: '', subject: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' }); setExamDialogOpen(true); };
@@ -186,23 +198,47 @@ export default function ExamTab() {
   };
   const showSnack = (message) => { setSnack({ open: true, message }); setTimeout(() => setSnack({ open: false, message: '' }), 2500); };
 
+  const toggleDeclinersFilter = () => {
+    if (!selectedExamId) return;
+    setFilters(prev => ({ ...prev, showDeclinersOnly: !prev.showDeclinersOnly }));
+  };
+
   return (
     <Box sx={{ animation: 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
       
       {/* ── 1. 상단 요약 카드 ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: '최근 시험 수', value: summary.recentCount, color: '#a78bfa', icon: <ExamIcon /> },
-          { label: '선택 시험 평균', value: summary.avg, color: '#4ade80', icon: <TrendingUpIcon /> },
-          { label: '최고 점수', value: summary.max, color: '#f59e0b', icon: <TrophyIcon /> },
-          { label: '성적 하락 학생', value: summary.decliners, color: '#ef4444', icon: <TrendingDownIcon /> },
+          { label: '최근 30일 시험 수', value: summary.recentCount, color: '#a78bfa', icon: <ExamIcon />, clickable: false },
+          { label: '선택 시험 평균', value: summary.avg, color: '#4ade80', icon: <TrendingUpIcon />, clickable: false },
+          { label: '최고 점수', value: summary.max, color: '#f59e0b', icon: <TrophyIcon />, clickable: false },
+          { 
+            label: '성적 하락 학생', 
+            value: summary.decliners, 
+            color: '#ef4444', 
+            icon: <TrendingDownIcon />, 
+            clickable: !!selectedExamId,
+            active: filters.showDeclinersOnly,
+            onClick: toggleDeclinersFilter
+          },
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
-            <Box sx={{
-              bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', p: 3,
-              display: 'flex', alignItems: 'center', gap: 2.5, transition: 'all 0.2s',
-              '&:hover': { transform: 'translateY(-4px)', borderColor: 'rgba(255,255,255,0.12)' }
-            }}>
+            <Box 
+              onClick={item.onClick}
+              sx={{
+                bgcolor: '#18181B', 
+                border: item.active ? `2px solid ${item.color}` : '1px solid rgba(255,255,255,0.06)', 
+                borderRadius: '16px', p: 3,
+                display: 'flex', alignItems: 'center', gap: 2.5, 
+                transition: 'all 0.2s',
+                cursor: item.clickable ? 'pointer' : 'default',
+                bgcolor: item.active ? `${item.color}08` : '#18181B',
+                '&:hover': item.clickable ? { 
+                  transform: 'translateY(-4px)', 
+                  borderColor: item.color 
+                } : {}
+              }}
+            >
               <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: `${item.color}15`, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
               </Box>
@@ -231,8 +267,7 @@ export default function ExamTab() {
             <MenuItem value="수학">수학</MenuItem><MenuItem value="영어">영어</MenuItem><MenuItem value="과학">과학</MenuItem>
           </Select>
         </FormControl>
-        <TextField type="date" size="small" label="시험일 시작" value={filters.dateStart} onChange={e => setFilters(p => ({ ...p, dateStart: e.target.value }))} sx={{ ...inputSx, minWidth: 150 }} InputLabelProps={{ shrink: true }} />
-        <TextField type="date" size="small" label="시험일 종료" value={filters.dateEnd} onChange={e => setFilters(p => ({ ...p, dateEnd: e.target.value }))} sx={{ ...inputSx, minWidth: 150 }} InputLabelProps={{ shrink: true }} />
+        <TextField size="small" placeholder="시험명 검색" value={filters.exam_title} onChange={e => setFilters(p => ({ ...p, exam_title: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 200 }} />
         <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.06)' }} />
         <TextField size="small" placeholder="학생명 검색" value={filters.student_name} onChange={e => setFilters(p => ({ ...p, student_name: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
         <Box sx={{ flex: 1 }} />
@@ -267,7 +302,7 @@ export default function ExamTab() {
                   </TableHead>
                   <TableBody>
                     {filteredExams.map(e => (
-                      <TableRow key={e.id} hover onClick={() => setSelectedExamId(e.id)} sx={{ cursor: 'pointer', bgcolor: selectedExamId === e.id ? 'rgba(167,139,250,0.06)' : 'transparent', '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA' } }}>
+                      <TableRow key={e.id} hover onClick={() => { setSelectedExamId(e.id); setFilters(p => ({ ...p, showDeclinersOnly: false })); }} sx={{ cursor: 'pointer', bgcolor: selectedExamId === e.id ? 'rgba(167,139,250,0.06)' : 'transparent', '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA' } }}>
                         <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{e.title}</TableCell>
                         <TableCell><Box sx={{ display: 'flex', gap: 0.5 }}><Chip label={e.subject} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.05)', color: '#71717A' }} /><Chip label={e.type} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa' }} /></Box></TableCell>
                         <TableCell>{e.date}</TableCell>
@@ -289,21 +324,26 @@ export default function ExamTab() {
               <Box sx={{ px: 3, py: 2, bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <SchoolIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>학생별 시험 결과 {selectedExam ? `[${selectedExam.title}]` : ''}</Typography>
+                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>
+                    학생별 시험 결과 {selectedExam ? `[${selectedExam.title}]` : ''} 
+                    {filters.showDeclinersOnly && <Typography component="span" sx={{ color: '#ef4444', ml: 1, fontSize: '0.8125rem', fontWeight: 700 }}>(성적 하락 학생 필터링됨)</Typography>}
+                  </Typography>
                 </Box>
                 {selectedExam && <Button variant="outlined" startIcon={<SaveIcon />} onClick={() => showSnack('성적이 저장되었습니다.')} sx={{ borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa', fontWeight: 700, borderRadius: '10px', textTransform: 'none', '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}>결과 저장</Button>}
               </Box>
               <Box sx={{ minHeight: 400 }}>
                 {!selectedExamId ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}><InfoIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} /><Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>시험을 선택해주세요</Typography></Box>
+                ) : currentResults.length === 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}><SearchIcon sx={{ fontSize: 48, color: '#27272A', mb: 2 }} /><Typography sx={{ color: '#71717A', fontSize: '0.9375rem', fontWeight: 500 }}>해당하는 학생이 없습니다</Typography></Box>
                 ) : (
                   <Table size="small">
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>학생명</TableCell>
+                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>분반</TableCell>
                         <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>점수 / {selectedExam.max_score}</TableCell>
                         <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>등급</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>반 순위</TableCell>
                         <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>코멘트</TableCell>
                         <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>수정일</TableCell>
                       </TableRow>
@@ -312,10 +352,27 @@ export default function ExamTab() {
                       {currentResults.map(item => (
                         <TableRow key={item.id} sx={{ '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA', py: 1.5 } }}>
                           <TableCell><Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}><Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.name[0]}</Avatar><Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#FAFAFA' }}>{item.name}</Typography></Box></TableCell>
-                          <TableCell><TextField size="small" type="number" value={item.result.score} onChange={ev => updateResult(item.id, { score: Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.8125rem' }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center', fontWeight: 700, color: '#a78bfa' } }} /></TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
+                          <TableCell><TextField size="small" type="number" value={item.result.score} onChange={ev => updateResult(item.id, { score: Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255,255,255,0.02)', fontSize: '0.8125rem', color: '#a78bfa', fontWeight: 700, '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
                           <TableCell><Select value={item.result.grade} onChange={ev => updateResult(item.id, { grade: ev.target.value })} size="small" sx={{ ...selectSx, minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.75rem', fontWeight: 700 } }} MenuProps={menuProps}>{['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(g => <MenuItem key={g} value={g}>{g}등급</MenuItem>)}</Select></TableCell>
-                          <TableCell><TextField size="small" type="number" value={item.result.rank} onChange={ev => updateResult(item.id, { rank: Number(ev.target.value) })} sx={{ width: 60, '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.8125rem' } }} /></TableCell>
-                          <TableCell><TextField fullWidth size="small" value={item.result.comment} onChange={ev => updateResult(item.id, { comment: ev.target.value })} placeholder="피드백 입력..." sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'transparent', fontSize: '0.8125rem' } }} /></TableCell>
+                          <TableCell>
+                            <TextField 
+                              fullWidth size="small" 
+                              value={item.result.comment} 
+                              onChange={ev => updateResult(item.id, { comment: ev.target.value })} 
+                              placeholder="피드백 입력..." 
+                              sx={{ 
+                                '& .MuiOutlinedInput-root': { 
+                                  bgcolor: 'rgba(255,255,255,0.02)', 
+                                  fontSize: '0.8125rem', 
+                                  color: '#FAFAFA',
+                                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                  '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.2)' },
+                                },
+                                '& .MuiOutlinedInput-input': { p: 0.5 }
+                              }} 
+                            />
+                          </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem' }}>{item.result.updated_at || '-'}</TableCell>
                         </TableRow>
                       ))}
@@ -352,8 +409,22 @@ export default function ExamTab() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>응시 인원</Typography><Typography sx={{ color: '#FAFAFA', fontWeight: 800 }}>{stats.count}명</Typography></Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>최고 점수</Typography><Typography sx={{ color: '#f59e0b', fontWeight: 800 }}>{stats.max}점</Typography></Box>
                   </Box>
-                  <Box sx={{ mt: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(239,68,68,0.05)', border: '1px dashed rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <TrendingDownIcon sx={{ color: '#ef4444', fontSize: 18 }} /><Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography> 발견. 집중 상담 권장.</Typography>
+                  <Box sx={{ mt: 3, p: 2, borderRadius: '12px', bgcolor: stats.decliners > 0 ? 'rgba(239,68,68,0.05)' : 'rgba(74,222,128,0.05)', border: `1px dashed ${stats.decliners > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(74,222,128,0.2)'}`, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {stats.decliners > 0 ? (
+                      <>
+                        <TrendingDownIcon sx={{ color: '#ef4444', fontSize: 18 }} />
+                        <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>
+                          전회 대비 성적 하락 학생 <Typography component="span" sx={{ fontWeight: 900, textDecoration: 'underline' }}>{stats.decliners}명</Typography> 발견. 집중 상담 권장.
+                        </Typography>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 18 }} />
+                        <Typography sx={{ color: '#86efac', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.4 }}>
+                          전회 대비 성적 하락 학생이 없습니다.
+                        </Typography>
+                      </>
+                    )}
                   </Box>
                 </>
               ) : (

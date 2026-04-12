@@ -225,6 +225,7 @@ export default function AssignmentTab() {
   const [filters, setFilters] = useState({
     class_id: 'all',
     student_name: '',
+    assignment_title: '',
     status: 'all',
     subject: 'all',
     dateStart: '',
@@ -274,8 +275,12 @@ export default function AssignmentTab() {
 
       if (filters.class_id !== 'all' && a.class_id !== Number(filters.class_id)) return false;
       if (filters.subject !== 'all' && a.subject !== filters.subject) return false;
-      if (filters.dateStart && a.due_date < filters.dateStart) return false;
-      if (filters.dateEnd && a.due_date > filters.dateEnd) return false;
+      if (filters.assignment_title && !a.title.toLowerCase().includes(filters.assignment_title.toLowerCase())) return false;
+      
+      // 날짜 정확히 일치 필터
+      if (filters.dateStart && a.assigned_date !== filters.dateStart) return false;
+      if (filters.dateEnd && a.due_date !== filters.dateEnd) return false;
+      
       return true;
     });
   }, [assignments, submissions, filters]);
@@ -479,15 +484,23 @@ export default function AssignmentTab() {
           type="date" size="small" label="시작일"
           value={filters.dateStart}
           onChange={e => setFilters(p => ({ ...p, dateStart: e.target.value }))}
-          sx={{ ...inputSx, minWidth: 150 }}
+          sx={{ ...inputSx, minWidth: 140 }}
           InputLabelProps={{ shrink: true }}
         />
         <TextField
           type="date" size="small" label="종료일"
           value={filters.dateEnd}
           onChange={e => setFilters(p => ({ ...p, dateEnd: e.target.value }))}
-          sx={{ ...inputSx, minWidth: 150 }}
+          sx={{ ...inputSx, minWidth: 140 }}
           InputLabelProps={{ shrink: true }}
+        />
+
+        <TextField
+          size="small" placeholder="과제명 검색"
+          value={filters.assignment_title}
+          onChange={e => setFilters(p => ({ ...p, assignment_title: e.target.value }))}
+          InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }}
+          sx={{ ...inputSx, minWidth: 180 }}
         />
 
         <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.06)' }} />
@@ -528,8 +541,8 @@ export default function AssignmentTab() {
                 과제 목록 {
                   filters.quickFilter === 'ongoing' ? '(진행중)' : 
                   filters.quickFilter === 'dueToday' ? '(오늘 마감)' : 
-                  filters.quickFilter === 'missing' ? '(미제출 포함)' :
-                  filters.quickFilter === 'late' ? '(지연 제출 포함)' : ''
+                  filters.quickFilter === 'missing' ? '(미제출)' :
+                  filters.quickFilter === 'late' ? '(지연 제출)' : ''
                 }
               </Typography>
             </Box>
