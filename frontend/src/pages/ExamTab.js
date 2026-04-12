@@ -231,13 +231,20 @@ res.forEach(r => {
           { label: '선택 시험 최고점', value: summary.max, color: '#f59e0b', icon: <TrophyIcon />, clickable: false },
           { 
             label: '성적 하락 학생', value: summary.decliners, color: '#ef4444', icon: <TrendingDownIcon />, 
-            clickable: !!selectedExamId, active: filters.showDeclinersOnly, onClick: () => setFilters(p => ({ ...p, showDeclinersOnly: !p.showDeclinersOnly }))
+            clickable: !!selectedExamId && summary.decliners > 0, 
+            active: filters.showDeclinersOnly, 
+            onClick: () => summary.decliners > 0 && setFilters(p => ({ ...p, showDeclinersOnly: !p.showDeclinersOnly }))
           },
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
-            <Box onClick={item.onClick} sx={{
-                bgcolor: '#18181B', border: item.active ? `2px solid ${item.color}` : '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', p: 3,
-                display: 'flex', alignItems: 'center', gap: 2.5, transition: 'all 0.2s',
+            <Box 
+              onClick={item.onClick} 
+              sx={{
+                bgcolor: '#18181B', 
+                border: item.active ? `2px solid ${item.color}` : '1px solid rgba(255,255,255,0.06)', 
+                borderRadius: '16px', p: 3,
+                display: 'flex', alignItems: 'center', gap: 2.5, 
+                transition: 'all 0.2s',
                 cursor: item.clickable ? 'pointer' : 'default',
                 bgcolor: item.active ? `${item.color}08` : '#18181B',
                 '&:hover': item.clickable ? { transform: 'translateY(-4px)', borderColor: item.color } : {}
