@@ -277,6 +277,8 @@ def _strip_markdown(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     # Remove [cite: "..."] markers (sources shown as buttons instead)
     text = re.sub(r'\s*\[cite:\s*"[^"]*"\]', "", text)
+    # Remove <!-- verify:... --> comments (verification handled by button card)
+    text = re.sub(r'\s*<!--\s*verify:[^>]*-->', "", text)
     return text.strip()
 
 
