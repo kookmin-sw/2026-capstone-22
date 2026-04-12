@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     REACT_APP_API_URL: str = "http://localhost:8888"
 
     # Verification (Auth)
-    APP_BASE_URL: str = "http://localhost:8888"
+    APP_BASE_URL: str = "https://academy.ready.talk"
     VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 10
     OTP_EXPIRE_MINUTES: int = 5
     OTP_MAX_ATTEMPTS: int = 5
