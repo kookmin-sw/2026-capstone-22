@@ -522,9 +522,12 @@ class ChatService:
                 contents = query
 
             # --- [Router Step] Determine specialized agent ---
-            # user_id는 JWT 인증을 통과한 실제 로그인 사용자에게만 주입됨.
-            # None이면 비로그인(게스트) 사용자 → CONSULTING 전용.
-            is_authenticated = user_id is not None
+            # is_authenticated: JWT 로그인 + 실제 테넌트 소속 사용자만 True.
+            # 게스트 유저는 DB에 저장된 user_id가 있어서 user_id is not None이지만,
+            # tenant_id=None이므로 반드시 tenant_id 조건도 함께 검사해야 한다.
+            # 게스트가 PERSONAL 키워드를 입력해도 policy check 블록 조건(and tenant_id)에서
+            # 걸려 스킵되면 LLM이 학생 데이터 없이 실행되어 일반 응답을 반환하는 버그가 있었음.
+            is_authenticated = user_id is not None and tenant_id is not None
             agent_type = RouterAgent.determine_agent(
                 query, is_authenticated, model_name=model_name
             )
