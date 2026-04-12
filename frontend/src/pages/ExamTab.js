@@ -151,25 +151,31 @@ export default function ExamTab() {
       dist[idx]++;
     });
     const distribution = dist.map((count, i) => ({ range: `${i * 10}-${(i + 1) * 10}`, count }));
-// 성적 하락 학생 판별 (동일 과목 + 동일 시험 유형의 직전 시험 대비)
-const declinerIds = [];
-res.forEach(r => {
-  const prevExam = exams
-    .filter(e => 
-      e.subject === selectedExam.subject && 
-      e.type === selectedExam.type && 
-      e.class_id === selectedExam.class_id && 
-      new Date(e.date) < new Date(selectedExam.date)
-    )
-    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-
-  if (prevExam) {
-    const prevResult = results.find(pr => pr.exam_id === prevExam.id && pr.student_id === r.student_id);
-    if (prevResult && r.score < prevResult.score) {
-      declinerIds.push(r.student_id);
-    }
-  }
-});
+    // 성적 하락 학생 판별 (동일 과목 + 동일 시험 유형의 직전 시험 대비)
+    // 중요: 시험마다 만점이 다를 수 있으므로 '백분율 점수(원점수/만점)' 기준으로 비교
+    const declinerIds = [];
+    res.forEach(r => {
+      const prevExam = exams
+        .filter(e => 
+          e.subject === selectedExam.subject && 
+          e.type === selectedExam.type && 
+          e.class_id === selectedExam.class_id && 
+          new Date(e.date) < new Date(selectedExam.date)
+        )
+        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      
+      if (prevExam) {
+        const prevResult = results.find(pr => pr.exam_id === prevExam.id && pr.student_id === r.student_id);
+        if (prevResult) {
+          const currentPercentage = r.score / selectedExam.max_score;
+          const prevPercentage = prevResult.score / prevExam.max_score;
+          
+          if (currentPercentage < prevPercentage) {
+            declinerIds.push(r.student_id);
+          }
+        }
+      }
+    });
 
     return { avg, max, count: res.length, decliners: declinerIds.length, distribution, declinerIds };
   }, [results, selectedExamId, selectedExam, exams]);
@@ -395,7 +401,7 @@ res.forEach(r => {
                   <BarChartIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
                   <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.875rem' }}>분석 요약</Typography>
                 </Box>
-                <Tooltip title="성적 하락 기준: 동일 학생/과목/시험유형의 직전 시험 대비 점수 하락">
+                <Tooltip title="성적 하락 기준: 동일 학생/과목/시험유형의 직전 시험 대비 백분율(원점수/만점) 하락">
                   <HelpIcon sx={{ color: '#52525B', fontSize: 16, cursor: 'help' }} />
                 </Tooltip>
               </Box>
