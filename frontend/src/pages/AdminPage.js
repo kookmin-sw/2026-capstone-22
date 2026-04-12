@@ -25,6 +25,7 @@ import {
 import CalendarPage from './CalendarPage';
 import ExamAnalysisPage from './ExamAnalysisPage';
 import AttendanceTab from './AttendanceTab';
+import AssignmentTab from './AssignmentTab';
 import { useUpload } from '../context/UploadContext';
 import { useTenant } from '../context/TenantContext';
 import { corpusAPI, adminAPI, promptTemplateAPI, calendarAPI, chatbotSettingsAPI, chatAPI, hitlAPI, studentAPI } from '../services/api';
@@ -1672,18 +1673,19 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       </Dialog>
 
       {studentSubTab === 2 && <AttendanceTab />}
+      {studentSubTab === 3 && <AssignmentTab />}
 
-      {(studentSubTab === 3 || studentSubTab === 4) && (
+      {studentSubTab === 4 && (
         <Box sx={{ py: 10, textAlign: 'center' }}>
           <Box sx={{
             width: 48, height: 48, borderRadius: '12px', mx: 'auto', mb: 2,
             background: 'linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(124,58,237,0.1) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Typography sx={{ fontSize: '1.25rem' }}>{studentSubTab === 3 ? '📋' : '📝'}</Typography>
+            <Typography sx={{ fontSize: '1.25rem' }}>{'📝'}</Typography>
           </Box>
           <Typography sx={{ color: '#FAFAFA', fontWeight: 600, fontSize: '0.9375rem', mb: 0.75 }}>
-            {studentSubTab === 3 ? '과제 관리' : '시험 관리'} 준비 중
+            {'시험 관리'} 준비 중
           </Typography>
           <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>
             다음 스프린트에서 제공될 예정입니다
