@@ -162,6 +162,23 @@ export default function AssignmentTab() {
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
 
+  const subjectOptions = useMemo(() => {
+    const uniqueSubjects = new Set(
+      classes
+        .map((cls) => cls.subject?.trim())
+        .filter(Boolean)
+    );
+    return Array.from(uniqueSubjects);
+  }, [classes]);
+
+  const formSubjectOptions = useMemo(() => {
+    const currentSubject = assignmentForm.subject?.trim();
+    if (currentSubject && !subjectOptions.includes(currentSubject)) {
+      return [currentSubject, ...subjectOptions];
+    }
+    return subjectOptions;
+  }, [assignmentForm.subject, subjectOptions]);
+
   // ── API 파라미터 빌더 ──
   const buildAssignmentParams = useCallback((filters) => {
     const params = {};
@@ -476,9 +493,9 @@ export default function AssignmentTab() {
             label="과목 선택" sx={selectSx} MenuProps={menuProps}
           >
             <MenuItem value="all">전체 과목</MenuItem>
-            <MenuItem value="수학">수학</MenuItem>
-            <MenuItem value="영어">영어</MenuItem>
-            <MenuItem value="과학">과학</MenuItem>
+            {subjectOptions.map(subject => (
+              <MenuItem key={subject} value={subject}>{subject}</MenuItem>
+            ))}
           </Select>
         </FormControl>
 
@@ -818,9 +835,10 @@ export default function AssignmentTab() {
                 value={assignmentForm.subject} onChange={e => setAssignmentForm(p => ({ ...p, subject: e.target.value }))}
                 label="과목" sx={selectSx} MenuProps={menuProps}
               >
-                <MenuItem value="수학">수학</MenuItem>
-                <MenuItem value="영어">영어</MenuItem>
-                <MenuItem value="과학">과학</MenuItem>
+                <MenuItem value="">선택 안 함</MenuItem>
+                {formSubjectOptions.map(subject => (
+                  <MenuItem key={subject} value={subject}>{subject}</MenuItem>
+                ))}
               </Select>
             </FormControl>
             <FormControl size="small" fullWidth>
