@@ -220,7 +220,7 @@ async def create_assignment(
         tenant_id=current_user.tenant_id,
         class_id=data.class_id,
         title=data.title,
-        subject=data.subject,
+        subject=cls.subject,
         assigned_date=data.assigned_date,
         due_date=data.due_date,
         description=data.description,
@@ -312,6 +312,8 @@ async def update_assignment(
         )
 
     for field, value in data.model_dump(exclude_unset=True).items():
+        if field == "subject":
+            continue
         setattr(assignment, field, value)
 
     assignment.updated_at = datetime.now(timezone.utc)

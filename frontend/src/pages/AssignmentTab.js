@@ -141,7 +141,7 @@ export default function AssignmentTab() {
 
   // 과제 목록 필터 (API 파라미터)
   const [assignmentFilters, setAssignmentFilters] = useState({
-    class_id: 'all', subject: 'all', dateStart: '', dateEnd: '',
+    class_id: 'all', dateStart: '', dateEnd: '',
   });
   // 과제명 검색 (클라이언트 사이드)
   const [assignmentSearch, setAssignmentSearch] = useState('');
@@ -156,34 +156,16 @@ export default function AssignmentTab() {
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [assignmentForm, setAssignmentForm] = useState({
-    title: '', subject: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '',
+    title: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '',
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
 
-  const subjectOptions = useMemo(() => {
-    const uniqueSubjects = new Set(
-      classes
-        .map((cls) => cls.subject?.trim())
-        .filter(Boolean)
-    );
-    return Array.from(uniqueSubjects);
-  }, [classes]);
-
-  const formSubjectOptions = useMemo(() => {
-    const currentSubject = assignmentForm.subject?.trim();
-    if (currentSubject && !subjectOptions.includes(currentSubject)) {
-      return [currentSubject, ...subjectOptions];
-    }
-    return subjectOptions;
-  }, [assignmentForm.subject, subjectOptions]);
-
   // ── API 파라미터 빌더 ──
   const buildAssignmentParams = useCallback((filters) => {
     const params = {};
     if (filters.class_id !== 'all') params.class_id = filters.class_id;
-    if (filters.subject !== 'all') params.subject = filters.subject;
     if (filters.dateStart) params.due_date_from = filters.dateStart;
     if (filters.dateEnd) params.due_date_to = filters.dateEnd;
     return params;
@@ -292,7 +274,7 @@ export default function AssignmentTab() {
   // ── 핸들러 ──
   const handleOpenAddAssignment = () => {
     setEditingAssignment(null);
-    setAssignmentForm({ title: '', subject: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '' });
+    setAssignmentForm({ title: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '' });
     setAssignmentDialogOpen(true);
   };
 
@@ -301,7 +283,6 @@ export default function AssignmentTab() {
     setEditingAssignment(assignment);
     setAssignmentForm({
       title: assignment.title,
-      subject: assignment.subject || '',
       class_id: assignment.class_id,
       assigned_date: assignment.assigned_date,
       due_date: assignment.due_date,
@@ -485,20 +466,6 @@ export default function AssignmentTab() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>과목 선택</InputLabel>
-          <Select
-            value={assignmentFilters.subject}
-            onChange={e => setAssignmentFilters(p => ({ ...p, subject: e.target.value }))}
-            label="과목 선택" sx={selectSx} MenuProps={menuProps}
-          >
-            <MenuItem value="all">전체 과목</MenuItem>
-            {subjectOptions.map(subject => (
-              <MenuItem key={subject} value={subject}>{subject}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
         <TextField
           type="date" size="small" label="마감일 시작"
           value={assignmentFilters.dateStart}
@@ -585,7 +552,6 @@ export default function AssignmentTab() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과제명</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>부여일</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>마감일</TableCell>
@@ -607,7 +573,6 @@ export default function AssignmentTab() {
                     }}
                   >
                     <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{a.title}</TableCell>
-                    <TableCell>{a.subject}</TableCell>
                     <TableCell>{a.class_name}</TableCell>
                     <TableCell>{a.assigned_date}</TableCell>
                     <TableCell sx={{ color: new Date(a.due_date) < new Date() ? '#ef4444 !important' : 'inherit' }}>{a.due_date}</TableCell>
@@ -822,25 +787,23 @@ export default function AssignmentTab() {
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 900, pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           {editingAssignment ? '과제 정보 수정' : '새 과제 등록'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          <TextField
-            label="과제명 *" fullWidth size="small"
-            value={assignmentForm.title} onChange={e => setAssignmentForm(p => ({ ...p, title: e.target.value }))}
-            sx={inputSx}
-          />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel sx={{ color: '#71717A' }}>과목</InputLabel>
-              <Select
-                value={assignmentForm.subject} onChange={e => setAssignmentForm(p => ({ ...p, subject: e.target.value }))}
-                label="과목" sx={selectSx} MenuProps={menuProps}
-              >
-                <MenuItem value="">선택 안 함</MenuItem>
-                {formSubjectOptions.map(subject => (
-                  <MenuItem key={subject} value={subject}>{subject}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+        <DialogContent
+          sx={{
+            pt: 6,
+            pb: 1,
+            overflow: 'visible',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2.5,
+          }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
+            <TextField
+              label="과제명 *" fullWidth size="small"
+              value={assignmentForm.title}
+              onChange={e => setAssignmentForm(p => ({ ...p, title: e.target.value }))}
+              sx={inputSx}
+            />
             <FormControl size="small" fullWidth>
               <InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel>
               <Select
