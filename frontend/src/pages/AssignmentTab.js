@@ -277,9 +277,13 @@ export default function AssignmentTab() {
       if (filters.subject !== 'all' && a.subject !== filters.subject) return false;
       if (filters.assignment_title && !a.title.toLowerCase().includes(filters.assignment_title.toLowerCase())) return false;
       
-      // 날짜 정확히 일치 필터
-      if (filters.dateStart && a.assigned_date !== filters.dateStart) return false;
-      if (filters.dateEnd && a.due_date !== filters.dateEnd) return false;
+      // 마감일 범위 필터 (due_date 기준)
+      if (a.due_date) {
+        if (filters.dateStart && a.due_date < filters.dateStart) return false;
+        if (filters.dateEnd && a.due_date > filters.dateEnd) return false;
+      } else {
+        if (filters.dateStart || filters.dateEnd) return false;
+      }
       
       return true;
     });
@@ -481,14 +485,14 @@ export default function AssignmentTab() {
         </FormControl>
 
         <TextField
-          type="date" size="small" label="시작일"
+          type="date" size="small" label="마감일 시작"
           value={filters.dateStart}
           onChange={e => setFilters(p => ({ ...p, dateStart: e.target.value }))}
           sx={{ ...inputSx, minWidth: 140 }}
           InputLabelProps={{ shrink: true }}
         />
         <TextField
-          type="date" size="small" label="종료일"
+          type="date" size="small" label="마감일 종료"
           value={filters.dateEnd}
           onChange={e => setFilters(p => ({ ...p, dateEnd: e.target.value }))}
           sx={{ ...inputSx, minWidth: 140 }}
@@ -504,6 +508,20 @@ export default function AssignmentTab() {
         />
 
         <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.06)' }} />
+
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>제출 상태</InputLabel>
+          <Select
+            value={filters.status}
+            onChange={e => setFilters(p => ({ ...p, status: e.target.value }))}
+            label="제출 상태" sx={selectSx} MenuProps={menuProps}
+          >
+            <MenuItem value="all">전체</MenuItem>
+            {Object.entries(SUBMISSION_STATUS).map(([key, val]) => (
+              <MenuItem key={key} value={key}>{val.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <TextField
           size="small" placeholder="학생명 검색"
