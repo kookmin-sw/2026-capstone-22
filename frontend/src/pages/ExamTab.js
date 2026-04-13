@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, Select, MenuItem, FormControl,
   InputLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -90,6 +90,7 @@ const menuProps = {
 export default function ExamTab() {
   const [exams, setExams] = useState(DUMMY_EXAMS);
   const [results, setResults] = useState(DUMMY_RESULTS);
+  const [draftResults, setDraftResults] = useState({}); // { [student_id]: patch } — 저장 전 임시값
   const [selectedExamId, setSelectedExamId] = useState(null);
 
   // 필터 상태
@@ -110,6 +111,11 @@ export default function ExamTab() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
+
+  // 시험 선택 변경 시 draft 초기화
+  useEffect(() => {
+    setDraftResults({});
+  }, [selectedExamId]);
 
   // "최근 30일" 기준 계산
   const today = useMemo(() => new Date(), []);
@@ -193,13 +199,15 @@ export default function ExamTab() {
     const classStudents = DUMMY_STUDENTS.filter(s => s.class_id === selectedExam?.class_id);
     return classStudents.map(student => {
       const res = results.find(r => r.exam_id === selectedExamId && r.student_id === student.id);
-      return { ...student, result: res || { score: '', grade: '', comment: '', updated_at: '' } };
+      const base = res || { score: null, grade: null, comment: '', updated_at: '' };
+      const draft = draftResults[student.id];
+      return { ...student, result: draft ? { ...base, ...draft } : base };
     }).filter(item => {
       if (filters.student_name && !item.name.includes(filters.student_name)) return false;
       if (filters.showDeclinersOnly && !stats.declinerIds.includes(item.id)) return false;
       return true;
     });
-  }, [selectedExamId, selectedExam, results, filters.student_name, filters.showDeclinersOnly, stats.declinerIds]);
+  }, [selectedExamId, selectedExam, results, draftResults, filters.student_name, filters.showDeclinersOnly, stats.declinerIds]);
 
   // 핸들러
   const handleSaveExam = () => {
@@ -210,15 +218,11 @@ export default function ExamTab() {
   };
   
   const updateResult = (studentId, patch) => {
-    setResults(prev => {
-      const idx = prev.findIndex(r => r.exam_id === selectedExamId && r.student_id === studentId);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = { ...next[idx], ...patch, updated_at: new Date().toISOString().slice(0, 10) };
-        return next;
-      }
-      return [...prev, { id: Date.now(), exam_id: selectedExamId, student_id: studentId, ...patch, updated_at: new Date().toISOString().slice(0, 10) }];
-    });
+    // draft에만 반영 — 저장 버튼 클릭 시 results에 커밋
+    setDraftResults(prev => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] || {}), ...patch },
+    }));
   };
 
   const showSnack = (message) => { setSnack({ open: true, message }); setTimeout(() => setSnack({ open: false, message: '' }), 2500); };
@@ -355,7 +359,24 @@ export default function ExamTab() {
                     {filters.showDeclinersOnly && <Typography component="span" sx={{ color: '#ef4444', ml: 1, fontSize: '0.8125rem', fontWeight: 700 }}>(성적 하락 학생 필터링됨)</Typography>}
                   </Typography>
                 </Box>
-                {selectedExam && <Button variant="outlined" startIcon={<SaveIcon />} onClick={() => showSnack('성적이 저장되었습니다.')} sx={{ borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa', fontWeight: 700, borderRadius: '10px', textTransform: 'none', '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}>결과 저장</Button>}
+                {selectedExam && <Button variant="outlined" startIcon={<SaveIcon />} onClick={() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  setResults(prev => {
+                    let next = [...prev];
+                    Object.entries(draftResults).forEach(([studentIdStr, patch]) => {
+                      const studentId = Number(studentIdStr);
+                      const idx = next.findIndex(r => r.exam_id === selectedExamId && r.student_id === studentId);
+                      if (idx > -1) {
+                        next = next.map((r, i) => i === idx ? { ...r, ...patch, updated_at: today } : r);
+                      } else {
+                        next = [...next, { id: Date.now(), exam_id: selectedExamId, student_id: studentId, ...patch, updated_at: today }];
+                      }
+                    });
+                    return next;
+                  });
+                  setDraftResults({});
+                  showSnack('성적이 저장되었습니다.');
+                }} sx={{ borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa', fontWeight: 700, borderRadius: '10px', textTransform: 'none', '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}>결과 저장</Button>}
               </Box>
               <Box sx={{ minHeight: 400 }}>
                 {!selectedExamId ? (

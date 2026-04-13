@@ -219,6 +219,7 @@ function StatusChip({ status }) {
 export default function AssignmentTab() {
   const [assignments, setAssignments] = useState(DUMMY_ASSIGNMENTS);
   const [submissions, setSubmissions] = useState(DUMMY_SUBMISSIONS);
+  const [draftSubmissions, setDraftSubmissions] = useState({}); // { [student_id]: patch } — 저장 전 임시값
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
 
   // 필터 상태
@@ -244,6 +245,11 @@ export default function AssignmentTab() {
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
 
   const [snack, setSnack] = useState({ open: false, message: '' });
+
+  // 과제 선택 변경 시 draft 초기화
+  useEffect(() => {
+    setDraftSubmissions({});
+  }, [selectedAssignmentId]);
 
   // 요약 정보 계산
   const summary = useMemo(() => {
@@ -317,16 +323,18 @@ export default function AssignmentTab() {
     const classStudents = DUMMY_STUDENTS.filter(s => s.class_id === assignment.class_id);
     return classStudents.map(student => {
       const sub = submissions.find(s => s.assignment_id === selectedAssignmentId && s.student_id === student.id);
+      const base = sub || { status: 'assigned', submitted_at: null, score: null, feedback: '', memo: '' };
+      const draft = draftSubmissions[student.id];
       return {
         ...student,
-        submission: sub || { status: 'assigned', submitted_at: null, score: null, feedback: '', memo: '' }
+        submission: draft ? { ...base, ...draft } : base
       };
     }).filter(item => {
       if (filters.student_name && !item.name.includes(filters.student_name)) return false;
       if (filters.status !== 'all' && item.submission.status !== filters.status) return false;
       return true;
     });
-  }, [selectedAssignmentId, assignments, submissions, filters.student_name, filters.status]);
+  }, [selectedAssignmentId, assignments, submissions, draftSubmissions, filters.student_name, filters.status]);
 
   // 핸들러들
   const handleOpenAddAssignment = () => {
@@ -370,24 +378,33 @@ export default function AssignmentTab() {
   };
 
   const handleUpdateSubmission = (studentId, patch) => {
-    setSubmissions(prev => {
-      const idx = prev.findIndex(s => s.assignment_id === selectedAssignmentId && s.student_id === studentId);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = { ...next[idx], ...patch };
-        return next;
-      } else {
-        return [...prev, { 
-          id: Math.max(...prev.map(s => s.id), 0) + 1,
-          assignment_id: selectedAssignmentId,
-          student_id: studentId,
-          ...patch
-        }];
-      }
-    });
+    // draft에만 반영 — 저장 버튼 클릭 시 submissions에 커밋
+    setDraftSubmissions(prev => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] || {}), ...patch },
+    }));
   };
 
   const handleBatchSave = () => {
+    setSubmissions(prev => {
+      let next = [...prev];
+      Object.entries(draftSubmissions).forEach(([studentIdStr, patch]) => {
+        const studentId = Number(studentIdStr);
+        const idx = next.findIndex(s => s.assignment_id === selectedAssignmentId && s.student_id === studentId);
+        if (idx > -1) {
+          next = next.map((s, i) => i === idx ? { ...s, ...patch } : s);
+        } else {
+          next = [...next, {
+            id: Math.max(...next.map(s => s.id), 0) + 1,
+            assignment_id: selectedAssignmentId,
+            student_id: studentId,
+            ...patch,
+          }];
+        }
+      });
+      return next;
+    });
+    setDraftSubmissions({});
     showSnack('학생별 제출 상태가 저장되었습니다.');
   };
 
