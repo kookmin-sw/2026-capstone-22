@@ -211,8 +211,38 @@ export default function ExamTab() {
 
   // 핸들러
   const handleSaveExam = () => {
-    if (editingExam) setExams(prev => prev.map(e => e.id === editingExam.id ? { ...e, ...examForm } : e));
-    else setExams(prev => [...prev, { ...examForm, id: Math.max(...prev.map(ex => ex.id), 0) + 1 }]);
+    const trimmedTitle = examForm.title.trim();
+    const numericMaxScore = Number(examForm.max_score);
+
+    if (!trimmedTitle) {
+      showSnack('시험명을 입력해주세요.');
+      return;
+    }
+    if (!examForm.subject) {
+      showSnack('과목을 선택해주세요.');
+      return;
+    }
+    if (!examForm.class_id) {
+      showSnack('대상 분반을 선택해주세요.');
+      return;
+    }
+    if (!examForm.date) {
+      showSnack('시험일을 입력해주세요.');
+      return;
+    }
+    if (!Number.isFinite(numericMaxScore) || numericMaxScore <= 0) {
+      showSnack('만점은 1 이상의 숫자로 입력해주세요.');
+      return;
+    }
+
+    const nextExam = {
+      ...examForm,
+      title: trimmedTitle,
+      max_score: numericMaxScore,
+    };
+
+    if (editingExam) setExams(prev => prev.map(e => e.id === editingExam.id ? { ...e, ...nextExam } : e));
+    else setExams(prev => [...prev, { ...nextExam, id: Math.max(...prev.map(ex => ex.id), 0) + 1 }]);
     setExamDialogOpen(false);
     showSnack('시험 정보가 저장되었습니다.');
   };
@@ -476,7 +506,7 @@ export default function ExamTab() {
             <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>과목</InputLabel><Select value={examForm.subject} onChange={e => setExamForm(p => ({ ...p, subject: e.target.value }))} label="과목" sx={selectSx} MenuProps={menuProps}><MenuItem value="수학">수학</MenuItem><MenuItem value="영어">영어</MenuItem><MenuItem value="과학">과학</MenuItem></Select></FormControl>
             <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel><Select value={examForm.class_id} onChange={e => setExamForm(p => ({ ...p, class_id: e.target.value }))} label="대상 분반 *" sx={selectSx} MenuProps={menuProps}>{DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</Select></FormControl>
             <TextField label="시험일" type="date" size="small" fullWidth value={examForm.date} onChange={e => setExamForm(p => ({ ...p, date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
-            <TextField label="만점 *" type="number" size="small" fullWidth value={examForm.max_score} onChange={e => setExamForm(p => ({ ...p, max_score: Number(e.target.value) }))} sx={inputSx} />
+            <TextField label="만점 *" type="number" size="small" fullWidth value={examForm.max_score} onChange={e => setExamForm(p => ({ ...p, max_score: e.target.value === '' ? '' : Number(e.target.value) }))} sx={inputSx} />
             <Autocomplete
               freeSolo
               options={Array.from(new Set(exams.map(e => e.type).filter(Boolean)))}
