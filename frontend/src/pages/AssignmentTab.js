@@ -387,6 +387,7 @@ export default function AssignmentTab() {
       setDraftSubmissions({});
       showSnack('학생별 제출 상태가 저장되었습니다.');
       await loadSubmissions(selectedAssignmentId, submissionFilters);
+      await loadAssignments(assignmentFilters);
       await loadSummary(assignmentFilters);
     } catch (e) {
       showSnack('저장에 실패했습니다.');
