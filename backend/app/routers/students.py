@@ -172,6 +172,22 @@ async def create_student(
         if not cls:
             raise HTTPException(status_code=404, detail="Class not found")
 
+        # 정원 체크
+        if cls.capacity is not None:
+            current_count = (
+                db.query(Student)
+                .filter(
+                    Student.tenant_id == current_user.tenant_id,
+                    Student.class_id == data.class_id,
+                )
+                .count()
+            )
+            if current_count >= cls.capacity:
+                raise HTTPException(
+                    status_code=400,
+                    detail="정원이 가득 찬 분반입니다.",
+                )
+
     cleaned = {k: (None if v == "" else v) for k, v in data.model_dump().items()}
     new_student = Student(**cleaned, tenant_id=current_user.tenant_id)
     db.add(new_student)
@@ -210,6 +226,22 @@ async def update_student(
         )
         if not cls:
             raise HTTPException(status_code=404, detail="Class not found")
+
+    # 다른 분반으로 이동하는 경우에만 정원 체크
+        if data.class_id != student.class_id and cls.capacity is not None:
+            current_count = (
+                db.query(Student)
+                .filter(
+                    Student.tenant_id == current_user.tenant_id,
+                    Student.class_id == data.class_id,
+                )
+                .count()
+            )
+            if current_count >= cls.capacity:
+                raise HTTPException(
+                    status_code=400,
+                    detail="정원이 가득 찬 분반입니다.",
+                )
 
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(student, field, None if value == "" else value)
