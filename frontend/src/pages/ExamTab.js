@@ -340,7 +340,7 @@ export default function ExamTab() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험명</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목 / 유형</TableCell>
+                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>유형</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험일</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">만점/평균</TableCell>
@@ -353,7 +353,6 @@ export default function ExamTab() {
                         <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{e.title}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
-                            <Chip label={getClassSubject(e.class_id)} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.05)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.1)' }} />
                             <Chip label={e.type || '일반'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }} />
                           </Box>
                         </TableCell>
