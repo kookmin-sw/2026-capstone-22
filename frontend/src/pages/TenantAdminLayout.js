@@ -147,6 +147,9 @@ export default function TenantAdminLayout() {
 
   const isActive = (path) => {
     if (path === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
+    if (path === `${basePath}/admin/students/classes`) {
+      return location.pathname.startsWith(`${basePath}/admin/students`);
+    }
     return location.pathname.startsWith(path);
   };
 
