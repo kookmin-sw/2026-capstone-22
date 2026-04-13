@@ -719,21 +719,22 @@ export default function AssignmentTab() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <TextField 
-                          size="small" 
-                          value={item.submission.submitted_at || ''} 
+                        <TextField
+                          size="small"
+                          type="date"
+                          value={item.submission.submitted_at || ''}
                           onChange={(e) => handleUpdateSubmission(item.id, { submitted_at: e.target.value })}
-                          placeholder="YYYY-MM-DD"
-                          sx={{ 
-                            '& .MuiOutlinedInput-root': { 
-                              bgcolor: 'rgba(255,255,255,0.02)', 
+                          InputLabelProps={{ shrink: true }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'rgba(255,255,255,0.02)',
                               fontSize: '0.75rem',
                               color: '#FAFAFA',
                               '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
                             },
-                            '& .MuiOutlinedInput-input': { 
+                            '& .MuiOutlinedInput-input': {
                               p: 0.5,
-                              '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
+                              colorScheme: 'dark',
                             }
                           }}
                         />
