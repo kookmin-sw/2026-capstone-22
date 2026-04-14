@@ -254,6 +254,24 @@ export const studentAPI = {
   deleteStudent: (id) => api.delete(`/admin/students/students/${id}`),
 };
 
+export const assignmentAPI = {
+  // 과제 목록 — params: { class_id?, subject?, due_date_from?, due_date_to? }
+  list: (params) => api.get('/admin/students/assignments', { params }),
+  // 요약 카드 — params: { class_id?, subject?, due_date_from?, due_date_to? }
+  getSummary: (params) => api.get('/admin/students/assignments/summary', { params }),
+  create: (data) => api.post('/admin/students/assignments', data),
+  update: (id, data) => api.put(`/admin/students/assignments/${id}`, data),
+  remove: (id) => api.delete(`/admin/students/assignments/${id}`),
+  // 제출 roster — params: { student_name?, display_status? }
+  listSubmissions: (assignmentId, params) =>
+    api.get(`/admin/students/assignments/${assignmentId}/submissions`, { params }),
+  bulkUpsertSubmissions: (assignmentId, data) =>
+    api.post(
+      `/admin/students/assignments/${assignmentId}/submissions/bulk-upsert`,
+      data
+    ),
+};
+
 export const attendanceAPI = {
   // 날짜 기준 roster 조회 (active 학생 + left join)
   // params: { attendance_date, class_id?, student_id?, status? }

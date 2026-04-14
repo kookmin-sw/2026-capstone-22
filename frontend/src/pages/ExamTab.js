@@ -53,6 +53,9 @@ const DUMMY_RESULTS = [
   { id: 101, exam_id: 6, student_id: 2, score: 90, grade: '1', comment: '', updated_at: '2026-03-26' },
 ];
 
+const getClassSubject = (classId) =>
+  DUMMY_CLASSES.find((cls) => cls.id === Number(classId))?.subject || '';
+
 // ── 공통 스타일 ──────────────────────────────────────────────────────────────
 const inputSx = {
   '& .MuiOutlinedInput-root': {
@@ -97,7 +100,6 @@ export default function ExamTab() {
   const [filters, setFilters] = useState({
     class_id: 'all', 
     student_name: '', 
-    subject: 'all', 
     exam_title: '',
     exam_date: '',
     showDeclinersOnly: false,
@@ -107,7 +109,7 @@ export default function ExamTab() {
   // 다이얼로그 상태
   const [examDialogOpen, setExamDialogOpen] = useState(false);
   const [editingExam, setEditingExam] = useState(null);
-  const [examForm, setExamForm] = useState({ title: '', subject: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' });
+  const [examForm, setExamForm] = useState({ title: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
@@ -128,7 +130,6 @@ export default function ExamTab() {
   const filteredExams = useMemo(() => {
     return exams.filter(e => {
       if (filters.class_id !== 'all' && e.class_id !== Number(filters.class_id)) return false;
-      if (filters.subject !== 'all' && e.subject !== filters.subject) return false;
       if (filters.exam_title && !e.title.toLowerCase().includes(filters.exam_title.toLowerCase())) return false;
       if (filters.exam_date && e.date !== filters.exam_date) return false;
       
@@ -163,7 +164,7 @@ export default function ExamTab() {
     res.forEach(r => {
       const prevExam = exams
         .filter(e => 
-          e.subject === selectedExam.subject && 
+          getClassSubject(e.class_id) === getClassSubject(selectedExam.class_id) && 
           e.type === selectedExam.type && 
           e.class_id === selectedExam.class_id && 
           new Date(e.date) < new Date(selectedExam.date)
@@ -218,10 +219,6 @@ export default function ExamTab() {
       showSnack('시험명을 입력해주세요.');
       return;
     }
-    if (!examForm.subject) {
-      showSnack('과목을 선택해주세요.');
-      return;
-    }
     if (!examForm.class_id) {
       showSnack('대상 분반을 선택해주세요.');
       return;
@@ -239,6 +236,7 @@ export default function ExamTab() {
       ...examForm,
       title: trimmedTitle,
       max_score: numericMaxScore,
+      subject: getClassSubject(examForm.class_id),
     };
 
     if (editingExam) setExams(prev => prev.map(e => e.id === editingExam.id ? { ...e, ...nextExam } : e));
@@ -310,13 +308,6 @@ export default function ExamTab() {
             {DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel sx={{ color: '#71717A' }}>과목 선택</InputLabel>
-          <Select value={filters.subject} onChange={e => setFilters(p => ({ ...p, subject: e.target.value }))} label="과목 선택" sx={selectSx} MenuProps={menuProps}>
-            <MenuItem value="all">전체 과목</MenuItem>
-            <MenuItem value="수학">수학</MenuItem><MenuItem value="영어">영어</MenuItem><MenuItem value="과학">과학</MenuItem>
-          </Select>
-        </FormControl>
 
         <TextField type="date" size="small" label="시험일" value={filters.exam_date} onChange={e => setFilters(p => ({ ...p, exam_date: e.target.value }))} sx={{ ...inputSx, minWidth: 140 }} InputLabelProps={{ shrink: true }} />
 
@@ -327,7 +318,7 @@ export default function ExamTab() {
         <TextField size="small" placeholder="학생명 검색" value={filters.student_name} onChange={e => setFilters(p => ({ ...p, student_name: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
         
         <Box sx={{ flex: 1 }} />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingExam(null); setExamForm({ title: '', subject: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' }); setExamDialogOpen(true); }} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', fontWeight: 700, borderRadius: '10px', px: 2.5, py: 1, textTransform: 'none', '&:hover': { opacity: 0.9 } }}>시험 추가</Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingExam(null); setExamForm({ title: '', date: '', class_id: '', max_score: 100, type: '정기', memo: '' }); setExamDialogOpen(true); }} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', fontWeight: 700, borderRadius: '10px', px: 2.5, py: 1, textTransform: 'none', '&:hover': { opacity: 0.9 } }}>시험 추가</Button>
       </Box>
 
       {/* ── 3. 메인 레이아웃 ── */}
@@ -349,7 +340,7 @@ export default function ExamTab() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험명</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목 / 유형</TableCell>
+                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>유형</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험일</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">만점/평균</TableCell>
@@ -362,7 +353,6 @@ export default function ExamTab() {
                         <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{e.title}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
-                            <Chip label={e.subject} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.05)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.1)' }} />
                             <Chip label={e.type || '일반'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }} />
                           </Box>
                         </TableCell>
@@ -370,7 +360,7 @@ export default function ExamTab() {
                         <TableCell>{DUMMY_CLASSES.find(c => c.id === e.class_id)?.name}</TableCell>
                         <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{e.max_score} / {selectedExamId === e.id ? stats.avg : '-'}</Typography></TableCell>
                         <TableCell align="right" onClick={ev => ev.stopPropagation()}>
-                          <IconButton size="small" onClick={(ev) => { setEditingExam(e); setExamForm({...e}); setExamDialogOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={(ev) => { setEditingExam(e); setExamForm({ title: e.title, date: e.date, class_id: e.class_id, max_score: e.max_score, type: e.type || '정기', memo: e.memo || '' }); setExamDialogOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
                           <IconButton size="small" onClick={(ev) => { setExamToDelete(e); setDeleteConfirmOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#ef4444' } }}><DeleteIcon fontSize="small" /></IconButton>
                         </TableCell>
                       </TableRow>
@@ -500,10 +490,9 @@ export default function ExamTab() {
       {/* ── 시험 등록/수정 다이얼로그 ── */}
       <Dialog open={examDialogOpen} onClose={() => setExamDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px' } }}>
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 900 }}>{editingExam ? '시험 정보 수정' : '새 시험 등록'}</DialogTitle>
-        <DialogContent sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          <TextField label="시험명 *" fullWidth size="small" value={examForm.title} onChange={e => setExamForm(p => ({ ...p, title: e.target.value }))} sx={inputSx} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>과목</InputLabel><Select value={examForm.subject} onChange={e => setExamForm(p => ({ ...p, subject: e.target.value }))} label="과목" sx={selectSx} MenuProps={menuProps}><MenuItem value="수학">수학</MenuItem><MenuItem value="영어">영어</MenuItem><MenuItem value="과학">과학</MenuItem></Select></FormControl>
+        <DialogContent sx={{ pt: 6, pb: 1, overflow: 'visible', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
+            <TextField label="시험명 *" fullWidth size="small" value={examForm.title} onChange={e => setExamForm(p => ({ ...p, title: e.target.value }))} sx={inputSx} />
             <FormControl size="small"><InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel><Select value={examForm.class_id} onChange={e => setExamForm(p => ({ ...p, class_id: e.target.value }))} label="대상 분반 *" sx={selectSx} MenuProps={menuProps}>{DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</Select></FormControl>
             <TextField label="시험일" type="date" size="small" fullWidth value={examForm.date} onChange={e => setExamForm(p => ({ ...p, date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
             <TextField label="만점 *" type="number" size="small" fullWidth value={examForm.max_score} onChange={e => setExamForm(p => ({ ...p, max_score: e.target.value === '' ? '' : Number(e.target.value) }))} sx={inputSx} />

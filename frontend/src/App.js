@@ -223,7 +223,9 @@ function App() {
                   <Route path="admin/templates" element={<AdminRoute><AdminPage section="templates" /></AdminRoute>} />
                   <Route path="admin/calendar" element={<AdminRoute><AdminPage section="calendar" /></AdminRoute>} />
                   <Route path="admin/chatbot" element={<AdminRoute><AdminPage section="chatbot" /></AdminRoute>} />
-                  <Route path="admin/students" element={<AdminRoute><AdminPage section="students" /></AdminRoute>} />
+                  <Route path="admin/students" element={<Navigate to="classes" replace />} />
+                  <Route path="admin/students/classes" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={0} /></AdminRoute>} />
+                  <Route path="admin/students/list" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={1} /></AdminRoute>} />
                   <Route path="admin/students/attendance" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={2} /></AdminRoute>} />
                   <Route path="admin/students/assignments" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={3} /></AdminRoute>} />
                   <Route path="admin/students/exams" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={4} /></AdminRoute>} />

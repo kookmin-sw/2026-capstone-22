@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -45,117 +45,30 @@ import {
   CalendarMonth as CalendarIcon,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
+import { assignmentAPI, studentAPI } from '../services/api';
 
-// ── 상태 옵션 (과제 제출 상태) ──────────────────────────────────────────────────
+// ── 표시용 상태 (5종, display_status 기준) ─────────────────────────────────────
 export const SUBMISSION_STATUS = {
   assigned:  { label: '부여됨',   color: '#94a3b8', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
   submitted: { label: '제출완료', color: '#4ade80', bg: 'rgba(74,222,128,0.12)',  border: 'rgba(74,222,128,0.3)'  },
   late:      { label: '지각제출', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
   missing:   { label: '미제출',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)'   },
-  exempt:    { label: '면제',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
+  excused:   { label: '면제',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
 };
 
-// ── 목데이터 ──────────────────────────────────────────────────────────────────
-const DUMMY_CLASSES = [
-  { id: 1, name: '심화수학 A반', subject: '수학' },
-  { id: 2, name: '기초영어 B반', subject: '영어' },
-  { id: 3, name: '통합과학 C반', subject: '과학' },
-];
+// 편집 Select에 노출할 저장 가능 상태 3종
+const EDITABLE_STATUSES = ['assigned', 'submitted', 'excused'];
 
-const DUMMY_STUDENTS = [
-  { id: 1,  name: '김민준', class_id: 1, class_name: '심화수학 A반' },
-  { id: 2,  name: '이서연', class_id: 1, class_name: '심화수학 A반' },
-  { id: 3,  name: '박지호', class_id: 1, class_name: '심화수학 A반' },
-  { id: 4,  name: '최유나', class_id: 1, class_name: '심화수학 A반' },
-  { id: 5,  name: '정하은', class_id: 2, class_name: '기초영어 B반' },
-  { id: 6,  name: '강서준', class_id: 2, class_name: '기초영어 B반' },
-  { id: 7,  name: '윤채원', class_id: 2, class_name: '기초영어 B반' },
-  { id: 8,  name: '한도현', class_id: 3, class_name: '통합과학 C반' },
-  { id: 9,  name: '임소율', class_id: 3, class_name: '통합과학 C반' },
-  { id: 10, name: '오재원', class_id: 3, class_name: '통합과학 C반' },
-];
-
-const DUMMY_ASSIGNMENTS = [
-  { 
-    id: 1, 
-    title: '미분법 기초 학습지', 
-    subject: '수학', 
-    class_id: 1, 
-    assigned_date: '2026-04-01', 
-    due_date: '2026-04-08',
-    description: '미분법 공식 암기 및 기본 문제 풀이',
-    memo: '전원 필수 제출'
-  },
-  { 
-    id: 2, 
-    title: '적분 응용 심화 문제', 
-    subject: '수학', 
-    class_id: 1, 
-    assigned_date: '2026-04-05', 
-    due_date: '2026-04-12',
-    description: '실생활 응용 문제 10선',
-    memo: '지각 제출 시 감점'
-  },
-  { 
-    id: 3, 
-    title: 'English Essay: My Future', 
-    subject: '영어', 
-    class_id: 2, 
-    assigned_date: '2026-04-02', 
-    due_date: '2026-04-09',
-    description: '최소 300단어 이상 에세이 작성',
-    memo: ''
-  },
-  { 
-    id: 4, 
-    title: 'Voca Quiz: Unit 1-3', 
-    subject: '영어', 
-    class_id: 2, 
-    assigned_date: '2026-04-10', 
-    due_date: '2026-04-15',
-    description: '단어 테스트 준비',
-    memo: ''
-  },
-  { 
-    id: 5, 
-    title: '화학 반응의 법칙 보고서', 
-    subject: '과학', 
-    class_id: 3, 
-    assigned_date: '2026-04-03', 
-    due_date: '2026-04-10',
-    description: '실험 결과 분석 및 고찰',
-    memo: '사진 첨부 필수'
-  },
-  { 
-    id: 6, 
-    title: '물리: 운동 법칙 정리', 
-    subject: '과학', 
-    class_id: 3, 
-    assigned_date: '2026-04-11', 
-    due_date: '2026-04-18',
-    description: '뉴턴의 운동 법칙 핵심 정리',
-    memo: ''
-  },
-];
-
-const DUMMY_SUBMISSIONS = [
-  // Assignment 1 (Math A)
-  { id: 1, assignment_id: 1, student_id: 1, status: 'submitted', submitted_at: '2026-04-07', score: 95, feedback: '잘 풀었습니다.', memo: '' },
-  { id: 2, assignment_id: 1, student_id: 2, status: 'submitted', submitted_at: '2026-04-08', score: 88, feedback: '공식을 정확히 이해하고 있네요.', memo: '' },
-  { id: 3, assignment_id: 1, student_id: 3, status: 'late', submitted_at: '2026-04-09', score: 70, feedback: '다음부턴 제시간에 제출하세요.', memo: '병원 방문으로 늦음' },
-  { id: 4, assignment_id: 1, student_id: 4, status: 'missing', submitted_at: null, score: 0, feedback: '', memo: '' },
-  // Assignment 2 (Math A)
-  { id: 5, assignment_id: 2, student_id: 1, status: 'assigned', submitted_at: null, score: null, feedback: '', memo: '' },
-  { id: 6, assignment_id: 2, student_id: 2, status: 'submitted', submitted_at: '2026-04-11', score: 92, feedback: '', memo: '' },
-  // Assignment 3 (English B)
-  { id: 7, assignment_id: 3, student_id: 5, status: 'submitted', submitted_at: '2026-04-08', score: 90, feedback: 'Good job!', memo: '' },
-  { id: 8, assignment_id: 3, student_id: 6, status: 'exempt', submitted_at: null, score: null, feedback: '', memo: '대회 참가로 면제' },
-  { id: 9, assignment_id: 3, student_id: 7, status: 'missing', submitted_at: null, score: 0, feedback: '', memo: '' },
-  // Assignment 5 (Science C)
-  { id: 10, assignment_id: 5, student_id: 8, status: 'submitted', submitted_at: '2026-04-09', score: 85, feedback: '', memo: '' },
-  { id: 11, assignment_id: 5, student_id: 9, status: 'submitted', submitted_at: '2026-04-10', score: 78, feedback: '', memo: '' },
-  { id: 12, assignment_id: 5, student_id: 10, status: 'late', submitted_at: '2026-04-11', score: 65, feedback: '', memo: '' },
-];
+// 드래프트 상태 기반 display_status 클라이언트 계산 (저장 전 미리보기용)
+function computeDisplayStatus(status, submitted_at, due_date_str) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (status === 'excused') return 'excused';
+  if (status === 'submitted') {
+    const sub_date = submitted_at ? submitted_at.slice(0, 10) : null;
+    return sub_date && sub_date > due_date_str ? 'late' : 'submitted';
+  }
+  return today > due_date_str ? 'missing' : 'assigned';
+}
 
 // ── 공통 스타일 ──────────────────────────────────────────────────────────────
 const inputSx = {
@@ -199,7 +112,7 @@ const menuProps = {
   },
 };
 
-// ── Status Chip ────────────────────────────────────────────────────────────────
+// ── Status Chip (display_status 기준) ─────────────────────────────────────────
 function StatusChip({ status }) {
   const opt = SUBMISSION_STATUS[status] || SUBMISSION_STATUS.assigned;
   return (
@@ -217,150 +130,188 @@ function StatusChip({ status }) {
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 export default function AssignmentTab() {
-  const [assignments, setAssignments] = useState(DUMMY_ASSIGNMENTS);
-  const [submissions, setSubmissions] = useState(DUMMY_SUBMISSIONS);
-  const [draftSubmissions, setDraftSubmissions] = useState({}); // { [student_id]: patch } — 저장 전 임시값
+  const [classes, setClasses] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({
+    ongoing_count: 0, due_today_count: 0, missing_count: 0, late_count: 0,
+  });
+  const [draftSubmissions, setDraftSubmissions] = useState({});
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
 
-  // 필터 상태
-  const [filters, setFilters] = useState({
-    class_id: 'all',
-    student_name: '',
-    assignment_title: '',
-    status: 'all',
-    subject: 'all',
-    dateStart: '',
-    dateEnd: '',
-    quickFilter: 'all', // 'all', 'ongoing', 'dueToday', 'missing', 'late'
+  // 과제 목록 필터 (API 파라미터)
+  const [assignmentFilters, setAssignmentFilters] = useState({
+    class_id: 'all', dateStart: '', dateEnd: '',
+  });
+  // 과제명 검색 (클라이언트 사이드)
+  const [assignmentSearch, setAssignmentSearch] = useState('');
+  // 요약 카드 퀵 필터 (UI 전용)
+  const [quickFilter, setQuickFilter] = useState('all');
+  // 제출 roster 필터 (API 파라미터)
+  const [submissionFilters, setSubmissionFilters] = useState({
+    student_name: '', display_status: 'all',
   });
 
   // 다이얼로그 상태
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [assignmentForm, setAssignmentForm] = useState({
-    title: '', subject: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: ''
+    title: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '',
   });
-
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
-
   const [snack, setSnack] = useState({ open: false, message: '' });
 
-  // 과제 선택 변경 시 draft 초기화
+  // ── API 파라미터 빌더 ──
+  const buildAssignmentParams = useCallback((filters) => {
+    const params = {};
+    if (filters.class_id !== 'all') params.class_id = filters.class_id;
+    if (filters.dateStart) params.due_date_from = filters.dateStart;
+    if (filters.dateEnd) params.due_date_to = filters.dateEnd;
+    return params;
+  }, []);
+
+  const buildSubmissionParams = useCallback((filters) => {
+    const params = {};
+    if (filters.student_name) params.student_name = filters.student_name;
+    if (filters.display_status !== 'all') params.display_status = filters.display_status;
+    return params;
+  }, []);
+
+  // ── 데이터 로딩 ──
+  const loadClasses = useCallback(async () => {
+    try {
+      const res = await studentAPI.listClasses();
+      setClasses(res.data);
+    } catch (e) {}
+  }, []);
+
+  const loadAssignments = useCallback(async (filters) => {
+    try {
+      const res = await assignmentAPI.list(buildAssignmentParams(filters));
+      setAssignments(res.data);
+    } catch (e) {}
+  }, [buildAssignmentParams]);
+
+  const loadSummary = useCallback(async (filters) => {
+    try {
+      const res = await assignmentAPI.getSummary(buildAssignmentParams(filters));
+      setSummaryStats(res.data);
+    } catch (e) {}
+  }, [buildAssignmentParams]);
+
+  const loadSubmissions = useCallback(async (id, filters) => {
+    try {
+      const res = await assignmentAPI.listSubmissions(id, buildSubmissionParams(filters));
+      setSubmissions(res.data);
+    } catch (e) {
+      setSubmissions([]); // 실패 시 stale 데이터 방지
+    }
+  }, [buildSubmissionParams]);
+
+  // ── Effects ──
+  useEffect(() => {
+    loadClasses();
+    loadAssignments(assignmentFilters);
+    loadSummary(assignmentFilters);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const refresh = async () => {
+      await loadAssignments(assignmentFilters);
+      await loadSummary(assignmentFilters);
+    };
+    refresh();
+  }, [assignmentFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 필터 변경 후 선택된 과제가 목록에서 사라지면 선택 해제 (0건 포함)
+  useEffect(() => {
+    if (selectedAssignmentId) {
+      const stillVisible = assignments.some(a => a.id === selectedAssignmentId);
+      if (!stillVisible) setSelectedAssignmentId(null);
+    }
+  }, [assignments, selectedAssignmentId]);
+
   useEffect(() => {
     setDraftSubmissions({});
-  }, [selectedAssignmentId]);
+    setSubmissions([]); // 과제 전환 즉시 초기화 — stale row 방지
+    if (selectedAssignmentId) loadSubmissions(selectedAssignmentId, submissionFilters);
+  }, [selectedAssignmentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 요약 정보 계산
-  const summary = useMemo(() => {
-    const now = new Date().toISOString().slice(0, 10);
-    const active = assignments.filter(a => a.due_date >= now).length;
-    const dueToday = assignments.filter(a => a.due_date === now).length;
-    const missing = submissions.filter(s => s.status === 'missing').length;
-    const late = submissions.filter(s => s.status === 'late').length;
-    return { active, dueToday, missing, late };
-  }, [assignments, submissions]);
+  useEffect(() => {
+    if (selectedAssignmentId) loadSubmissions(selectedAssignmentId, submissionFilters);
+  }, [submissionFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 필터링된 과제 목록
+  // ── 클라이언트 사이드 필터링 (과제 목록 — 과제명 검색 + 퀵 필터) ──
+  // missing/late는 submission-level 집계라 assignment list 필터 불가 — ongoing/dueToday만 적용
   const filteredAssignments = useMemo(() => {
     const now = new Date().toISOString().slice(0, 10);
     return assignments.filter(a => {
-      // 퀵 필터 로직
-      if (filters.quickFilter === 'ongoing' && a.due_date < now) return false;
-      if (filters.quickFilter === 'dueToday' && a.due_date !== now) return false;
-      
-      // 미제출/지연 제출 필터: 해당 과제의 제출 데이터 중 하나라도 해당 상태가 있는지 확인
-      if (filters.quickFilter === 'missing') {
-        const hasMissing = submissions.some(s => s.assignment_id === a.id && s.status === 'missing');
-        if (!hasMissing) return false;
-      }
-      if (filters.quickFilter === 'late') {
-        const hasLate = submissions.some(s => s.assignment_id === a.id && s.status === 'late');
-        if (!hasLate) return false;
-      }
-
-      if (filters.class_id !== 'all' && a.class_id !== Number(filters.class_id)) return false;
-      if (filters.subject !== 'all' && a.subject !== filters.subject) return false;
-      if (filters.assignment_title && !a.title.toLowerCase().includes(filters.assignment_title.toLowerCase())) return false;
-      
-      // 마감일 범위 필터 (due_date 기준)
-      if (a.due_date) {
-        if (filters.dateStart && a.due_date < filters.dateStart) return false;
-        if (filters.dateEnd && a.due_date > filters.dateEnd) return false;
-      } else {
-        if (filters.dateStart || filters.dateEnd) return false;
-      }
-      
+      if (quickFilter === 'ongoing' && a.due_date < now) return false;
+      if (quickFilter === 'dueToday' && a.due_date !== now) return false;
+      if (assignmentSearch && !a.title.toLowerCase().includes(assignmentSearch.toLowerCase())) return false;
       return true;
     });
-  }, [assignments, submissions, filters]);
+  }, [assignments, assignmentSearch, quickFilter]);
 
-  const selectedAssignment = useMemo(() => 
-    assignments.find(a => a.id === selectedAssignmentId), [assignments, selectedAssignmentId]
-  );
+  const selectedAssignment = useMemo(() =>
+    assignments.find(a => a.id === selectedAssignmentId), [assignments, selectedAssignmentId]);
 
-  const submissionStats = useMemo(() => {
-    const stats = {};
-    assignments.forEach(a => {
-      const classStudents = DUMMY_STUDENTS.filter(s => s.class_id === a.class_id);
-      const assignmentSubmissions = submissions.filter(s => s.assignment_id === a.id);
-      const submittedCount = assignmentSubmissions.filter(s => s.status === 'submitted' || s.status === 'late').length;
-      stats[a.id] = {
-        total: classStudents.length,
-        submitted: submittedCount,
-        rate: classStudents.length > 0 ? Math.round((submittedCount / classStudents.length) * 100) : 0
-      };
-    });
-    return stats;
-  }, [assignments, submissions]);
-
-  // 과제별 학생 제출 현황
+  // 드래프트 반영된 제출 목록
   const currentSubmissions = useMemo(() => {
-    if (!selectedAssignmentId) return [];
-    const assignment = assignments.find(a => a.id === selectedAssignmentId);
-    if (!assignment) return [];
-
-    const classStudents = DUMMY_STUDENTS.filter(s => s.class_id === assignment.class_id);
-    return classStudents.map(student => {
-      const sub = submissions.find(s => s.assignment_id === selectedAssignmentId && s.student_id === student.id);
-      const base = sub || { status: 'assigned', submitted_at: null, score: null, feedback: '', memo: '' };
-      const draft = draftSubmissions[student.id];
-      return {
-        ...student,
-        submission: draft ? { ...base, ...draft } : base
-      };
-    }).filter(item => {
-      if (filters.student_name && !item.name.includes(filters.student_name)) return false;
-      if (filters.status !== 'all' && item.submission.status !== filters.status) return false;
-      return true;
+    return submissions.map(item => {
+      const draft = draftSubmissions[item.student_id];
+      if (!draft) return item;
+      const mergedStatus = draft.status ?? item.status;
+      const mergedSubmittedAt = draft.submitted_at !== undefined ? draft.submitted_at : item.submitted_at;
+      const mergedDisplayStatus = computeDisplayStatus(
+        mergedStatus, mergedSubmittedAt, selectedAssignment?.due_date
+      );
+      return { ...item, ...draft, status: mergedStatus, display_status: mergedDisplayStatus };
     });
-  }, [selectedAssignmentId, assignments, submissions, draftSubmissions, filters.student_name, filters.status]);
+  }, [submissions, draftSubmissions, selectedAssignment]);
 
-  // 핸들러들
+  // ── 핸들러 ──
   const handleOpenAddAssignment = () => {
     setEditingAssignment(null);
-    setAssignmentForm({ title: '', subject: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '' });
+    setAssignmentForm({ title: '', class_id: '', assigned_date: '', due_date: '', description: '', memo: '' });
     setAssignmentDialogOpen(true);
   };
 
   const handleOpenEditAssignment = (e, assignment) => {
     e.stopPropagation();
     setEditingAssignment(assignment);
-    setAssignmentForm({ ...assignment });
+    setAssignmentForm({
+      title: assignment.title,
+      class_id: assignment.class_id,
+      assigned_date: assignment.assigned_date,
+      due_date: assignment.due_date,
+      description: assignment.description || '',
+      memo: assignment.memo || '',
+    });
     setAssignmentDialogOpen(true);
   };
 
-  const handleSaveAssignment = () => {
-    if (!assignmentForm.title || !assignmentForm.class_id) return;
-    if (editingAssignment) {
-      setAssignments(prev => prev.map(a => a.id === editingAssignment.id ? { ...a, ...assignmentForm } : a));
-      showSnack('과제가 수정되었습니다.');
-    } else {
-      const newId = Math.max(...assignments.map(a => a.id), 0) + 1;
-      setAssignments(prev => [...prev, { ...assignmentForm, id: newId }]);
-      showSnack('과제가 추가되었습니다.');
+  const handleSaveAssignment = async () => {
+    if (!assignmentForm.title || !assignmentForm.class_id || !assignmentForm.assigned_date || !assignmentForm.due_date) {
+      showSnack('과제명, 대상 분반, 부여일, 마감일은 필수 항목입니다.');
+      return;
     }
-    setAssignmentDialogOpen(false);
+    try {
+      if (editingAssignment) {
+        const { class_id, ...updatePayload } = assignmentForm;
+        await assignmentAPI.update(editingAssignment.id, updatePayload);
+        showSnack('과제가 수정되었습니다.');
+      } else {
+        await assignmentAPI.create(assignmentForm);
+        showSnack('과제가 추가되었습니다.');
+      }
+      setAssignmentDialogOpen(false);
+      await loadAssignments(assignmentFilters);
+      await loadSummary(assignmentFilters);
+    } catch (e) {
+      showSnack('저장에 실패했습니다.');
+    }
   };
 
   const handleDeleteClick = (e, assignment) => {
@@ -369,43 +320,78 @@ export default function AssignmentTab() {
     setDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    setAssignments(prev => prev.filter(a => a.id !== assignmentToDelete.id));
-    setSubmissions(prev => prev.filter(s => s.assignment_id !== assignmentToDelete.id));
-    if (selectedAssignmentId === assignmentToDelete.id) setSelectedAssignmentId(null);
-    setDeleteConfirmOpen(false);
-    showSnack('과제가 삭제되었습니다.');
+  const handleConfirmDelete = async () => {
+    try {
+      await assignmentAPI.remove(assignmentToDelete.id);
+      if (selectedAssignmentId === assignmentToDelete.id) setSelectedAssignmentId(null);
+      setDeleteConfirmOpen(false);
+      showSnack('과제가 삭제되었습니다.');
+      await loadAssignments(assignmentFilters);
+      await loadSummary(assignmentFilters);
+    } catch (e) {
+      showSnack('삭제에 실패했습니다.');
+    }
   };
 
   const handleUpdateSubmission = (studentId, patch) => {
-    // draft에만 반영 — 저장 버튼 클릭 시 submissions에 커밋
+    const updated = { ...patch };
+    if (patch.status) {
+      if (patch.status !== 'submitted') {
+        // submitted 외 상태로 변경 시 submitted_at 초기화
+        updated.submitted_at = null;
+      } else {
+        // submitted로 변경 시 submitted_at이 비어있으면 오늘 날짜 자동 채움
+        const currentDraft = draftSubmissions[studentId] || {};
+        const currentItem = submissions.find(s => s.student_id === studentId);
+        const existing = currentDraft.submitted_at !== undefined
+          ? currentDraft.submitted_at
+          : currentItem?.submitted_at;
+        if (!existing) {
+          updated.submitted_at = new Date().toISOString().slice(0, 10);
+        }
+      }
+    }
     setDraftSubmissions(prev => ({
       ...prev,
-      [studentId]: { ...(prev[studentId] || {}), ...patch },
+      [studentId]: { ...(prev[studentId] || {}), ...updated },
     }));
   };
 
-  const handleBatchSave = () => {
-    setSubmissions(prev => {
-      let next = [...prev];
-      Object.entries(draftSubmissions).forEach(([studentIdStr, patch]) => {
-        const studentId = Number(studentIdStr);
-        const idx = next.findIndex(s => s.assignment_id === selectedAssignmentId && s.student_id === studentId);
-        if (idx > -1) {
-          next = next.map((s, i) => i === idx ? { ...s, ...patch } : s);
-        } else {
-          next = [...next, {
-            id: Math.max(...next.map(s => s.id), 0) + 1,
-            assignment_id: selectedAssignmentId,
-            student_id: studentId,
-            ...patch,
-          }];
-        }
-      });
-      return next;
+  const handleBatchSave = async () => {
+    const records = Object.entries(draftSubmissions).map(([studentIdStr, patch]) => {
+      const item = submissions.find(s => s.student_id === Number(studentIdStr));
+      const status = patch.status ?? item?.status ?? 'assigned';
+      const submitted_at_raw = patch.submitted_at !== undefined ? patch.submitted_at : item?.submitted_at;
+      // 날짜 문자열(YYYY-MM-DD)을 ISO datetime으로 변환
+      const submitted_at = submitted_at_raw
+        ? (submitted_at_raw.length === 10 ? `${submitted_at_raw}T00:00:00Z` : submitted_at_raw)
+        : null;
+      return {
+        student_id: Number(studentIdStr),
+        status,
+        submitted_at: status === 'submitted' ? submitted_at : null,
+        score: patch.score !== undefined ? patch.score : item?.score,
+        feedback: patch.feedback !== undefined ? patch.feedback : item?.feedback,
+        memo: patch.memo !== undefined ? patch.memo : item?.memo,
+      };
     });
-    setDraftSubmissions({});
-    showSnack('학생별 제출 상태가 저장되었습니다.');
+    if (records.length === 0) return;
+    // 저장 전 검증: submitted 상태인데 submitted_at 없으면 차단
+    const missingDate = records.filter(r => r.status === 'submitted' && !r.submitted_at);
+    if (missingDate.length > 0) {
+      showSnack('제출완료 상태는 제출 일시가 필요합니다.');
+      return;
+    }
+    try {
+      await assignmentAPI.bulkUpsertSubmissions(selectedAssignmentId, { records });
+      setDraftSubmissions({});
+      showSnack('학생별 제출 상태가 저장되었습니다.');
+      await loadSubmissions(selectedAssignmentId, submissionFilters);
+      await loadAssignments(assignmentFilters);
+      await loadSummary(assignmentFilters);
+    } catch (e) {
+      showSnack('저장에 실패했습니다.');
+    }
   };
 
   const showSnack = (message) => {
@@ -414,40 +400,33 @@ export default function AssignmentTab() {
   };
 
   const handleQuickFilter = (type) => {
-    setFilters(prev => ({
-      ...prev,
-      quickFilter: prev.quickFilter === type ? 'all' : type
-    }));
+    setQuickFilter(prev => prev === type ? 'all' : type);
   };
 
   return (
     <Box sx={{ animation: 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
-      
+
       {/* ── 1. 상단 요약 카드 ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { id: 'ongoing', label: '진행중 과제', value: summary.active, color: '#a78bfa', icon: <AssignmentIcon /> },
-          { id: 'dueToday', label: '오늘 마감', value: summary.dueToday, color: '#f59e0b', icon: <CalendarIcon /> },
-          { id: 'missing', label: '미제출 건수', value: summary.missing, color: '#ef4444', icon: <TrendingUpIcon /> },
-          { id: 'late', label: '지연 제출', value: summary.late, color: '#fb923c', icon: <AccessTimeIcon /> },
+          { id: 'ongoing',  label: '진행중 과제', value: summaryStats.ongoing_count,   color: '#a78bfa', icon: <AssignmentIcon />, filterable: true },
+          { id: 'dueToday', label: '오늘 마감',   value: summaryStats.due_today_count, color: '#f59e0b', icon: <CalendarIcon />,   filterable: true },
+          { id: 'missing',  label: '미제출 건수', value: summaryStats.missing_count,   color: '#ef4444', icon: <TrendingUpIcon />, filterable: false },
+          { id: 'late',     label: '지연 제출',   value: summaryStats.late_count,      color: '#fb923c', icon: <AccessTimeIcon />, filterable: false },
         ].map((item, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
-            <Box 
-              onClick={() => handleQuickFilter(item.id)}
+            <Box
+              onClick={() => item.filterable && handleQuickFilter(item.id)}
               sx={{
-                bgcolor: '#18181B', 
-                border: filters.quickFilter === item.id 
-                  ? `2px solid ${item.color}` 
+                bgcolor: (item.filterable && quickFilter === item.id) ? `${item.color}08` : '#18181B',
+                border: (item.filterable && quickFilter === item.id)
+                  ? `2px solid ${item.color}`
                   : '1px solid rgba(255,255,255,0.06)',
                 borderRadius: '16px', p: 3,
                 display: 'flex', alignItems: 'center', gap: 2.5,
                 transition: 'all 0.25s ease',
-                cursor: 'pointer',
-                bgcolor: filters.quickFilter === item.id ? `${item.color}08` : '#18181B',
-                '&:hover': { 
-                  transform: 'translateY(-4px)', 
-                  borderColor: item.color 
-                },
+                cursor: item.filterable ? 'pointer' : 'default',
+                '&:hover': item.filterable ? { transform: 'translateY(-4px)', borderColor: item.color } : {},
               }}
             >
               <Box sx={{
@@ -475,62 +454,50 @@ export default function AssignmentTab() {
         bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
         p: 2.5, mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center'
       }}>
+        {/* 과제 목록 필터 */}
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>분반 선택</InputLabel>
-          <Select 
-            value={filters.class_id} 
-            onChange={e => setFilters(p => ({ ...p, class_id: e.target.value }))} 
+          <Select
+            value={assignmentFilters.class_id}
+            onChange={e => setAssignmentFilters(p => ({ ...p, class_id: e.target.value }))}
             label="분반 선택" sx={selectSx} MenuProps={menuProps}
           >
             <MenuItem value="all">전체 분반</MenuItem>
-            {DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>과목 선택</InputLabel>
-          <Select 
-            value={filters.subject} 
-            onChange={e => setFilters(p => ({ ...p, subject: e.target.value }))} 
-            label="과목 선택" sx={selectSx} MenuProps={menuProps}
-          >
-            <MenuItem value="all">전체 과목</MenuItem>
-            <MenuItem value="수학">수학</MenuItem>
-            <MenuItem value="영어">영어</MenuItem>
-            <MenuItem value="과학">과학</MenuItem>
+            {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
           </Select>
         </FormControl>
 
         <TextField
           type="date" size="small" label="마감일 시작"
-          value={filters.dateStart}
-          onChange={e => setFilters(p => ({ ...p, dateStart: e.target.value }))}
+          value={assignmentFilters.dateStart}
+          onChange={e => setAssignmentFilters(p => ({ ...p, dateStart: e.target.value }))}
           sx={{ ...inputSx, minWidth: 140 }}
           InputLabelProps={{ shrink: true }}
         />
         <TextField
           type="date" size="small" label="마감일 종료"
-          value={filters.dateEnd}
-          onChange={e => setFilters(p => ({ ...p, dateEnd: e.target.value }))}
+          value={assignmentFilters.dateEnd}
+          onChange={e => setAssignmentFilters(p => ({ ...p, dateEnd: e.target.value }))}
           sx={{ ...inputSx, minWidth: 140 }}
           InputLabelProps={{ shrink: true }}
         />
 
         <TextField
           size="small" placeholder="과제명 검색"
-          value={filters.assignment_title}
-          onChange={e => setFilters(p => ({ ...p, assignment_title: e.target.value }))}
+          value={assignmentSearch}
+          onChange={e => setAssignmentSearch(e.target.value)}
           InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }}
           sx={{ ...inputSx, minWidth: 180 }}
         />
 
         <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.06)' }} />
 
+        {/* 제출 roster 필터 */}
         <FormControl size="small" sx={{ minWidth: 130 }}>
           <InputLabel sx={{ color: '#71717A', fontSize: '0.8125rem' }}>제출 상태</InputLabel>
           <Select
-            value={filters.status}
-            onChange={e => setFilters(p => ({ ...p, status: e.target.value }))}
+            value={submissionFilters.display_status}
+            onChange={e => setSubmissionFilters(p => ({ ...p, display_status: e.target.value }))}
             label="제출 상태" sx={selectSx} MenuProps={menuProps}
           >
             <MenuItem value="all">전체</MenuItem>
@@ -542,8 +509,8 @@ export default function AssignmentTab() {
 
         <TextField
           size="small" placeholder="학생명 검색"
-          value={filters.student_name}
-          onChange={e => setFilters(p => ({ ...p, student_name: e.target.value }))}
+          value={submissionFilters.student_name}
+          onChange={e => setSubmissionFilters(p => ({ ...p, student_name: e.target.value }))}
           InputProps={{ startAdornment: <SearchIcon sx={{ color: '#52525B', fontSize: 18, mr: 1 }} /> }}
           sx={{ ...inputSx, minWidth: 180 }}
         />
@@ -566,7 +533,7 @@ export default function AssignmentTab() {
 
       {/* ── 3. 메인 레이아웃 (2단 구조) ── */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        
+
         {/* 상단: 과제 목록 테이블 */}
         <Box sx={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', overflow: 'hidden' }}>
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -574,10 +541,8 @@ export default function AssignmentTab() {
               <AssignmentIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
               <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '0.9375rem' }}>
                 과제 목록 {
-                  filters.quickFilter === 'ongoing' ? '(진행중)' : 
-                  filters.quickFilter === 'dueToday' ? '(오늘 마감)' : 
-                  filters.quickFilter === 'missing' ? '(미제출)' :
-                  filters.quickFilter === 'late' ? '(지연 제출)' : ''
+                  quickFilter === 'ongoing' ? '(진행중)' :
+                  quickFilter === 'dueToday' ? '(오늘 마감)' : ''
                 }
               </Typography>
             </Box>
@@ -588,7 +553,6 @@ export default function AssignmentTab() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과제명</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과목</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>부여일</TableCell>
                   <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>마감일</TableCell>
@@ -598,11 +562,11 @@ export default function AssignmentTab() {
               </TableHead>
               <TableBody>
                 {filteredAssignments.map((a) => (
-                  <TableRow 
-                    key={a.id} 
-                    hover 
+                  <TableRow
+                    key={a.id}
+                    hover
                     onClick={() => setSelectedAssignmentId(a.id)}
-                    sx={{ 
+                    sx={{
                       cursor: 'pointer',
                       bgcolor: selectedAssignmentId === a.id ? 'rgba(167,139,250,0.06)' : 'transparent',
                       '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA' },
@@ -610,16 +574,15 @@ export default function AssignmentTab() {
                     }}
                   >
                     <TableCell sx={{ fontWeight: 700, color: '#FAFAFA !important' }}>{a.title}</TableCell>
-                    <TableCell>{a.subject}</TableCell>
-                    <TableCell>{DUMMY_CLASSES.find(c => c.id === a.class_id)?.name}</TableCell>
+                    <TableCell>{a.class_name}</TableCell>
                     <TableCell>{a.assigned_date}</TableCell>
                     <TableCell sx={{ color: new Date(a.due_date) < new Date() ? '#ef4444 !important' : 'inherit' }}>{a.due_date}</TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                         <Box sx={{ flex: 1, minWidth: 60, height: 4, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
-                          <Box sx={{ width: `${submissionStats[a.id]?.rate}%`, height: '100%', bgcolor: '#a78bfa', borderRadius: 2 }} />
+                          <Box sx={{ width: `${a.submission_rate}%`, height: '100%', bgcolor: '#a78bfa', borderRadius: 2 }} />
                         </Box>
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{submissionStats[a.id]?.rate}%</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{a.submission_rate}%</Typography>
                       </Box>
                     </TableCell>
                     <TableCell align="right" onClick={e => e.stopPropagation()}>
@@ -644,18 +607,19 @@ export default function AssignmentTab() {
                 </Typography>
                 {selectedAssignment && (
                   <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
-                    {DUMMY_CLASSES.find(c => c.id === selectedAssignment.class_id)?.name} · 마감일: {selectedAssignment.due_date}
+                    {selectedAssignment.class_name} · 마감일: {selectedAssignment.due_date}
                   </Typography>
                 )}
               </Box>
             </Box>
             {selectedAssignment && (
-              <Button 
-                variant="outlined" 
-                startIcon={<SaveIcon />} 
+              <Button
+                variant="outlined"
+                startIcon={<SaveIcon />}
                 onClick={handleBatchSave}
-                sx={{ 
-                  borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa', 
+                disabled={Object.keys(draftSubmissions).length === 0}
+                sx={{
+                  borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa',
                   fontWeight: 700, borderRadius: '10px', textTransform: 'none',
                   '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' }
                 }}
@@ -685,7 +649,8 @@ export default function AssignmentTab() {
                   <TableRow>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>학생명</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>분반</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>제출 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>표시 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>저장 상태</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>제출 일시</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>점수</TableCell>
                     <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>피드백</TableCell>
@@ -694,27 +659,34 @@ export default function AssignmentTab() {
                 </TableHead>
                 <TableBody>
                   {currentSubmissions.map((item) => (
-                    <TableRow key={item.id} sx={{ '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA', py: 1.5 } }}>
+                    <TableRow key={item.student_id} sx={{ '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#A1A1AA', py: 1.5 } }}>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.name[0]}</Avatar>
-                          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#FAFAFA' }}>{item.name}</Typography>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.student_name[0]}</Avatar>
+                          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#FAFAFA' }}>{item.student_name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
+                      {/* 표시 상태: display_status 기반 배지 */}
                       <TableCell>
-                        <Select 
-                          value={item.submission.status} 
-                          onChange={(e) => handleUpdateSubmission(item.id, { status: e.target.value })}
+                        <StatusChip status={item.display_status} />
+                      </TableCell>
+                      {/* 저장 상태: 3종만 선택 가능한 편집 Select */}
+                      <TableCell>
+                        <Select
+                          value={item.status || 'assigned'}
+                          onChange={(e) => handleUpdateSubmission(item.student_id, { status: e.target.value })}
                           size="small"
-                          sx={{ 
+                          sx={{
                             ...selectSx, minWidth: 100,
                             '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.75rem', fontWeight: 700 }
                           }}
                           MenuProps={menuProps}
                         >
-                          {Object.entries(SUBMISSION_STATUS).map(([key, val]) => (
-                            <MenuItem key={key} value={key} sx={{ fontSize: '0.75rem', fontWeight: 700, color: val.color }}>{val.label}</MenuItem>
+                          {EDITABLE_STATUSES.map(key => (
+                            <MenuItem key={key} value={key} sx={{ fontSize: '0.75rem', fontWeight: 700, color: SUBMISSION_STATUS[key].color }}>
+                              {SUBMISSION_STATUS[key].label}
+                            </MenuItem>
                           ))}
                         </Select>
                       </TableCell>
@@ -722,8 +694,9 @@ export default function AssignmentTab() {
                         <TextField
                           size="small"
                           type="date"
-                          value={item.submission.submitted_at || ''}
-                          onChange={(e) => handleUpdateSubmission(item.id, { submitted_at: e.target.value })}
+                          value={item.submitted_at ? item.submitted_at.slice(0, 10) : ''}
+                          onChange={(e) => handleUpdateSubmission(item.student_id, { submitted_at: e.target.value || null })}
+                          disabled={item.status !== 'submitted'}
                           InputLabelProps={{ shrink: true }}
                           sx={{
                             '& .MuiOutlinedInput-root': {
@@ -732,23 +705,20 @@ export default function AssignmentTab() {
                               color: '#FAFAFA',
                               '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
                             },
-                            '& .MuiOutlinedInput-input': {
-                              p: 0.5,
-                              colorScheme: 'dark',
-                            }
+                            '& .MuiOutlinedInput-input': { p: 0.5, colorScheme: 'dark' }
                           }}
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField 
-                          size="small" 
+                        <TextField
+                          size="small"
                           type="number"
-                          value={item.submission.score ?? ''} 
-                          onChange={(e) => handleUpdateSubmission(item.id, { score: e.target.value === '' ? null : Number(e.target.value) })}
-                          sx={{ 
+                          value={item.score ?? ''}
+                          onChange={(e) => handleUpdateSubmission(item.student_id, { score: e.target.value === '' ? null : Number(e.target.value) })}
+                          sx={{
                             width: 50,
-                            '& .MuiOutlinedInput-root': { 
-                              bgcolor: 'rgba(255,255,255,0.02)', 
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'rgba(255,255,255,0.02)',
                               fontSize: '0.75rem',
                               color: '#a78bfa',
                               fontWeight: 700,
@@ -759,19 +729,19 @@ export default function AssignmentTab() {
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField 
-                          size="small" 
+                        <TextField
+                          size="small"
                           placeholder="피드백..."
-                          value={item.submission.feedback || ''} 
-                          onChange={(e) => handleUpdateSubmission(item.id, { feedback: e.target.value })}
-                          sx={{ 
-                            '& .MuiOutlinedInput-root': { 
-                              bgcolor: 'rgba(255,255,255,0.02)', 
+                          value={item.feedback || ''}
+                          onChange={(e) => handleUpdateSubmission(item.student_id, { feedback: e.target.value })}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'rgba(255,255,255,0.02)',
                               fontSize: '0.75rem',
                               color: '#FAFAFA',
                               '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
                             },
-                            '& .MuiOutlinedInput-input': { 
+                            '& .MuiOutlinedInput-input': {
                               p: 0.5,
                               '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
                             }
@@ -779,19 +749,19 @@ export default function AssignmentTab() {
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField 
-                          size="small" 
+                        <TextField
+                          size="small"
                           placeholder="메모..."
-                          value={item.submission.memo || ''} 
-                          onChange={(e) => handleUpdateSubmission(item.id, { memo: e.target.value })}
-                          sx={{ 
-                            '& .MuiOutlinedInput-root': { 
-                              bgcolor: 'rgba(255,255,255,0.02)', 
+                          value={item.memo || ''}
+                          onChange={(e) => handleUpdateSubmission(item.student_id, { memo: e.target.value })}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'rgba(255,255,255,0.02)',
                               fontSize: '0.75rem',
                               color: '#FAFAFA',
                               '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
                             },
-                            '& .MuiOutlinedInput-input': { 
+                            '& .MuiOutlinedInput-input': {
                               p: 0.5,
                               '&::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 }
                             }
@@ -808,72 +778,73 @@ export default function AssignmentTab() {
       </Box>
 
       {/* ── 과제 추가/수정 다이얼로그 ── */}
-      <Dialog 
-        open={assignmentDialogOpen} 
-        onClose={() => setAssignmentDialogOpen(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={assignmentDialogOpen}
+        onClose={() => setAssignmentDialogOpen(false)}
+        maxWidth="sm"
         fullWidth
         PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px' } }}
       >
         <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 900, pb: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           {editingAssignment ? '과제 정보 수정' : '새 과제 등록'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          <TextField 
-            label="과제명 *" fullWidth size="small" 
-            value={assignmentForm.title} onChange={e => setAssignmentForm(p => ({ ...p, title: e.target.value }))}
-            sx={inputSx} 
-          />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel sx={{ color: '#71717A' }}>과목</InputLabel>
-              <Select 
-                value={assignmentForm.subject} onChange={e => setAssignmentForm(p => ({ ...p, subject: e.target.value }))} 
-                label="과목" sx={selectSx} MenuProps={menuProps}
-              >
-                <MenuItem value="수학">수학</MenuItem>
-                <MenuItem value="영어">영어</MenuItem>
-                <MenuItem value="과학">과학</MenuItem>
-              </Select>
-            </FormControl>
+        <DialogContent
+          sx={{
+            pt: 6,
+            pb: 1,
+            overflow: 'visible',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2.5,
+          }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
+            <TextField
+              label="과제명 *" fullWidth size="small"
+              value={assignmentForm.title}
+              onChange={e => setAssignmentForm(p => ({ ...p, title: e.target.value }))}
+              sx={inputSx}
+            />
             <FormControl size="small" fullWidth>
               <InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel>
-              <Select 
-                value={assignmentForm.class_id} onChange={e => setAssignmentForm(p => ({ ...p, class_id: e.target.value }))} 
+              <Select
+                value={assignmentForm.class_id}
+                onChange={e => setAssignmentForm(p => ({ ...p, class_id: e.target.value }))}
                 label="대상 분반 *" sx={selectSx} MenuProps={menuProps}
+                disabled={!!editingAssignment}
               >
-                {DUMMY_CLASSES.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>
             </FormControl>
-            <TextField 
-              label="부여일" type="date" size="small" fullWidth 
+            <TextField
+              label="부여일" type="date" size="small" fullWidth
               value={assignmentForm.assigned_date} onChange={e => setAssignmentForm(p => ({ ...p, assigned_date: e.target.value }))}
-              InputLabelProps={{ shrink: true }} sx={inputSx} 
+              InputLabelProps={{ shrink: true }} sx={inputSx}
             />
-            <TextField 
-              label="마감일" type="date" size="small" fullWidth 
+            <TextField
+              label="마감일" type="date" size="small" fullWidth
               value={assignmentForm.due_date} onChange={e => setAssignmentForm(p => ({ ...p, due_date: e.target.value }))}
-              InputLabelProps={{ shrink: true }} sx={inputSx} 
+              InputLabelProps={{ shrink: true }} sx={inputSx}
             />
           </Box>
-          <TextField 
-            label="설명" multiline rows={3} fullWidth size="small" 
+          <TextField
+            label="설명" multiline rows={3} fullWidth size="small"
             value={assignmentForm.description} onChange={e => setAssignmentForm(p => ({ ...p, description: e.target.value }))}
-            sx={inputSx} 
+            sx={inputSx}
           />
-          <TextField 
-            label="메모" size="small" fullWidth 
+          <TextField
+            label="메모" size="small" fullWidth
             value={assignmentForm.memo} onChange={e => setAssignmentForm(p => ({ ...p, memo: e.target.value }))}
-            sx={inputSx} 
+            sx={inputSx}
           />
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button onClick={() => setAssignmentDialogOpen(false)} sx={{ color: '#71717A', fontWeight: 700, textTransform: 'none' }}>취소</Button>
-          <Button 
-            variant="contained" onClick={handleSaveAssignment} 
-            sx={{ 
-              background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', 
-              fontWeight: 800, borderRadius: '10px', px: 3, textTransform: 'none' 
+          <Button
+            variant="contained" onClick={handleSaveAssignment}
+            sx={{
+              background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
+              fontWeight: 800, borderRadius: '10px', px: 3, textTransform: 'none'
             }}
           >
             저장하기
@@ -882,8 +853,8 @@ export default function AssignmentTab() {
       </Dialog>
 
       {/* 삭제 확인 다이얼로그 */}
-      <Dialog 
-        open={deleteConfirmOpen} 
+      <Dialog
+        open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' } }}
       >
@@ -895,8 +866,8 @@ export default function AssignmentTab() {
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
           <Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#71717A', textTransform: 'none' }}>취소</Button>
-          <Button 
-            onClick={handleConfirmDelete} 
+          <Button
+            onClick={handleConfirmDelete}
             sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 700, px: 2, '&:hover': { bgcolor: 'rgba(239,68,68,0.2)' } }}
           >
             삭제

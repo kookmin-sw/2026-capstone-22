@@ -17,6 +17,7 @@ from .routers import (
     hitl,
     students,
     attendance,
+    assignments,
     verification,
 )
 from .utils.init_data import init_database
@@ -141,6 +142,11 @@ app.include_router(
     attendance.router,
     prefix="/api/admin/students/attendance",
     tags=["Attendance"],
+)
+app.include_router(
+    assignments.router,
+    prefix="/api/admin/students/assignments",
+    tags=["Assignments"],
 )
 app.include_router(verification.router, prefix="/api", tags=["Verification"])
 

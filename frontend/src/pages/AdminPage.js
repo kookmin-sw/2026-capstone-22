@@ -1179,14 +1179,9 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
 
   const handleSubTabChange = (index) => {
     setStudentSubTab(index);
-    const subPaths = ['', '/attendance', '/assignments', '/exams'];
-    if (index === 0) navigate(basePath);
-    else if (index === 1) navigate(basePath); // '학생' is index 1 but maps to default or needs specific path? 
-    // Wait, labels are ['분반', '학생', '출결', '과제', '시험']
-    // index 0: 분반, 1: 학생, 2: 출결, 3: 과제, 4: 시험
     const paths = {
-      0: '',
-      1: '',
+      0: '/classes',
+      1: '/list',
       2: '/attendance',
       3: '/assignments',
       4: '/exams'

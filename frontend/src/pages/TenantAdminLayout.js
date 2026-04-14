@@ -81,7 +81,7 @@ export default function TenantAdminLayout() {
         { text: '채팅 내역', icon: <HistoryIcon />, path: `${basePath}/admin/chat-history` },
         { text: '문서 저장소', icon: <FolderIcon />, path: `${basePath}/admin/stores` },
         { text: '그룹 & 유저', icon: <PeopleIcon />, path: `${basePath}/admin/users` },
-        { text: '학생 관리', icon: <SchoolIcon />, path: `${basePath}/admin/students` },
+        { text: '학생 관리', icon: <SchoolIcon />, path: `${basePath}/admin/students/classes` },
         { text: '문제 분석', icon: <QuizIcon />, path: `${basePath}/admin/exam-analysis` },
         { text: '프롬프트 템플릿', icon: <ArticleIcon />, path: `${basePath}/admin/templates` },
       ],
@@ -147,6 +147,9 @@ export default function TenantAdminLayout() {
 
   const isActive = (path) => {
     if (path === basePath) return location.pathname === basePath || location.pathname === `${basePath}/`;
+    if (path === `${basePath}/admin/students/classes`) {
+      return location.pathname.startsWith(`${basePath}/admin/students`);
+    }
     return location.pathname.startsWith(path);
   };
 
