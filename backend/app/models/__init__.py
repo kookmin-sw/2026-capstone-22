@@ -13,6 +13,7 @@ from .hitl_request import HitlRequest, HitlStatus
 from .student import StudentClass, StudentClassStatus, Student, StudentStatus
 from .attendance import AttendanceRecord, AttendanceStatus
 from .assignment import Assignment, AssignmentSubmission, AssignmentSubmissionStatus
+from .exam import Exam, ExamResult, ExamResultStatus
 from .student_access_link import (
     StudentAccessLink,
     RelationshipType,
@@ -49,6 +50,9 @@ __all__ = [
     "Assignment",
     "AssignmentSubmission",
     "AssignmentSubmissionStatus",
+    "Exam",
+    "ExamResult",
+    "ExamResultStatus",
     "StudentAccessLink",
     "RelationshipType",
     "AccessLinkStatus",
