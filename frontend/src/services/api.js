@@ -272,6 +272,20 @@ export const assignmentAPI = {
     ),
 };
 
+export const examAPI = {
+  // 시험 목록 — params: { class_id?, exam_date?, exam_title? }
+  list: (params) => api.get('/admin/students/exams', { params }),
+  // 요약 카드 — params: { class_id?, days? }
+  getSummary: (params) => api.get('/admin/students/exams/summary', { params }),
+  create: (data) => api.post('/admin/students/exams', data),
+  update: (id, data) => api.put(`/admin/students/exams/${id}`, data),
+  remove: (id) => api.delete(`/admin/students/exams/${id}`),
+  // 결과 조회 (ExamResultsPayload: results + avg/max/declining_count)
+  listResults: (examId) => api.get(`/admin/students/exams/${examId}/results`),
+  bulkUpsertResults: (examId, data) =>
+    api.post(`/admin/students/exams/${examId}/results/bulk-upsert`, data),
+};
+
 export const attendanceAPI = {
   // 날짜 기준 roster 조회 (active 학생 + left join)
   // params: { attendance_date, class_id?, student_id?, status? }
