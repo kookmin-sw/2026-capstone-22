@@ -9,11 +9,11 @@ import {
   Assignment as ExamIcon, Search as SearchIcon, CheckCircle as CheckCircleIcon,
   Save as SaveIcon, Edit as EditIcon, DeleteOutline as DeleteIcon,
   Add as AddIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon,
-  BarChart as BarChartIcon, Close as CloseIcon, EmojiEvents as TrophyIcon,
-  EventNote as EventNoteIcon, School as SchoolIcon, Groups as GroupsIcon,
+  BarChart as BarChartIcon, EmojiEvents as TrophyIcon,
+  EventNote as EventNoteIcon, School as SchoolIcon,
   InfoOutlined as InfoIcon, HelpOutline as HelpIcon
 } from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { examAPI, studentAPI } from '../services/api';
 
 // ── 공통 스타일 ──────────────────────────────────────────────────────────────
@@ -174,16 +174,7 @@ export default function ExamTab() {
     });
     const distribution = dist.map((count, i) => ({ range: `${i * 10}-${(i + 1) * 10}`, count }));
 
-    const declinerIds = resultPayload.results
-      .filter(r => r.status === 'completed' && r.score != null)
-      .map(r => r.student_id)
-      .filter((_, idx) => {
-        // declining은 서버에서 count만 내려주므로, showDeclinersOnly 필터는 서버 응답 순서 기준 앞 N명으로 처리할 수 없음
-        // declining_count만 표시용으로 사용하고, showDeclinersOnly 필터는 미지원 처리
-        return false;
-      });
-
-    return { avg, max, decliners, distribution, declinerIds: [] };
+    return { avg, max, decliners, distribution };
   }, [resultPayload, selectedExam]);
 
   const summary = useMemo(() => ({
@@ -395,7 +386,7 @@ export default function ExamTab() {
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>유형</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험일</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">만점/평균</TableCell>
+                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">평균/만점</TableCell>
                       <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="right">액션</TableCell>
                     </TableRow>
                   </TableHead>
@@ -410,7 +401,7 @@ export default function ExamTab() {
                         </TableCell>
                         <TableCell>{e.exam_date}</TableCell>
                         <TableCell>{e.class_name}</TableCell>
-                        <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{e.max_score} / {selectedExamId === e.id && stats.avg ? stats.avg : (e.avg_score ?? '-')}</Typography></TableCell>
+                        <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{selectedExamId === e.id && stats.avg ? stats.avg : (e.avg_score ?? '-')} / {e.max_score}</Typography></TableCell>
                         <TableCell align="right" onClick={ev => ev.stopPropagation()}>
                           <IconButton size="small" onClick={() => { setEditingExam(e); setExamForm({ title: e.title, exam_date: e.exam_date, class_id: e.class_id, max_score: e.max_score, exam_type: e.exam_type || '', memo: e.memo || '' }); setExamDialogOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
                           <IconButton size="small" onClick={() => { setExamToDelete(e); setDeleteConfirmOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#ef4444' } }}><DeleteIcon fontSize="small" /></IconButton>
@@ -503,7 +494,7 @@ export default function ExamTab() {
                         <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
                         <RechartsTooltip contentStyle={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} itemStyle={{ fontSize: '10px' }} />
                         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                          {stats.distribution.map((entry, index) => (<Cell key={`cell-${index}`} fill={index > 7 ? '#a78bfa' : index > 4 ? '#6366f1' : '#3f3f46'} />))}
+                          {stats.distribution.map((_, index) => (<Cell key={`cell-${index}`} fill={index > 7 ? '#a78bfa' : index > 4 ? '#6366f1' : '#3f3f46'} />))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
@@ -553,8 +544,8 @@ export default function ExamTab() {
               freeSolo
               options={Array.from(new Set(exams.map(e => e.exam_type).filter(Boolean)))}
               value={examForm.exam_type || ''}
-              onChange={(event, newValue) => setExamForm(p => ({ ...p, exam_type: newValue }))}
-              onInputChange={(event, newValue) => setExamForm(p => ({ ...p, exam_type: newValue }))}
+              onChange={(_, newValue) => setExamForm(p => ({ ...p, exam_type: newValue }))}
+              onInputChange={(_, newValue) => setExamForm(p => ({ ...p, exam_type: newValue }))}
               slotProps={{
                 paper: {
                   sx: {
