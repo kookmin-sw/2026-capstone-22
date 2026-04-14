@@ -410,7 +410,7 @@ export default function ExamTab() {
                         </TableCell>
                         <TableCell>{e.exam_date}</TableCell>
                         <TableCell>{e.class_name}</TableCell>
-                        <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{e.max_score} / {selectedExamId === e.id && stats.avg ? stats.avg : '-'}</Typography></TableCell>
+                        <TableCell align="center"><Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAFAFA' }}>{e.max_score} / {selectedExamId === e.id && stats.avg ? stats.avg : (e.avg_score ?? '-')}</Typography></TableCell>
                         <TableCell align="right" onClick={ev => ev.stopPropagation()}>
                           <IconButton size="small" onClick={() => { setEditingExam(e); setExamForm({ title: e.title, exam_date: e.exam_date, class_id: e.class_id, max_score: e.max_score, exam_type: e.exam_type || '', memo: e.memo || '' }); setExamDialogOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
                           <IconButton size="small" onClick={() => { setExamToDelete(e); setDeleteConfirmOpen(true); }} sx={{ color: '#52525B', '&:hover': { color: '#ef4444' } }}><DeleteIcon fontSize="small" /></IconButton>
