@@ -25,6 +25,7 @@ import {
   TableRow,
   Avatar,
   Divider,
+  Portal,
 } from '@mui/material';
 import {
   Assignment as AssignmentIcon,
@@ -160,7 +161,7 @@ export default function AssignmentTab() {
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
-  const [snack, setSnack] = useState({ open: false, message: '' });
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
 
   // ── API 파라미터 빌더 ──
   const buildAssignmentParams = useCallback((filters) => {
@@ -208,6 +209,8 @@ export default function AssignmentTab() {
       setSubmissions([]); // 실패 시 stale 데이터 방지
     }
   }, [buildSubmissionParams]);
+
+  const showSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
 
   // ── Effects ──
   useEffect(() => {
@@ -293,10 +296,16 @@ export default function AssignmentTab() {
   };
 
   const handleSaveAssignment = async () => {
-    if (!assignmentForm.title || !assignmentForm.class_id || !assignmentForm.assigned_date || !assignmentForm.due_date) {
-      showSnack('과제명, 대상 분반, 부여일, 마감일은 필수 항목입니다.');
-      return;
+    const required = [
+      { key: 'title', msg: '과제명을 입력해주세요.' },
+      { key: 'class_id', msg: '대상 분반을 선택해주세요.' },
+      { key: 'assigned_date', msg: '부여일을 선택해주세요.' },
+      { key: 'due_date', msg: '마감일을 선택해주세요.' }
+    ];
+    for (const f of required) {
+      if (!assignmentForm[f.key]?.toString().trim()) { showSnack(f.msg, 'error'); return; }
     }
+
     try {
       if (editingAssignment) {
         const { class_id, ...updatePayload } = assignmentForm;
@@ -307,10 +316,9 @@ export default function AssignmentTab() {
         showSnack('과제가 추가되었습니다.');
       }
       setAssignmentDialogOpen(false);
-      await loadAssignments(assignmentFilters);
-      await loadSummary(assignmentFilters);
+      await Promise.all([loadAssignments(assignmentFilters), loadSummary(assignmentFilters)]);
     } catch (e) {
-      showSnack('저장에 실패했습니다.');
+      showSnack('저장에 실패했습니다.', 'error');
     }
   };
 
@@ -329,7 +337,7 @@ export default function AssignmentTab() {
       await loadAssignments(assignmentFilters);
       await loadSummary(assignmentFilters);
     } catch (e) {
-      showSnack('삭제에 실패했습니다.');
+      showSnack('삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -390,13 +398,8 @@ export default function AssignmentTab() {
       await loadAssignments(assignmentFilters);
       await loadSummary(assignmentFilters);
     } catch (e) {
-      showSnack('저장에 실패했습니다.');
+      showSnack('저장에 실패했습니다.', 'error');
     }
-  };
-
-  const showSnack = (message) => {
-    setSnack({ open: true, message });
-    setTimeout(() => setSnack({ open: false, message: '' }), 2500);
   };
 
   const handleQuickFilter = (type) => {
@@ -877,15 +880,19 @@ export default function AssignmentTab() {
 
       {/* 스낵바 토스트 */}
       {snack.open && (
-        <Box sx={{
-          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 9999, bgcolor: '#14532d', border: '1px solid #22c55e', color: '#86efac',
-          px: 4, py: 1.5, borderRadius: '14px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
-          display: 'flex', alignItems: 'center', gap: 1.5, animation: 'fadeUp 0.3s ease-out'
-        }}>
-          <CheckCircleIcon sx={{ fontSize: 20 }} />
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>{snack.message}</Typography>
-        </Box>
+        <Portal>
+          <Box sx={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
+            border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+            color: snack.severity === 'error' ? '#fca5a5' : '#86efac',
+            px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600,
+            cursor: 'pointer'
+          }}
+          onClick={() => setSnack(p => ({ ...p, open: false }))}>
+            {snack.message}
+          </Box>
+        </Portal>
       )}
 
       <style>{`

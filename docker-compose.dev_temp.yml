@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: readytalk-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-readytalk_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-readytalk_password}
+      POSTGRES_DB: ${POSTGRES_DB:-readytalk_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-readytalk_user} -d ${POSTGRES_DB:-readytalk_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: readytalk-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-readytalk_user}:${POSTGRES_PASSWORD:-readytalk_password}@postgres:5432/${POSTGRES_DB:-readytalk_db}
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SUPERADMIN_EMAIL=${SUPERADMIN_EMAIL:-admin@academy.ready.talk}
+      - SUPERADMIN_PASSWORD=${SUPERADMIN_PASSWORD:-readytalk2026!}
+      - FEEDBACK_EMAIL=${FEEDBACK_EMAIL:-}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - API_ENCRYPTION_KEY=${API_ENCRYPTION_KEY:-}
+      - GOOGLE_CALENDAR_CLIENT_ID=${GOOGLE_CALENDAR_CLIENT_ID:-}
+      - GOOGLE_CALENDAR_CLIENT_SECRET=${GOOGLE_CALENDAR_CLIENT_SECRET:-}
+      - GOOGLE_CALENDAR_REDIRECT_URI=${GOOGLE_CALENDAR_REDIRECT_URI:-http://localhost:8888/api/calendar/callback}
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8888}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/readytalk-kmu-credentials.json
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+      - ./backend/credentials:/app/credentials:ro
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  nginx:
+    image: nginx:alpine
+    container_name: readytalk-nginx
+    restart: always
+    volumes:
+      - ./nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8888:80"
+    depends_on:
+      - backend
+      - frontend
+
+  weaviate:
+    image: semitechnologies/weaviate:1.28.4
+    container_name: readytalk-weaviate
+    restart: always
+    ports:
+      - "8081:8080"
+      - "50052:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_APIKEY_ENABLED: 'true'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: '${WEAVIATE_API_KEY:-readytalk-weaviate-local-key}'
+      AUTHENTICATION_APIKEY_USERS: 'admin@readytalk.com'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: readytalk-frontend
+    restart: always
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost}
+      - WDS_SOCKET_HOST=localhost
+      - WDS_SOCKET_PORT=8888
+      - WDS_SOCKET_PATH=/ws
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  weaviate_data:

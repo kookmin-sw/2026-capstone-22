@@ -3,7 +3,7 @@ import {
   Box, Typography, TextField, Button, Select, MenuItem, FormControl,
   InputLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
   IconButton, Tooltip, Avatar, Divider, Table, TableBody, TableCell,
-  TableHead, TableRow, Paper, Chip, Autocomplete
+  TableHead, TableRow, Paper, Chip, Autocomplete, Portal
 } from '@mui/material';
 import {
   Assignment as ExamIcon, Search as SearchIcon, CheckCircle as CheckCircleIcon,
@@ -75,7 +75,7 @@ export default function ExamTab() {
   const [examForm, setExamForm] = useState({ title: '', exam_date: '', class_id: '', max_score: 100, exam_type: '', memo: '' });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState(null);
-  const [snack, setSnack] = useState({ open: false, message: '' });
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
 
   // ── 데이터 fetch ─────────────────────────────────────────────────────────────
 
@@ -204,14 +204,24 @@ export default function ExamTab() {
 
   // ── 핸들러 ───────────────────────────────────────────────────────────────────
 
+  const showSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
+
   const handleSaveExam = async () => {
     const trimmedTitle = examForm.title.trim();
     const numericMaxScore = Number(examForm.max_score);
 
-    if (!trimmedTitle) { showSnack('시험명을 입력해주세요.'); return; }
-    if (!editingExam && !examForm.class_id) { showSnack('대상 분반을 선택해주세요.'); return; }
-    if (!examForm.exam_date) { showSnack('시험일을 입력해주세요.'); return; }
-    if (!Number.isFinite(numericMaxScore) || numericMaxScore <= 0) { showSnack('만점은 1 이상의 숫자로 입력해주세요.'); return; }
+    const required = [
+      { val: trimmedTitle, msg: '시험명을 입력해주세요.' },
+      { val: editingExam || examForm.class_id, msg: '대상 분반을 선택해주세요.' },
+      { val: examForm.exam_date, msg: '시험일을 입력해주세요.' },
+      { val: examForm.max_score, msg: '만점을 입력해주세요.' }
+    ];
+    for (const f of required) {
+      if (!f.val?.toString().trim()) { showSnack(f.msg, 'error'); return; }
+    }
+    if (!Number.isFinite(numericMaxScore) || numericMaxScore <= 0) {
+      showSnack('만점은 1 이상의 숫자로 입력해주세요.', 'error'); return;
+    }
 
     try {
       if (editingExam) {
@@ -222,6 +232,7 @@ export default function ExamTab() {
           exam_type: examForm.exam_type || null,
           memo: examForm.memo || null,
         });
+        showSnack('시험 정보가 수정되었습니다.');
       } else {
         await examAPI.create({
           title: trimmedTitle,
@@ -231,18 +242,15 @@ export default function ExamTab() {
           exam_type: examForm.exam_type || null,
           memo: examForm.memo || null,
         });
+        showSnack('시험 정보가 등록되었습니다.');
       }
       setExamDialogOpen(false);
-      showSnack('시험 정보가 저장되었습니다.');
-      await fetchExams();
-      await fetchSummary(filters.class_id);
-      // 수정한 시험이 현재 선택된 시험이면 분석 카드도 갱신
+      await Promise.all([fetchExams(), fetchSummary(filters.class_id)]);
       if (editingExam && editingExam.id === selectedExamId) {
         await fetchResults(selectedExamId);
       }
     } catch (e) {
-      showSnack('저장 중 오류가 발생했습니다.');
-      console.error(e);
+      showSnack('저장에 실패했습니다.', 'error');
     }
   };
 
@@ -251,12 +259,11 @@ export default function ExamTab() {
       await examAPI.remove(examToDelete.id);
       setDeleteConfirmOpen(false);
       if (selectedExamId === examToDelete.id) setSelectedExamId(null);
-      showSnack('삭제되었습니다.');
+      showSnack('시험이 삭제되었습니다.');
       await fetchExams();
       await fetchSummary(filters.class_id);
     } catch (e) {
-      showSnack('삭제 중 오류가 발생했습니다.');
-      console.error(e);
+      showSnack('삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -277,11 +284,9 @@ export default function ExamTab() {
       await examAPI.bulkUpsertResults(selectedExamId, { records });
       setDraftResults({});
       showSnack('성적이 저장되었습니다.');
-      await fetchResults(selectedExamId);
-      await fetchExams(); // avg_score 갱신
+      await Promise.all([fetchResults(selectedExamId), fetchExams()]);
     } catch (e) {
-      showSnack('저장 중 오류가 발생했습니다.');
-      console.error(e);
+      showSnack('성적 저장에 실패했습니다.', 'error');
     }
   };
 
@@ -296,8 +301,6 @@ export default function ExamTab() {
       return { ...prev, [studentId]: next };
     });
   };
-
-  const showSnack = (message) => { setSnack({ open: true, message }); setTimeout(() => setSnack({ open: false, message: '' }), 2500); };
 
   return (
     <Box sx={{ animation: 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
@@ -583,9 +586,29 @@ export default function ExamTab() {
         <DialogActions sx={{ p: 2.5 }}><Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#71717A' }}>취소</Button><Button onClick={handleDeleteExam} sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 700 }}>삭제</Button></DialogActions>
       </Dialog>
 
-      {snack.open && (<Box sx={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, bgcolor: '#14532d', border: '1px solid #22c55e', color: '#86efac', px: 4, py: 1.5, borderRadius: '14px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', gap: 1.5, animation: 'fadeUp 0.3s ease-out' }}><CheckCircleIcon sx={{ fontSize: 20 }} /><Typography sx={{ fontWeight: 700, fontSize: '0.9375rem' }}>{snack.message}</Typography></Box>)}
+      {/* 스낵바 토스트 */}
+      {snack.open && (
+        <Portal>
+          <Box sx={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 9999, bgcolor: snack.severity === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
+            border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+            color: snack.severity === 'error' ? '#fca5a5' : '#86efac',
+            px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600,
+            cursor: 'pointer'
+          }}
+          onClick={() => setSnack(p => ({ ...p, open: false }))}>
+            {snack.message}
+          </Box>
+        </Portal>
+      )}
 
-      <style>{`@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </Box>
   );
 }
