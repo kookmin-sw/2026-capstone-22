@@ -813,6 +813,7 @@ export default function AttendanceTab() {
                   onChange={e => setFormData(p => ({ ...p, student_id: e.target.value }))}
                   label="학생을 선택하세요"
                   MenuProps={menuProps}
+                  sx={{ color: '#FAFAFA' }}
                 >
                   {roster.map(s => <MenuItem key={s.student_id} value={s.student_id}>{s.student_name} ({s.class_name})</MenuItem>)}
                 </Select>
