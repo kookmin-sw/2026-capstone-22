@@ -59,6 +59,7 @@ frontend/yarn-error.log*
 
 # Logs
 *.log
+docker-compose.dev_temp.yml
 
 # Google Drive credentials
 credentials.json
