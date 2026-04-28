@@ -26,12 +26,16 @@ router = APIRouter()
 async def list_classes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user),
+    status: Optional[str] = Query(None),
 ):
     """List all student classes in current tenant (Admin only)"""
+    query = db.query(StudentClass).filter(
+        StudentClass.tenant_id == current_user.tenant_id
+    )
+    if status:
+        query = query.filter(StudentClass.status == status)
     return (
-        db.query(StudentClass)
-        .filter(StudentClass.tenant_id == current_user.tenant_id)
-        .order_by(StudentClass.created_at)
+        query.order_by(StudentClass.created_at)
         .all()
     )
 

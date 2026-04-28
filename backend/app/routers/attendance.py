@@ -59,6 +59,7 @@ async def list_roster(
         .filter(
             Student.tenant_id == current_user.tenant_id,
             Student.status == StudentStatus.active,
+            (Student.class_id == None) | (StudentClass.status == 'active'),
         )
     )
 
@@ -100,9 +101,14 @@ async def get_summary(
 ):
     """날짜 기준 출결 요약 통계 (roster와 동일한 학생 집합 기준, Admin only)"""
     # roster와 동일한 기준: active 학생 + 분반 필터
-    student_query = db.query(Student.id).filter(
-        Student.tenant_id == current_user.tenant_id,
-        Student.status == StudentStatus.active,
+    student_query = (
+        db.query(Student.id)
+        .outerjoin(StudentClass, Student.class_id == StudentClass.id)
+        .filter(
+            Student.tenant_id == current_user.tenant_id,
+            Student.status == StudentStatus.active,
+            (Student.class_id == None) | (StudentClass.status == 'active'),
+        )
     )
     if class_id is not None:
         student_query = student_query.filter(Student.class_id == class_id)

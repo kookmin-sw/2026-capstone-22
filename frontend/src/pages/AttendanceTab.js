@@ -140,7 +140,7 @@ export default function AttendanceTab() {
 
   // ── 분반 목록 1회 로드 ─────────────────────────────────────────────────────
   useEffect(() => {
-    studentAPI.listClasses()
+    studentAPI.listClasses({ status: 'active' })
       .then(res => setClasses(res.data))
       .catch(() => {});
   }, []);
@@ -220,6 +220,19 @@ export default function AttendanceTab() {
 
   const classSummary = useMemo(() => {
     const classMap = {};
+
+    classes.forEach(c => {
+      classMap[c.id] = {
+        classId: c.id,
+        className: c.name,
+        total: 0,
+        present: 0,
+        absent: 0,
+        late: 0,
+        early_leave: 0,
+      };
+    });
+
     roster.forEach(item => {
       // class_id를 key로 사용 — 동명 분반 중복 방지
       const key = item.class_id ?? 'unassigned';
@@ -235,8 +248,12 @@ export default function AttendanceTab() {
       const st = draftItem?.status !== undefined ? draftItem.status : item.status;
       if (st && classMap[key][st] !== undefined) classMap[key][st]++;
     });
-    return Object.values(classMap).sort((a, b) => a.className.localeCompare(b.className));
-  }, [roster, draft]);
+    return Object.values(classMap).sort((a, b) => {
+      if (a.classId === 'unassigned') return 1;
+      if (b.classId === 'unassigned') return -1;
+      return a.className.localeCompare(b.className);
+    });
+  }, [classes, roster, draft]);
 
   const selectedStudent = selectedStudentId
     ? roster.find(r => r.student_id === selectedStudentId)
