@@ -708,7 +708,7 @@ export default function AssignmentTab() {
                               color: '#FAFAFA',
                               '& fieldset': { borderColor: 'rgba(255,255,255,0.05)' },
                             },
-                            '& .MuiOutlinedInput-input': { p: 0.5, colorScheme: 'dark' }
+                            '& .MuiOutlinedInput-input': { p: 0.5, colorScheme: 'dark', WebkitTextFillColor: 'white' }
                           }}
                         />
                       </TableCell>
