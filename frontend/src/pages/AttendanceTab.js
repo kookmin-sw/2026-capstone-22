@@ -248,12 +248,12 @@ export default function AttendanceTab() {
       const st = draftItem?.status !== undefined ? draftItem.status : item.status;
       if (st && classMap[key][st] !== undefined) classMap[key][st]++;
     });
-    return Object.values(classMap).sort((a, b) => {
-      if (a.classId === 'unassigned') return 1;
-      if (b.classId === 'unassigned') return -1;
-      return a.className.localeCompare(b.className);
-    });
-  }, [classes, roster, draft]);
+    // 3. 필터 적용 및 정렬
+    return Object.values(classMap)
+      .filter(cs => {
+        if (filters.classId === 'all') {
+          // 'all'일 때는 'unassigned'는 학생이 있을 때만 표시
+          if (cs.classId === 'unassigned') return cs.total > 0;
 
   const selectedStudent = selectedStudentId
     ? roster.find(r => r.student_id === selectedStudentId)
@@ -427,6 +427,7 @@ export default function AttendanceTab() {
           >
             <MenuItem value="all">전체 분반</MenuItem>
             {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+            <MenuItem value="unassigned">미배정</MenuItem>
           </Select>
         </FormControl>
         <TextField

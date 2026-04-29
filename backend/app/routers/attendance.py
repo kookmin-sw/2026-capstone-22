@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attendance import AttendanceRecord, AttendanceStatus
-from ..models.student import Student, StudentClass, StudentStatus
+from ..models.student import Student, StudentClass, StudentStatus, StudentClassStatus
 from ..models.user import User
 from ..schemas.attendance import (
     AttendanceBulkUpsertRequest,
@@ -59,7 +59,7 @@ async def list_roster(
         .filter(
             Student.tenant_id == current_user.tenant_id,
             Student.status == StudentStatus.active,
-            (Student.class_id == None) | (StudentClass.status == 'active'),
+            (StudentClass.id == None) | (StudentClass.status == StudentClassStatus.active),
         )
     )
 
@@ -107,7 +107,7 @@ async def get_summary(
         .filter(
             Student.tenant_id == current_user.tenant_id,
             Student.status == StudentStatus.active,
-            (Student.class_id == None) | (StudentClass.status == 'active'),
+            (StudentClass.id == None) | (StudentClass.status == StudentClassStatus.active),
         )
     )
     if class_id is not None:
