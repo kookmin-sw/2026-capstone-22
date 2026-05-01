@@ -13,6 +13,9 @@ from .gemini_client import (
     _get_model_generation_params,
     _init_vertex_ai_global,
 )
+from ..llm_tools.attendance import ATTENDANCE_FUNCTION_DECLARATIONS, execute_attendance_tool
+from ..llm_tools.assignment import ASSIGNMENT_FUNCTION_DECLARATIONS, execute_assignment_tool
+from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 
 logger = logging.getLogger(__name__)
 
@@ -637,6 +640,12 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
+            # PERSONAL Agent: DB data tools (attendance, assignment, exam)
+            if agent_type == AgentType.PERSONAL:
+                function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
+                function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
+                function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
             # 2. Document search: Available to CONSULTING and PERSONAL
             if agent_type in [
                 AgentType.CONSULTING,
@@ -1051,6 +1060,15 @@ class ChatService:
                             )
                     except Exception as e:
                         result_str = f"웹 검색 중 오류 발생: {str(e)}"
+                elif func_name.startswith("get_my_attendance_"):
+                    result = execute_attendance_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_assignment_"):
+                    result = execute_assignment_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_exam_"):
+                    result = execute_exam_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
 
@@ -1268,6 +1286,12 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
+            # PERSONAL Agent: DB data tools (attendance, assignment, exam)
+            if agent_type == AgentType.PERSONAL:
+                function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
+                function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
+                function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
             if agent_type in [
                 AgentType.CONSULTING,
                 AgentType.PERSONAL,
@@ -1477,6 +1501,15 @@ class ChatService:
                         ),
                     )
                     result_str = search_response.text
+                elif func_name.startswith("get_my_attendance_"):
+                    result = execute_attendance_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_assignment_"):
+                    result = execute_assignment_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_exam_"):
+                    result = execute_exam_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"
 
