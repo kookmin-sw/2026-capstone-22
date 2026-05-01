@@ -13,8 +13,14 @@ from .gemini_client import (
     _get_model_generation_params,
     _init_vertex_ai_global,
 )
-from ..llm_tools.attendance import ATTENDANCE_FUNCTION_DECLARATIONS, execute_attendance_tool
-from ..llm_tools.assignment import ASSIGNMENT_FUNCTION_DECLARATIONS, execute_assignment_tool
+from ..llm_tools.attendance import (
+    ATTENDANCE_FUNCTION_DECLARATIONS,
+    execute_attendance_tool,
+)
+from ..llm_tools.assignment import (
+    ASSIGNMENT_FUNCTION_DECLARATIONS,
+    execute_assignment_tool,
+)
 from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 
 logger = logging.getLogger(__name__)
@@ -117,18 +123,51 @@ CONSULTING (일반 안내로 충분):
             return False
 
         # 직전 assistant 메시지에 PERSONAL 학생 데이터 주제 키워드가 있는지 확인
-        PERSONAL_DATA_KEYWORDS = {"출결", "과제", "시험", "성적", "출석", "결석", "지각", "조기퇴실"}
+        PERSONAL_DATA_KEYWORDS = {
+            "출결",
+            "과제",
+            "시험",
+            "성적",
+            "출석",
+            "결석",
+            "지각",
+            "조퇴",
+        }
         if not any(kw in last_assistant_text for kw in PERSONAL_DATA_KEYWORDS):
             return False
 
         # 현재 쿼리가 기간/날짜 보충 응답인지 확인 (짧고 날짜·기간 표현 포함)
         PERIOD_SUPPLEMENT_KEYWORDS = {
-            "지난", "이번", "최근", "오늘", "어제",
-            "일주일", "한 달", "한달", "이번 달", "이번달",
-            "지난달", "저번달", "전체", "모두", "전부",
-            "주일", "학기", "분기",
-            "1월", "2월", "3월", "4월", "5월", "6월",
-            "7월", "8월", "9월", "10월", "11월", "12월",
+            "지난",
+            "이번",
+            "최근",
+            "오늘",
+            "어제",
+            "일주일",
+            "한 달",
+            "한달",
+            "이번 달",
+            "이번달",
+            "지난달",
+            "저번달",
+            "전체",
+            "모두",
+            "전부",
+            "주일",
+            "학기",
+            "분기",
+            "1월",
+            "2월",
+            "3월",
+            "4월",
+            "5월",
+            "6월",
+            "7월",
+            "8월",
+            "9월",
+            "10월",
+            "11월",
+            "12월",
         }
         query_stripped = query.strip()
         return len(query_stripped) < 30 and any(
@@ -152,7 +191,7 @@ CONSULTING (일반 안내로 충분):
                 return keyword_result
 
             # 2. LLM 분류 — PERSONAL 여부를 뉘앙스로 판단
-            prompt = f"학부모 질문: \"{query}\"\n\n위 질문에 가장 적합한 에이전트 타입은?"
+            prompt = f'학부모 질문: "{query}"\n\n위 질문에 가장 적합한 에이전트 타입은?'
 
             gen_params = _get_model_generation_params()
             # Use provided model (usually a flash model) for fast and cheap routing
@@ -623,8 +662,15 @@ class ChatService:
             # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
             # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
             _VERIFY_QUERY_KEYWORDS = {
-                "본인확인", "본인 확인", "인증 방법", "인증방법", "어떻게 인증",
-                "인증 어떻게", "verify", "인증하는 방법", "인증은 어떻게",
+                "본인확인",
+                "본인 확인",
+                "인증 방법",
+                "인증방법",
+                "어떻게 인증",
+                "인증 어떻게",
+                "verify",
+                "인증하는 방법",
+                "인증은 어떻게",
             }
             if is_authenticated and user_id and tenant_id and db_session:
                 if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
@@ -658,7 +704,12 @@ class ChatService:
             # 거부 시 메시지 안에 마크다운 링크를 포함 → ReactMarkdown이 클릭 가능한
             # 링크로 렌더링하므로 DB 저장 후 재로드해도 링크가 살아있다.
             allowed_student_ids = None
-            if agent_type == AgentType.PERSONAL and db_session and user_id and tenant_id:
+            if (
+                agent_type == AgentType.PERSONAL
+                and db_session
+                and user_id
+                and tenant_id
+            ):
                 from ..models.user import User as _User
                 from .policy_service import check_personal_access
 
@@ -713,7 +764,10 @@ class ChatService:
             # 2. Document search: CONSULTING 및 PERSONAL(연속 흐름이 아닌 경우)에 제공
             # 멀티턴 PERSONAL 연속 흐름(is_personal_continuation=True)에서는
             # search_documents 대신 학생 DB 조회 tool 사용을 유도하기 위해 제외한다.
-            if agent_type in [AgentType.CONSULTING, AgentType.PERSONAL] and not is_personal_continuation:
+            if (
+                agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
+                and not is_personal_continuation
+            ):
                 function_declarations.append(
                     {
                         "name": "search_documents",
@@ -1151,13 +1205,19 @@ class ChatService:
                     except Exception as e:
                         result_str = f"웹 검색 중 오류 발생: {str(e)}"
                 elif func_name.startswith("get_my_attendance_"):
-                    result = execute_attendance_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_attendance_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 elif func_name.startswith("get_my_assignment_"):
-                    result = execute_assignment_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_assignment_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 elif func_name.startswith("get_my_exam_"):
-                    result = execute_exam_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_exam_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
@@ -1401,7 +1461,10 @@ class ChatService:
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
 
-            if agent_type in [AgentType.CONSULTING, AgentType.PERSONAL] and not is_personal_continuation:
+            if (
+                agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
+                and not is_personal_continuation
+            ):
                 function_declarations.append(
                     {
                         "name": "search_documents",
@@ -1547,7 +1610,9 @@ class ChatService:
             for fc in function_calls:
                 func_name = fc.name
                 func_args = dict(fc.args)
-                logger.info(f"[Stream] LLM called function: {func_name} with args: {func_args}")
+                logger.info(
+                    f"[Stream] LLM called function: {func_name} with args: {func_args}"
+                )
 
                 if func_name.startswith(
                     (
@@ -1636,13 +1701,19 @@ class ChatService:
                     )
                     result_str = search_response.text
                 elif func_name.startswith("get_my_attendance_"):
-                    result = execute_attendance_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_attendance_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 elif func_name.startswith("get_my_assignment_"):
-                    result = execute_assignment_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_assignment_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 elif func_name.startswith("get_my_exam_"):
-                    result = execute_exam_tool(func_name, func_args, tenant_id, user_id, db_session)
+                    result = execute_exam_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"
