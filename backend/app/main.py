@@ -20,6 +20,7 @@ from .routers import (
     assignments,
     exams,
     verification,
+    question_bank,
 )
 from .utils.init_data import init_database
 import logging
