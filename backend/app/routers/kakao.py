@@ -11,7 +11,7 @@ from ..models.tenant import Tenant, TenantKakaoConfig
 from ..models.user import User
 from ..models.chat import ChatSession, Message, MessageRole
 from ..services.chat_service import ChatService as GeminiService
-from ..utils.chat_history import get_conversation_history
+from ..utils.chat_history import get_conversation_history, build_hitl_context_snapshot
 from ..config import settings
 
 logger = logging.getLogger(__name__)
@@ -193,10 +193,15 @@ def _save_hitl(
     """HITL 트리거 시 hitl_requests 테이블에 저장."""
     from ..models.hitl_request import HitlRequest, HitlStatus
 
+    if session_id:
+        user_message = build_hitl_context_snapshot(session_id, db) or utterance
+    else:
+        user_message = utterance
+
     hitl_entry = HitlRequest(
         tenant_id=tenant_id,
         session_id=session_id,  # None이면 NULL로 저장 (0 금지)
-        user_message=utterance,
+        user_message=user_message,
         ai_response=ai_response,
         hitl_reason=hitl_reason,
         status=HitlStatus.pending,
@@ -278,7 +283,7 @@ def _strip_markdown(text: str) -> str:
     # Remove [cite: "..."] markers (sources shown as buttons instead)
     text = re.sub(r'\s*\[cite:\s*"[^"]*"\]', "", text)
     # Remove <!-- verify:... --> comments (verification handled by button card)
-    text = re.sub(r'\s*<!--\s*verify:[^>]*-->', "", text)
+    text = re.sub(r"\s*<!--\s*verify:[^>]*-->", "", text)
     return text.strip()
 
 
