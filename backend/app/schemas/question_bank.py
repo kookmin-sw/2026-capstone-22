@@ -11,8 +11,11 @@ from ..models.question_bank import PaperStatus, ReviewStatus
 class ExamPaperCreate(BaseModel):
     title: str
     subject: str = "영어"
+    grade: Optional[str] = None
     source_year: Optional[int] = None
-    source_type: Optional[str] = None  # csat / school / mock
+    source_type: Optional[str] = None  # 내신 / 모의고사 / 학원 자체 제작
+    source: Optional[str] = None
+    memo: Optional[str] = None
 
 
 class ExamPaperResponse(BaseModel):
@@ -20,8 +23,11 @@ class ExamPaperResponse(BaseModel):
     tenant_id: int
     title: str
     subject: str
+    grade: Optional[str]
     source_year: Optional[int]
     source_type: Optional[str]
+    source: Optional[str]
+    memo: Optional[str]
     status: PaperStatus
     total_questions: Optional[int]
     error_message: Optional[str]

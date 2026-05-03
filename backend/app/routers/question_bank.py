@@ -32,8 +32,11 @@ async def upload_paper(
     file: UploadFile = File(...),
     title: str = Form(...),
     subject: str = Form("영어"),
+    grade: Optional[str] = Form(None),
     source_year: Optional[int] = Form(None),
     source_type: Optional[str] = Form(None),
+    source: Optional[str] = Form(None),
+    memo: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user),
 ):
@@ -49,8 +52,11 @@ async def upload_paper(
         tenant_id=current_user.tenant_id,
         title=title,
         subject=subject,
+        grade=grade,
         source_year=source_year,
         source_type=source_type,
+        source=source,
+        memo=memo,
         status=PaperStatus.pending,
         created_by=current_user.id,
     )
