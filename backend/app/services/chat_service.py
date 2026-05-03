@@ -856,14 +856,20 @@ class ChatService:
             if agent_type == AgentType.PERSONAL:
                 agent_persona = (
                     "\n## 배정된 역할: 자녀 정보 조회 에이전트\n"
-                    "- 당신은 학부모가 자녀의 학원 정보를 확인할 수 있도록 돕는 전담 비서입니다.\n"
-                    "- 자녀의 수업 일정 확인, 결석 신고, 보강 날짜 안내 업무를 처리하세요.\n"
-                    "- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요."
+                    "- 당신은 본인 인증을 완료한 학부모가 자녀의 학원 정보를 확인하도록 돕는 전담 비서입니다.\n"
+                    "- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요.\n"
+                    "- **[필수] 자녀의 개인 정보(분반·선생님·시간표·출결·과제·성적)를 물어보면 반드시 아래 함수를 호출하세요.**\n"
+                    "  - 분반·담당 선생님·시간표·수업 요일 → get_my_student_profile\n"
+                    "  - 출결·결석·지각 → get_my_attendance_summary 또는 get_my_attendance_records\n"
+                    "  - 과제 → get_my_assignment_* 함수\n"
+                    "  - 시험·성적 → get_my_exam_* 함수\n"
+                    "- **개인정보 보호를 이유로 거절하거나 HITL 태그를 추가하지 마세요. "
+                    "이 학부모는 인증을 완료하였으므로 위 함수를 호출해 실제 데이터로 답변하세요.**"
                 )
                 if is_personal_continuation:
                     agent_persona += (
                         "\n\n**[멀티턴 지시] 이전 대화에서 학생 데이터 조회를 요청받아 기간/조건 확인 중입니다. "
-                        "반드시 학생 데이터 조회 함수(get_my_attendance_*, get_my_assignment_*, get_my_exam_*)를 "
+                        "반드시 학생 데이터 조회 함수(get_my_student_profile, get_my_attendance_*, get_my_assignment_*, get_my_exam_*)를 "
                         "호출하여 답변하세요. search_documents는 호출하지 마세요.**"
                     )
             elif agent_type == AgentType.CONSULTING:
