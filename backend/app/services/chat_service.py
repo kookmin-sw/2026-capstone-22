@@ -13,6 +13,15 @@ from .gemini_client import (
     _get_model_generation_params,
     _init_vertex_ai_global,
 )
+from ..llm_tools.attendance import (
+    ATTENDANCE_FUNCTION_DECLARATIONS,
+    execute_attendance_tool,
+)
+from ..llm_tools.assignment import (
+    ASSIGNMENT_FUNCTION_DECLARATIONS,
+    execute_assignment_tool,
+)
+from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +97,84 @@ CONSULTING (일반 안내로 충분):
         return None
 
     @staticmethod
+    def _is_personal_context_continuation(history: list, query: str) -> bool:
+        """멀티턴 대화에서 직전 assistant 메시지가 PERSONAL 학생 데이터 관련
+        후속 질문을 했고, 현재 쿼리가 기간/조건 보충 응답인지 감지한다.
+
+        탐지 조건:
+          1. 직전 model 메시지에 출결/과제/시험/성적 등 PERSONAL 주제 키워드가 있고
+          2. 현재 쿼리가 30자 미만의 짧은 기간/날짜 보충 응답인 경우
+        """
+        if not history:
+            return False
+
+        # 직전 assistant(model) 메시지 텍스트 추출
+        last_assistant_text = ""
+        for msg in reversed(history):
+            if msg.get("role") == "model":
+                for part in msg.get("parts", []):
+                    if isinstance(part, dict):
+                        last_assistant_text += part.get("text", "")
+                    elif hasattr(part, "text") and part.text:
+                        last_assistant_text += part.text
+                break
+
+        if not last_assistant_text:
+            return False
+
+        # 직전 assistant 메시지에 PERSONAL 학생 데이터 주제 키워드가 있는지 확인
+        PERSONAL_DATA_KEYWORDS = {
+            "출결",
+            "과제",
+            "시험",
+            "성적",
+            "출석",
+            "결석",
+            "지각",
+            "조퇴",
+        }
+        if not any(kw in last_assistant_text for kw in PERSONAL_DATA_KEYWORDS):
+            return False
+
+        # 현재 쿼리가 기간/날짜 보충 응답인지 확인 (짧고 날짜·기간 표현 포함)
+        PERIOD_SUPPLEMENT_KEYWORDS = {
+            "지난",
+            "이번",
+            "최근",
+            "오늘",
+            "어제",
+            "일주일",
+            "한 달",
+            "한달",
+            "이번 달",
+            "이번달",
+            "지난달",
+            "저번달",
+            "전체",
+            "모두",
+            "전부",
+            "주일",
+            "학기",
+            "분기",
+            "1월",
+            "2월",
+            "3월",
+            "4월",
+            "5월",
+            "6월",
+            "7월",
+            "8월",
+            "9월",
+            "10월",
+            "11월",
+            "12월",
+        }
+        query_stripped = query.strip()
+        return len(query_stripped) < 30 and any(
+            kw in query_stripped for kw in PERIOD_SUPPLEMENT_KEYWORDS
+        )
+
+    @staticmethod
     def determine_agent(
         query: str, is_authenticated: bool, model_name: str = "gemini-1.5-flash"
     ) -> str:
@@ -104,7 +191,7 @@ CONSULTING (일반 안내로 충분):
                 return keyword_result
 
             # 2. LLM 분류 — PERSONAL 여부를 뉘앙스로 판단
-            prompt = f"학부모 질문: \"{query}\"\n\n위 질문에 가장 적합한 에이전트 타입은?"
+            prompt = f'학부모 질문: "{query}"\n\n위 질문에 가장 적합한 에이전트 타입은?'
 
             gen_params = _get_model_generation_params()
             # Use provided model (usually a flash model) for fast and cheap routing
@@ -548,16 +635,42 @@ class ChatService:
             agent_type = RouterAgent.determine_agent(
                 query, is_authenticated, model_name=model_name
             )
+            original_agent_type = agent_type
             logger.info(
-                f"Routed query to agent: {agent_type} (Authenticated: {is_authenticated})"
+                f"[Routing] RouterAgent initial classification: '{query[:60]}' -> {agent_type} "
+                f"(Authenticated: {is_authenticated})"
+            )
+
+            # --- [멀티턴 PERSONAL 보정] ---
+            # 직전 assistant 메시지가 학생 데이터를 묻고 있고, 현재 쿼리가
+            # 기간/조건 보충 응답이면 CONSULTING → PERSONAL로 강제 보정한다.
+            is_personal_continuation = False
+            if agent_type != AgentType.PERSONAL and is_authenticated and history:
+                if RouterAgent._is_personal_context_continuation(history, query):
+                    agent_type = AgentType.PERSONAL
+                    is_personal_continuation = True
+                    logger.info(
+                        f"[Routing] Multi-turn context correction: {original_agent_type} -> PERSONAL "
+                        f"(prior assistant msg referenced student data, current query is period supplement)"
+                    )
+            logger.info(
+                f"[Routing] Final agent_type={agent_type} "
+                f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
             # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
             # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
             # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
             _VERIFY_QUERY_KEYWORDS = {
-                "본인확인", "본인 확인", "인증 방법", "인증방법", "어떻게 인증",
-                "인증 어떻게", "verify", "인증하는 방법", "인증은 어떻게",
+                "본인확인",
+                "본인 확인",
+                "인증 방법",
+                "인증방법",
+                "어떻게 인증",
+                "인증 어떻게",
+                "verify",
+                "인증하는 방법",
+                "인증은 어떻게",
             }
             if is_authenticated and user_id and tenant_id and db_session:
                 if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
@@ -591,7 +704,12 @@ class ChatService:
             # 거부 시 메시지 안에 마크다운 링크를 포함 → ReactMarkdown이 클릭 가능한
             # 링크로 렌더링하므로 DB 저장 후 재로드해도 링크가 살아있다.
             allowed_student_ids = None
-            if agent_type == AgentType.PERSONAL and db_session and user_id and tenant_id:
+            if (
+                agent_type == AgentType.PERSONAL
+                and db_session
+                and user_id
+                and tenant_id
+            ):
                 from ..models.user import User as _User
                 from .policy_service import check_personal_access
 
@@ -637,11 +755,19 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
-            # 2. Document search: Available to CONSULTING and PERSONAL
-            if agent_type in [
-                AgentType.CONSULTING,
-                AgentType.PERSONAL,
-            ]:
+            # PERSONAL Agent: DB data tools (attendance, assignment, exam)
+            if agent_type == AgentType.PERSONAL:
+                function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
+                function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
+                function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
+            # 2. Document search: CONSULTING 및 PERSONAL(연속 흐름이 아닌 경우)에 제공
+            # 멀티턴 PERSONAL 연속 흐름(is_personal_continuation=True)에서는
+            # search_documents 대신 학생 DB 조회 tool 사용을 유도하기 위해 제외한다.
+            if (
+                agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
+                and not is_personal_continuation
+            ):
                 function_declarations.append(
                     {
                         "name": "search_documents",
@@ -678,6 +804,22 @@ class ChatService:
                     }
                 )
 
+            _student_tool_names = {
+                d["name"]
+                for decl_list in [
+                    ATTENDANCE_FUNCTION_DECLARATIONS,
+                    ASSIGNMENT_FUNCTION_DECLARATIONS,
+                    EXAM_FUNCTION_DECLARATIONS,
+                ]
+                for d in decl_list
+            }
+            _declared_names = [d["name"] for d in function_declarations]
+            _has_student_tools = bool(set(_declared_names) & _student_tool_names)
+            logger.info(
+                f"[Routing] function_declarations={_declared_names}, "
+                f"student_data_tools_included={_has_student_tools}"
+            )
+
             from datetime import datetime, timezone, timedelta
 
             kst = timezone(timedelta(hours=9))
@@ -710,7 +852,18 @@ class ChatService:
             # Add Agent-specific persona
             agent_persona = ""
             if agent_type == AgentType.PERSONAL:
-                agent_persona = f"\n## 배정된 역할: 자녀 정보 조회 에이전트\n- 당신은 학부모가 자녀의 학원 정보를 확인할 수 있도록 돕는 전담 비서입니다.\n- 자녀의 수업 일정 확인, 결석 신고, 보강 날짜 안내 업무를 처리하세요.\n- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요."
+                agent_persona = (
+                    "\n## 배정된 역할: 자녀 정보 조회 에이전트\n"
+                    "- 당신은 학부모가 자녀의 학원 정보를 확인할 수 있도록 돕는 전담 비서입니다.\n"
+                    "- 자녀의 수업 일정 확인, 결석 신고, 보강 날짜 안내 업무를 처리하세요.\n"
+                    "- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요."
+                )
+                if is_personal_continuation:
+                    agent_persona += (
+                        "\n\n**[멀티턴 지시] 이전 대화에서 학생 데이터 조회를 요청받아 기간/조건 확인 중입니다. "
+                        "반드시 학생 데이터 조회 함수(get_my_attendance_*, get_my_assignment_*, get_my_exam_*)를 "
+                        "호출하여 답변하세요. search_documents는 호출하지 마세요.**"
+                    )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
 
@@ -1051,6 +1204,21 @@ class ChatService:
                             )
                     except Exception as e:
                         result_str = f"웹 검색 중 오류 발생: {str(e)}"
+                elif func_name.startswith("get_my_attendance_"):
+                    result = execute_attendance_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_assignment_"):
+                    result = execute_assignment_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_exam_"):
+                    result = execute_exam_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
 
@@ -1252,11 +1420,30 @@ class ChatService:
                 contents = query
 
             # --- [Router Step] ---
-            is_authenticated = user_id is not None
+            is_authenticated = user_id is not None and tenant_id is not None
             agent_type = RouterAgent.determine_agent(
                 query, is_authenticated, model_name=model_name
             )
-            logger.info(f"Routed STREAM query to agent: {agent_type}")
+            original_agent_type = agent_type
+            logger.info(
+                f"[Routing/Stream] RouterAgent initial classification: '{query[:60]}' -> {agent_type} "
+                f"(Authenticated: {is_authenticated})"
+            )
+
+            # --- [멀티턴 PERSONAL 보정] ---
+            is_personal_continuation = False
+            if agent_type != AgentType.PERSONAL and is_authenticated and history:
+                if RouterAgent._is_personal_context_continuation(history, query):
+                    agent_type = AgentType.PERSONAL
+                    is_personal_continuation = True
+                    logger.info(
+                        f"[Routing/Stream] Multi-turn context correction: {original_agent_type} -> PERSONAL "
+                        f"(prior assistant msg referenced student data, current query is period supplement)"
+                    )
+            logger.info(
+                f"[Routing/Stream] Final agent_type={agent_type} "
+                f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
+            )
 
             # Build function declarations (same as query_smart)
             function_declarations = []
@@ -1268,10 +1455,16 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
-            if agent_type in [
-                AgentType.CONSULTING,
-                AgentType.PERSONAL,
-            ]:
+            # PERSONAL Agent: DB data tools (attendance, assignment, exam)
+            if agent_type == AgentType.PERSONAL:
+                function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
+                function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
+                function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
+            if (
+                agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
+                and not is_personal_continuation
+            ):
                 function_declarations.append(
                     {
                         "name": "search_documents",
@@ -1307,6 +1500,22 @@ class ChatService:
                     }
                 )
 
+            _student_tool_names_s = {
+                d["name"]
+                for decl_list in [
+                    ATTENDANCE_FUNCTION_DECLARATIONS,
+                    ASSIGNMENT_FUNCTION_DECLARATIONS,
+                    EXAM_FUNCTION_DECLARATIONS,
+                ]
+                for d in decl_list
+            }
+            _declared_names_s = [d["name"] for d in function_declarations]
+            _has_student_tools_s = bool(set(_declared_names_s) & _student_tool_names_s)
+            logger.info(
+                f"[Routing/Stream] function_declarations={_declared_names_s}, "
+                f"student_data_tools_included={_has_student_tools_s}"
+            )
+
             # Time info
             from datetime import datetime, timezone, timedelta
 
@@ -1339,7 +1548,18 @@ class ChatService:
 
             agent_persona = ""
             if agent_type == AgentType.PERSONAL:
-                agent_persona = f"\n## 배정된 역할: 자녀 정보 조회 에이전트\n- 당신은 학부모가 자녀의 학원 정보를 확인할 수 있도록 돕는 전담 비서입니다.\n- 자녀의 수업 일정 확인, 결석 신고, 보강 날짜 안내 업무를 처리하세요.\n- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요."
+                agent_persona = (
+                    "\n## 배정된 역할: 자녀 정보 조회 에이전트\n"
+                    "- 당신은 학부모가 자녀의 학원 정보를 확인할 수 있도록 돕는 전담 비서입니다.\n"
+                    "- 자녀의 수업 일정 확인, 결석 신고, 보강 날짜 안내 업무를 처리하세요.\n"
+                    "- 학부모의 입장에서 자녀 정보를 친절하고 명확하게 안내하세요."
+                )
+                if is_personal_continuation:
+                    agent_persona += (
+                        "\n\n**[멀티턴 지시] 이전 대화에서 학생 데이터 조회를 요청받아 기간/조건 확인 중입니다. "
+                        "반드시 학생 데이터 조회 함수(get_my_attendance_*, get_my_assignment_*, get_my_exam_*)를 "
+                        "호출하여 답변하세요. search_documents는 호출하지 마세요.**"
+                    )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
 
@@ -1390,6 +1610,9 @@ class ChatService:
             for fc in function_calls:
                 func_name = fc.name
                 func_args = dict(fc.args)
+                logger.info(
+                    f"[Stream] LLM called function: {func_name} with args: {func_args}"
+                )
 
                 if func_name.startswith(
                     (
@@ -1477,6 +1700,21 @@ class ChatService:
                         ),
                     )
                     result_str = search_response.text
+                elif func_name.startswith("get_my_attendance_"):
+                    result = execute_attendance_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_assignment_"):
+                    result = execute_assignment_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name.startswith("get_my_exam_"):
+                    result = execute_exam_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"
 
