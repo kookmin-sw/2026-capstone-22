@@ -43,6 +43,7 @@ class ExamPaper(Base):
         Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
     )
     title = Column(String(300), nullable=False)       # 시험명
+    file_name = Column(String(300), nullable=True)    # 원본 파일명
     subject = Column(String(50), nullable=False, server_default="영어")
     grade = Column(String(20), nullable=True)          # 학년 (중1~고3)
     source_year = Column(Integer, nullable=True)       # 시행 연도
