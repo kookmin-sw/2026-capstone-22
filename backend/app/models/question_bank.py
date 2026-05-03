@@ -42,10 +42,13 @@ class ExamPaper(Base):
     tenant_id = Column(
         Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
     )
-    title = Column(String(300), nullable=False)
+    title = Column(String(300), nullable=False)       # 시험명
     subject = Column(String(50), nullable=False, server_default="영어")
-    source_year = Column(Integer, nullable=True)
-    source_type = Column(String(50), nullable=True)  # csat / school / mock
+    grade = Column(String(20), nullable=True)          # 학년 (중1~고3)
+    source_year = Column(Integer, nullable=True)       # 시행 연도
+    source_type = Column(String(50), nullable=True)   # 시험 구분 (내신/모의고사/학원 자체 제작)
+    source = Column(String(200), nullable=True)        # 출처 (한국교육과정평가원 등)
+    memo = Column(Text, nullable=True)                 # 비고
     status = Column(
         SQLAlchemyEnum(PaperStatus, name="paper_status", create_type=False),
         nullable=False,
