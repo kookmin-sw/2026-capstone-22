@@ -12,6 +12,7 @@ import {
   Quiz as QuizIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { questionBankAPI } from '../services/api';
 
 const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
@@ -29,60 +30,31 @@ const STATUS_CONFIG = {
   '실패':        { bg: 'rgba(239,68,68,0.15)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
 };
 
-const MOCK_HISTORY = [
-  {
-    id: 1,
-    fileName: '2024_수능_국어.pdf',
-    subject: '국어',
-    grade: '고3',
-    examName: '2024 수능',
-    examType: '모의고사',
-    year: '2024',
-    source: '한국교육과정평가원',
-    uploadedAt: '2026-04-09 14:32',
-    uploader: 'admin@school.kr',
-    status: '분석 완료',
-  },
-  {
-    id: 2,
-    fileName: '2025_3월_모의고사_수학.pdf',
-    subject: '수학',
-    grade: '고2',
-    examName: '2025년 3월 모의고사',
-    examType: '모의고사',
-    year: '2025',
-    source: '교육청',
-    uploadedAt: '2026-04-09 15:10',
-    uploader: 'admin@school.kr',
-    status: '분석 중',
-  },
-  {
-    id: 3,
-    fileName: '중간고사_영어_고1.jpg',
-    subject: '영어',
-    grade: '고1',
-    examName: '1학기 중간고사',
-    examType: '내신',
-    year: '2026',
-    source: '자체 출제',
-    uploadedAt: '2026-04-10 09:05',
-    uploader: 'teacher@school.kr',
-    status: '업로드 완료',
-  },
-  {
-    id: 4,
-    fileName: '학원_자체_테스트_수학.png',
-    subject: '수학',
-    grade: '중3',
-    examName: '4월 테스트',
-    examType: '학원 자체 제작',
-    year: '2026',
-    source: '자체 제작',
-    uploadedAt: '2026-04-10 10:20',
-    uploader: 'admin@school.kr',
-    status: '실패',
-  },
-];
+// API status → 화면 표시 텍스트 매핑
+const STATUS_MAP = {
+  pending: '업로드 완료',
+  processing: '분석 중',
+  done: '분석 완료',
+  failed: '실패',
+};
+
+function paperToRow(paper) {
+  return {
+    id: paper.id,
+    fileName: paper.file_name || paper.title,
+    subject: paper.subject,
+    grade: paper.grade || '-',
+    examName: paper.title,
+    examType: paper.source_type || '-',
+    year: paper.source_year ? String(paper.source_year) : '-',
+    source: paper.source || '-',
+    uploadedAt: paper.created_at
+      ? new Date(paper.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, 16)
+      : '-',
+    uploader: '-',
+    status: STATUS_MAP[paper.status] || paper.status,
+  };
+}
 
 const EMPTY_FORM = {
   subject: '',
