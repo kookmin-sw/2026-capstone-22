@@ -1672,7 +1672,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
             <FormControl size="small">
               <Select value={studentForm.class_id ?? ''} onChange={e => setStudentForm(p => ({ ...p, class_id: e.target.value || null }))} displayEmpty sx={selectSx} MenuProps={menuProps}>
                 <MenuItem value="">분반 선택</MenuItem>
-                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {classes.filter(c => c.status !== 'closed').map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>
             </FormControl>
             <FormControl size="small">

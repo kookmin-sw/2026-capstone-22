@@ -816,7 +816,7 @@ export default function AssignmentTab() {
                 label="대상 분반 *" sx={selectSx} MenuProps={menuProps}
                 disabled={!!editingAssignment}
               >
-                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {classes.filter(c => c.status !== 'closed').map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>
             </FormControl>
             <TextField

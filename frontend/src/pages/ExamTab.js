@@ -566,7 +566,7 @@ export default function ExamTab() {
             <FormControl size="small" disabled={!!editingExam}>
               <InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel>
               <Select value={examForm.class_id} onChange={e => setExamForm(p => ({ ...p, class_id: e.target.value }))} label="대상 분반 *" sx={selectSx} MenuProps={menuProps}>
-                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {classes.filter(c => c.status !== 'closed').map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>
             </FormControl>
             <TextField label="시험일" type="date" size="small" fullWidth value={examForm.exam_date} onChange={e => setExamForm(p => ({ ...p, exam_date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
