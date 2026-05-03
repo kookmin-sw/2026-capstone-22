@@ -1087,7 +1087,7 @@ function HITLPanel() {
                 {/* 사용자 질문 */}
                 <Box sx={{ bgcolor: '#09090B', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(255,255,255,0.04)' }}>
                   <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
-                    USER
+                    대화 문맥
                   </Typography>
                   <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                     {item.user_message}
