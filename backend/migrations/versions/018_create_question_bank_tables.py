@@ -39,6 +39,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("title", sa.String(300), nullable=False),
+        sa.Column("file_name", sa.String(300), nullable=True),
         sa.Column("subject", sa.String(50), nullable=False, server_default="영어"),
         sa.Column("grade", sa.String(20), nullable=True),
         sa.Column("source_year", sa.Integer(), nullable=True),
