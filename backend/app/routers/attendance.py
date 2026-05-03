@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attendance import AttendanceRecord, AttendanceStatus
-from ..models.student import Student, StudentClass, StudentStatus
+from ..models.student import Student, StudentClass, StudentStatus, StudentClassStatus
 from ..models.user import User
 from ..schemas.attendance import (
     AttendanceBulkUpsertRequest,
@@ -59,6 +59,7 @@ async def list_roster(
         .filter(
             Student.tenant_id == current_user.tenant_id,
             Student.status == StudentStatus.active,
+            (StudentClass.id == None) | (StudentClass.status == StudentClassStatus.active),
         )
     )
 
@@ -100,9 +101,14 @@ async def get_summary(
 ):
     """날짜 기준 출결 요약 통계 (roster와 동일한 학생 집합 기준, Admin only)"""
     # roster와 동일한 기준: active 학생 + 분반 필터
-    student_query = db.query(Student.id).filter(
-        Student.tenant_id == current_user.tenant_id,
-        Student.status == StudentStatus.active,
+    student_query = (
+        db.query(Student.id)
+        .outerjoin(StudentClass, Student.class_id == StudentClass.id)
+        .filter(
+            Student.tenant_id == current_user.tenant_id,
+            Student.status == StudentStatus.active,
+            (StudentClass.id == None) | (StudentClass.status == StudentClassStatus.active),
+        )
     )
     if class_id is not None:
         student_query = student_query.filter(Student.class_id == class_id)

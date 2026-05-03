@@ -167,14 +167,21 @@ export default function ExamTab() {
     const decliners = resultPayload.declining_count ?? 0;
 
     const maxScore = selectedExam?.max_score ?? 100;
+    const binSize = maxScore / 10;
     const dist = Array(10).fill(0);
     scores.forEach(s => {
       const idx = Math.min(Math.floor(s / maxScore * 10), 9);
       dist[idx]++;
     });
-    const distribution = dist.map((count, i) => ({ range: `${i * 10}-${(i + 1) * 10}`, count }));
+    const distribution = dist.map((count, i) => ({
+      x: binSize * (i + 0.5),
+      range: `${Math.round(binSize * i)}-${Math.round(binSize * (i + 1))}`,
+      count
+    }));
+    const ticks = Array.from({ length: 11 }, (_, i) => Math.round(binSize * i));
+    const yTicks = Array.from(new Set([0, ...distribution.map(d => d.count)])).sort((a, b) => a - b);
 
-    return { avg, max, decliners, distribution };
+    return { avg, max, decliners, distribution, ticks, maxScore, yTicks };
   }, [resultPayload, selectedExam]);
 
   const summary = useMemo(() => ({
@@ -492,11 +499,32 @@ export default function ExamTab() {
                 <>
                   <Box sx={{ height: 160, width: '100%', mb: 3 }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.distribution} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                        <XAxis dataKey="range" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                        <RechartsTooltip contentStyle={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} itemStyle={{ fontSize: '10px' }} />
-                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      <BarChart data={stats.distribution} margin={{ top: 5, right: 25, left: -20, bottom: stats.maxScore > 100 ? 25 : 5 }}>
+                        <XAxis
+                          type="number"
+                          dataKey="x"
+                          domain={[0, stats.maxScore]}
+                          ticks={stats.ticks}
+                          interval={0}
+                          tick={{ 
+                            fontSize: 10, 
+                            fill: '#71717A',
+                            angle: stats.maxScore > 100 ? -45 : 0,
+                            textAnchor: stats.maxScore > 100 ? 'end' : 'middle'
+                          }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis ticks={stats.yTicks} tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+                        <RechartsTooltip
+                          labelFormatter={(val) => {
+                            const bin = stats.distribution.find(d => d.x === val);
+                            return bin ? `${bin.range}점` : `${val}점`;
+                          }}
+                          contentStyle={{ bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                          itemStyle={{ fontSize: '10px' }}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={20}>
                           {stats.distribution.map((_, index) => (<Cell key={`cell-${index}`} fill={index > 7 ? '#a78bfa' : index > 4 ? '#6366f1' : '#3f3f46'} />))}
                         </Bar>
                       </BarChart>
@@ -538,7 +566,7 @@ export default function ExamTab() {
             <FormControl size="small" disabled={!!editingExam}>
               <InputLabel sx={{ color: '#71717A' }}>대상 분반 *</InputLabel>
               <Select value={examForm.class_id} onChange={e => setExamForm(p => ({ ...p, class_id: e.target.value }))} label="대상 분반 *" sx={selectSx} MenuProps={menuProps}>
-                {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                {classes.filter(c => c.status !== 'closed').map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
               </Select>
             </FormControl>
             <TextField label="시험일" type="date" size="small" fullWidth value={examForm.exam_date} onChange={e => setExamForm(p => ({ ...p, exam_date: e.target.value }))} InputLabelProps={{ shrink: true }} sx={inputSx} />
@@ -612,3 +640,4 @@ export default function ExamTab() {
     </Box>
   );
 }
+
