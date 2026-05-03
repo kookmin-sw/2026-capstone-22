@@ -22,6 +22,7 @@ class ExamPaperResponse(BaseModel):
     id: int
     tenant_id: int
     title: str
+    file_name: Optional[str]
     subject: str
     grade: Optional[str]
     source_year: Optional[int]
