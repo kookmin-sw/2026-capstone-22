@@ -86,7 +86,7 @@ function StatusChip({ status }) {
 }
 
 export default function ExamAnalysisPage() {
-  const { user } = useAuth();
+  useAuth();
 
   // File state
   const [file, setFile] = useState(null);
@@ -167,31 +167,32 @@ export default function ExamAnalysisPage() {
     setUploading(true);
     setUploadSuccess(false);
 
-    // Mock: simulate API delay
-    await new Promise(r => setTimeout(r, 1200));
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', form.examName);
+      formData.append('subject', form.subject);
+      if (form.grade) formData.append('grade', form.grade);
+      if (form.year) formData.append('source_year', form.year);
+      if (form.examType) formData.append('source_type', form.examType);
+      if (form.source) formData.append('source', form.source);
+      if (form.note) formData.append('memo', form.note);
 
-    const newEntry = {
-      id: Date.now(),
-      fileName: file.name,
-      subject: form.subject,
-      grade: form.grade,
-      examName: form.examName,
-      examType: form.examType,
-      year: form.year,
-      source: form.source,
-      uploadedAt: new Date().toLocaleString('ko-KR', { hour12: false }).replace(/\./g, '-').replace(/ /g, ' ').slice(0, 16),
-      uploader: user?.email || 'admin',
-      status: '업로드 완료',
-    };
+      await questionBankAPI.upload(formData);
 
-    setHistory(prev => [newEntry, ...prev]);
-    setFile(null);
-    setForm(EMPTY_FORM);
-    setErrors({});
-    setFileError('');
-    setUploading(false);
-    setUploadSuccess(true);
-    setTimeout(() => setUploadSuccess(false), 3000);
+      await fetchHistory();
+      setFile(null);
+      setForm(EMPTY_FORM);
+      setErrors({});
+      setFileError('');
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
+    } catch (e) {
+      console.error('업로드 실패', e);
+      setFileError('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const inputSx = {
