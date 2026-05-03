@@ -37,6 +37,9 @@ google-cloud-discoveryengine>=0.13.0
 # HTTP Client (for external API calls)
 httpx>=0.25.0
 
+# PDF 텍스트 추출 (문제 분석 파이프라인)
+pymupdf>=1.24.0
+
 # Utilities
 pydantic>=2.9.0
 pydantic-settings>=2.1.0
