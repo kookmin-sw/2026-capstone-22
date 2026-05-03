@@ -103,7 +103,19 @@ export default function ExamAnalysisPage() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
   // History
-  const [history, setHistory] = useState(MOCK_HISTORY);
+  const [history, setHistory] = useState([]);
+
+  // 목록 불러오기
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await questionBankAPI.listPapers();
+      setHistory(res.data.map(paperToRow));
+    } catch (e) {
+      console.error('문제 분석 목록 조회 실패', e);
+    }
+  }, []);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   const validateFile = (f) => {
     if (!ALLOWED_TYPES.includes(f.type) && !ALLOWED_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext))) {
