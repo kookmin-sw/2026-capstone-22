@@ -51,6 +51,7 @@ async def upload_paper(
     paper = ExamPaper(
         tenant_id=current_user.tenant_id,
         title=title,
+        file_name=file.filename,
         subject=subject,
         grade=grade,
         source_year=source_year,
