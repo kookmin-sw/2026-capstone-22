@@ -1720,6 +1720,11 @@ class ChatService:
                         ),
                     )
                     result_str = search_response.text
+                elif func_name.startswith("get_my_student_"):
+                    result = execute_student_tool(
+                        func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 elif func_name.startswith("get_my_attendance_"):
                     result = execute_attendance_tool(
                         func_name, func_args, tenant_id, user_id, db_session
