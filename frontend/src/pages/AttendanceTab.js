@@ -249,13 +249,23 @@ export default function AttendanceTab() {
       if (st && classMap[key][st] !== undefined) classMap[key][st]++;
     });
     // 3. 필터 적용 및 정렬
-    return Object.values(classMap)
-      .filter(cs => {
-        if (filters.classId === 'all') {
-          // 'all'일 때는 'unassigned'는 학생이 있을 때만 표시
-          if (cs.classId === 'unassigned') return cs.total > 0;
+   return Object.values(classMap)
+    .filter(cs => {
+      if (filters.classId === 'all') {
+        // 'all'일 때는 'unassigned'는 학생 있을 때만 표시
+        if (cs.classId === 'unassigned') return cs.total > 0;
+        return true;
+      }
+      return cs.classId === filters.classId;
+    })
+    .sort((a, b) => {
+      if (a.classId === 'unassigned') return 1;
+      if (b.classId === 'unassigned') return -1;
+      return a.className.localeCompare(b.className);
+    });
+    }, [classes, roster, draft, filters.classId]);
 
-  const selectedStudent = selectedStudentId
+    const selectedStudent = selectedStudentId
     ? roster.find(r => r.student_id === selectedStudentId)
     : null;
 
