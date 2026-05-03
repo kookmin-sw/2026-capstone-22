@@ -243,7 +243,7 @@ export const examAnalysisAPI = {
 
 export const studentAPI = {
   // 분반
-  listClasses: () => api.get('/admin/students/classes'),
+  listClasses: (params) => api.get('/admin/students/classes', { params }),
   createClass: (data) => api.post('/admin/students/classes', data),
   updateClass: (id, data) => api.put(`/admin/students/classes/${id}`, data),
   deleteClass: (id) => api.delete(`/admin/students/classes/${id}`),
