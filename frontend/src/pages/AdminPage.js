@@ -973,10 +973,37 @@ function CalendarSettingsPanel() {
   );
 }
 
+// 줄 전체가 정확히 [사용자] 또는 [AI]인 경우만 마커로 인식 (본문에 해당 문자열이 포함돼도 오파싱 방지)
+const HITL_MARKER_RE = /^\[(사용자|AI)\]$/;
+
+function extractLatestUserQuestion(userMessage) {
+  if (!userMessage) return '';
+  const lines = userMessage.split('\n');
+
+  // 마지막 [사용자] 마커 줄 인덱스 탐색
+  let lastUserIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === '[사용자]') lastUserIdx = i;
+  }
+  if (lastUserIdx === -1) return userMessage.trim(); // 태그 없는 예전 데이터
+
+  // 마커 다음 줄부터 다음 마커 전까지 수집
+  const contentLines = [];
+  for (let i = lastUserIdx + 1; i < lines.length; i++) {
+    if (HITL_MARKER_RE.test(lines[i].trim())) break;
+    contentLines.push(lines[i]);
+  }
+  return contentLines.join('\n').trim() || userMessage.trim();
+}
+
 function HITLPanel() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState({}); // { id: true/false }
+  const [expandedHitl, setExpandedHitl] = useState({}); // { [id]: bool }
+
+  const toggleExpand = (id) =>
+    setExpandedHitl((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const loadHITL = async () => {
     setLoading(true);
@@ -1085,14 +1112,44 @@ function HITLPanel() {
                 </Box>
 
                 {/* 사용자 질문 */}
-                <Box sx={{ bgcolor: '#09090B', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(255,255,255,0.04)' }}>
-                  <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
-                    대화 문맥
-                  </Typography>
-                  <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-                    {item.user_message}
-                  </Typography>
-                </Box>
+                {(() => {
+                  const extracted = extractLatestUserQuestion(item.user_message);
+                  const hasContext = item.user_message &&
+                    item.user_message.split('\n').some((l) => l.trim() === '[사용자]');
+                  const isExpanded = !!expandedHitl[item.id];
+                  return (
+                    <Box sx={{ bgcolor: '#09090B', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
+                        질문
+                      </Typography>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                        {extracted || '-'}
+                      </Typography>
+                      {hasContext && (
+                        <Box sx={{ mt: 1 }}>
+                          <Button
+                            size="small"
+                            onClick={() => toggleExpand(item.id)}
+                            sx={{
+                              color: '#71717A', fontSize: '0.72rem', textTransform: 'none',
+                              fontWeight: 600, p: 0, minWidth: 0,
+                              '&:hover': { bgcolor: 'transparent', color: '#a78bfa' },
+                            }}
+                          >
+                            {isExpanded ? '접기' : '자세히 보기'}
+                          </Button>
+                        </Box>
+                      )}
+                      {hasContext && isExpanded && (
+                        <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                            {item.user_message}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })()}
 
                 {/* AI 답변 */}
                 {item.ai_response && (
