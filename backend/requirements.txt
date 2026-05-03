@@ -48,3 +48,5 @@ email-validator==2.1.0
 
 # Scheduler
 apscheduler>=3.10.0
+
+PyMuPDF
