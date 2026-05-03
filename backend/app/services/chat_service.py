@@ -22,6 +22,7 @@ from ..llm_tools.assignment import (
     execute_assignment_tool,
 )
 from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
+from ..llm_tools.student import STUDENT_FUNCTION_DECLARATIONS, execute_student_tool
 
 logger = logging.getLogger(__name__)
 
@@ -755,8 +756,9 @@ class ChatService:
 
                 function_declarations.extend(CALENDAR_FUNCTION_DECLARATIONS)
 
-            # PERSONAL Agent: DB data tools (attendance, assignment, exam)
+            # PERSONAL Agent: DB data tools (student profile, attendance, assignment, exam)
             if agent_type == AgentType.PERSONAL:
+                function_declarations.extend(STUDENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
