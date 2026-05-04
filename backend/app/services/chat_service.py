@@ -84,16 +84,32 @@ CONSULTING (일반 안내로 충분):
 에이전트 타입 이름 하나만 출력하세요. 예: PERSONAL
 """
 
-    # ACADEMIC 전용 키워드 사전 분류 — 단어 자체로 의도가 명확한 경우만 여기서 처리.
-    # PERSONAL은 뉘앙스 판단이 필요하므로 항상 LLM 라우터에 위임한다.
-    _ACADEMIC_KEYWORDS = {"문제", "유사문제", "기출", "유사 문제", "유형", "오답"}
+    # ACADEMIC 단독 키워드 — 이 단어 하나만으로 문제 생성/분석 의도가 확정되는 경우만 포함.
+    # "문제", "오답", "유형"처럼 일반 상담에서도 자주 나오는 단어는 제외.
+    _ACADEMIC_SOLE_KEYWORDS = {"기출", "유사문제", "유사 문제"}
+
+    # ACADEMIC 조합 패턴 — (핵심어, 의도 수식어 집합): 둘 다 있을 때만 ACADEMIC
+    _ACADEMIC_PATTERNS = [
+        ("문제", {"생성", "만들어", "출제", "뽑아", "내줘", "만들어줘", "만들다"}),
+        ("유형", {"분석", "분류", "정리", "파악"}),
+        ("오답", {"정리", "분석", "생성", "만들어"}),
+    ]
 
     @staticmethod
     def _keyword_classify(query: str) -> Optional[str]:
-        """ACADEMIC 키워드만 사전 분류. PERSONAL은 LLM 판단에 위임."""
+        """ACADEMIC 의도 사전 분류.
+
+        단독 키워드("기출", "유사문제")는 바로 ACADEMIC 확정.
+        "문제", "오답", "유형"은 단독으로는 일반 상담에서도 흔하므로
+        의도 수식어("생성", "만들어", "분석" 등)와 함께 있을 때만 ACADEMIC.
+        PERSONAL은 항상 LLM 판단에 위임.
+        """
         q = query.strip()
-        for kw in RouterAgent._ACADEMIC_KEYWORDS:
+        for kw in RouterAgent._ACADEMIC_SOLE_KEYWORDS:
             if kw in q:
+                return AgentType.ACADEMIC
+        for anchor, modifiers in RouterAgent._ACADEMIC_PATTERNS:
+            if anchor in q and any(m in q for m in modifiers):
                 return AgentType.ACADEMIC
         return None
 
@@ -756,6 +772,14 @@ class ChatService:
                         f"[Routing] Multi-turn context correction: {original_agent_type} -> PERSONAL "
                         f"(prior assistant msg referenced student data, current query is period supplement)"
                     )
+            # ACADEMIC fallback: 전용 도구가 없는 경로에서는 CONSULTING으로 처리
+            if agent_type == AgentType.ACADEMIC:
+                agent_type = AgentType.CONSULTING
+                logger.info(
+                    "[Routing] ACADEMIC -> CONSULTING fallback "
+                    "(no dedicated ACADEMIC tools in query_smart path)"
+                )
+
             logger.info(
                 f"[Routing] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
