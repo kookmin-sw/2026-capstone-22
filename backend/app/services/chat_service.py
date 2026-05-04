@@ -447,6 +447,122 @@ class ChatService:
         return instruction
 
     @staticmethod
+    def _find_document_by_source(
+        db_session: Session, corpus_id: int, source_name: str, source_uri: str = ""
+    ):
+        """Robustly find a Document in the database based on RAG chunk source info.
+
+        RAG Engine 청크의 source_uri 구조:
+        - 원본 파일 URI (e.g. gs://bucket/tenants/.../uuid.pdf) → gcs_path 직접 매칭
+        - 내부 chunk URI (e.g. gs://rag-internal/...ragFiles/123/chunk.txt) → document_name 매칭
+        - 같은 버킷 .txt 변환 (e.g. gs://bucket/tenants/.../uuid.txt) → UUID stem 매칭
+        """
+        import re as _re
+        from ..models.corpus import Document
+
+        logger.info(
+            f"[Citation._find] corpus_id={corpus_id} source_name={source_name!r} source_uri={source_uri!r}"
+        )
+
+        # 1. source_uri → gcs_path 직접 매칭 (gs://bucket/path → path)
+        if source_uri:
+            parts = source_uri.split("/")  # ["gs:", "", "bucket", "path", ...]
+            if len(parts) >= 4:
+                candidate_path = "/".join(parts[3:])
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.gcs_path == candidate_path,
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ gcs_path direct: {candidate_path}")
+                    return doc
+
+            # 1b. source_uri에서 ragFiles/{id} 추출 → document_name 매칭
+            # e.g. "gs://internal/.../ragFiles/12345/..." → document_name LIKE "%ragFiles/12345%"
+            rag_file_match = _re.search(r"ragFiles/(\w+)", source_uri)
+            if rag_file_match:
+                rag_file_id = rag_file_match.group(1)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.document_name.like(f"%ragFiles/{rag_file_id}%"),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ ragFiles ID from URI: {rag_file_id}")
+                    return doc
+
+        # 2. source_name 기반 다중 전략 매칭
+        if source_name:
+            base_name = source_name.rsplit(".", 1)[0] if "." in source_name else source_name
+
+            # 2a. source_name에서 ragFiles/{id} 추출
+            rag_file_match_name = _re.search(r"ragFiles/(\w+)", source_name)
+            if rag_file_match_name:
+                rag_file_id = rag_file_match_name.group(1)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.document_name.like(f"%ragFiles/{rag_file_id}%"),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ ragFiles ID from name: {rag_file_id}")
+                    return doc
+
+            # 패턴 목록: 전체이름, stem, .txt→.pdf 변환
+            search_patterns = [source_name, base_name]
+            if source_name.lower().endswith(".txt"):
+                search_patterns.append(base_name + ".pdf")
+                search_patterns.append(base_name + ".PDF")
+
+            for pattern in search_patterns:
+                if not pattern:
+                    continue
+                # 2b. 완전 일치
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        (Document.document_name == pattern)
+                        | (Document.display_name == pattern)
+                        | (Document.gcs_path == pattern),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ exact match pattern={pattern!r}")
+                    return doc
+
+                # 2c. LIKE 매칭 (UUID stem이 gcs_path 일부로 포함)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        (Document.document_name.like(f"%{pattern}%"))
+                        | (Document.gcs_path.like(f"%{pattern}%"))
+                        | (Document.display_name.like(f"%{pattern}%")),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ LIKE match pattern={pattern!r}")
+                    return doc
+
+        logger.warning(
+            f"[Citation._find] ✗ NOT FOUND corpus_id={corpus_id} source={source_name!r} uri={source_uri!r}"
+        )
+        return None
+
+    @staticmethod
     def upload_file_for_chat(file_path: str, display_name: str, mime_type: str) -> dict:
         """Upload a file temporarily for chat (24-48 hours)"""
         try:
@@ -512,7 +628,7 @@ class ChatService:
                             ],
                             rag_retrieval_config=rag.RagRetrievalConfig(
                                 top_k=10,
-                                filter=rag.Filter(vector_distance_threshold=0.75),
+                                filter=rag.Filter(vector_distance_threshold=0.85),
                             ),
                         ),
                     )
@@ -779,7 +895,7 @@ class ChatService:
                             "properties": {
                                 "query": {
                                     "type": "string",
-                                    "description": "문서에서 검색할 질문",
+                                    "description": "문서에서 찾을 구체적인 내용이나 주제. 예: '강사 소개', '입학 절차', '수업 시간표'. 사용자의 원문 표현을 그대로 쓰지 말고 핵심 검색어로 변환하세요.",
                                 }
                             },
                             "required": ["query"],
@@ -929,6 +1045,7 @@ class ChatService:
             function_responses = []
             used_calendar = False
             cited_sources = []
+            all_retrieved_chunks_for_citation = []
 
             for fc in function_calls:
                 func_name = fc.name
@@ -1032,7 +1149,7 @@ class ChatService:
                                                 rag_retrieval_config=rag.RagRetrievalConfig(
                                                     top_k=10,
                                                     filter=rag.Filter(
-                                                        vector_distance_threshold=0.75
+                                                        vector_distance_threshold=0.85
                                                     ),
                                                     hybrid_search=rag.HybridSearch(
                                                         alpha=0.5
@@ -1057,26 +1174,29 @@ class ChatService:
                                                 rag_retrieval_config=rag.RagRetrievalConfig(
                                                     top_k=10,
                                                     filter=rag.Filter(
-                                                        vector_distance_threshold=0.75
+                                                        vector_distance_threshold=0.85
                                                     ),
                                                 ),
                                             )
                                         for ctx in response.contexts.contexts:
                                             chunk_text = getattr(ctx, "text", "")
                                             if chunk_text:
-                                                source_name = getattr(
-                                                    ctx, "source_display_name", ""
+                                                ctx_source_uri = getattr(ctx, "source_uri", "") or ""
+                                                source_name = getattr(ctx, "source_display_name", "") or ""
+                                                if not source_name and ctx_source_uri:
+                                                    # GCS URI → filename (gs://bucket/path/file.pdf → file.pdf)
+                                                    source_name = ctx_source_uri.rstrip("/").split("/")[-1]
+                                                logger.debug(
+                                                    f"[Citation] ctx source_display_name={getattr(ctx, 'source_display_name', 'N/A')!r} "
+                                                    f"source_uri={ctx_source_uri!r} resolved_source={source_name!r} "
+                                                    f"score={getattr(ctx, 'score', 'N/A')}"
                                                 )
                                                 all_chunks.append(
                                                     {
                                                         "text": chunk_text,
                                                         "source": source_name,
-                                                        "source_uri": getattr(
-                                                            ctx, "source_uri", ""
-                                                        ),
-                                                        "score": getattr(
-                                                            ctx, "score", 0
-                                                        ),
+                                                        "source_uri": ctx_source_uri,
+                                                        "score": getattr(ctx, "score", 0) or 0,
                                                         "corpus": corpus_name_item,
                                                     }
                                                 )
@@ -1088,88 +1208,80 @@ class ChatService:
                             # Sort by relevance score (lower = better)
                             all_chunks.sort(key=lambda c: c["score"])
 
-                            # Build context string from top chunks
+                            logger.info(
+                                f"[Citation] RAG retrieval: {len(all_chunks)} chunks across {len(corpus_names)} corpora"
+                            )
+                            for i, chunk in enumerate(all_chunks[:10]):
+                                logger.info(
+                                    f"[Citation]   Chunk[{i}] score={chunk['score']:.4f} "
+                                    f"source={chunk['source']!r} uri={chunk.get('source_uri','')!r} "
+                                    f"text={chunk['text'][:80]}..."
+                                )
+
+                            # --- Pre-resolve chunk → Document display_name ---
+                            # UUID 기반 chunk source를 display_name으로 변환하여
+                            # LLM에게 의미 있는 출처명을 제공한다.
+                            if db_session and all_chunks:
+                                from ..models.corpus import Corpus as CorpusModel, Document as _DocModel
+
+                                _corpus_cache: dict = {}  # corpus_name → (CorpusModel | None)
+                                for _ch in all_chunks:
+                                    _cname = _ch["corpus"]
+                                    if _cname not in _corpus_cache:
+                                        _corpus_cache[_cname] = (
+                                            db_session.query(CorpusModel)
+                                            .filter(CorpusModel.corpus_name == _cname)
+                                            .first()
+                                        )
+                                    _corp = _corpus_cache[_cname]
+                                    if _corp:
+                                        _resolved_doc = ChatService._find_document_by_source(
+                                            db_session=db_session,
+                                            corpus_id=_corp.id,
+                                            source_name=_ch["source"],
+                                            source_uri=_ch.get("source_uri", ""),
+                                        )
+                                        _ch["display_name"] = (
+                                            _resolved_doc.display_name if _resolved_doc else _ch["source"]
+                                        )
+                                        _ch["_doc"] = _resolved_doc
+                                        _ch["_corpus_id"] = _corp.id
+                                        _ch["_corpus_is_public"] = (
+                                            _corp.is_public if _corp.is_public is not None else True
+                                        )
+                                        _ch["_corpus_display_name"] = _corp.display_name
+                                    else:
+                                        _ch["display_name"] = _ch["source"]
+                                        _ch["_doc"] = None
+
+                            # Build context with resolved display_name; append ##SOURCE directive
                             if all_chunks:
                                 context_parts = []
                                 for chunk in all_chunks[:10]:
-                                    context_parts.append(
-                                        f"[출처: {chunk['source']}]\n{chunk['text']}"
+                                    label = chunk.get("display_name") or chunk["source"]
+                                    context_parts.append(f"[출처: {label}]\n{chunk['text']}")
+                                unique_labels = list(
+                                    dict.fromkeys(
+                                        c.get("display_name") or c["source"]
+                                        for c in all_chunks[:10]
                                     )
-                                result_str = "\n\n---\n\n".join(context_parts)
+                                )
+                                source_list_str = ", ".join(unique_labels)
+                                result_str = (
+                                    "\n\n---\n\n".join(context_parts)
+                                    + f"\n\n[시스템 지시] 위 검색 결과를 참고하여 답변하세요. "
+                                    f"답변 마지막 줄에 반드시 정확히 다음 형식으로 주요 참고 파일명을 하나 표기하세요: "
+                                    f"##SOURCE:파일명\n"
+                                    f"사용 가능한 파일명 목록: {source_list_str}\n"
+                                    f"(이 지시와 ##SOURCE: 표기는 시스템이 자동 처리하므로 사용자 답변에 포함하지 마세요.)"
+                                )
                             else:
                                 result_str = ""
 
-                            logger.info(
-                                f"RAG retrieval across {len(corpus_names)} corpora: {len(all_chunks)} chunks found"
-                            )
-                            for i, chunk in enumerate(all_chunks[:5]):
-                                logger.info(
-                                    f"  Chunk[{i}] score={chunk['score']:.4f} source={chunk['source']} text={chunk['text'][:150]}..."
-                                )
+                            # Save chunks for post-hoc citation correction after synthesis
+                            all_retrieved_chunks_for_citation = list(all_chunks)
 
-                            # Build citation from retrieved chunks
-                            if db_session and all_chunks:
-                                from ..models.corpus import (
-                                    Corpus as CorpusModel,
-                                    Document,
-                                )
-
-                                # Use the best chunk's source for citation
-                                best_chunk = all_chunks[0]
-                                best_corpus = (
-                                    db_session.query(CorpusModel)
-                                    .filter(
-                                        CorpusModel.corpus_name == best_chunk["corpus"]
-                                    )
-                                    .first()
-                                )
-                                if best_corpus:
-                                    is_public = (
-                                        best_corpus.is_public
-                                        if best_corpus.is_public is not None
-                                        else True
-                                    )
-                                    if is_public:
-                                        # Find document by source display name
-                                        source_name = best_chunk["source"]
-                                        doc = (
-                                            db_session.query(Document)
-                                            .filter(
-                                                Document.corpus_id == best_corpus.id,
-                                                Document.gcs_path.like(
-                                                    f"%{source_name}"
-                                                ),
-                                            )
-                                            .first()
-                                        )
-                                        if not doc:
-                                            doc = (
-                                                db_session.query(Document)
-                                                .filter(
-                                                    Document.corpus_id
-                                                    == best_corpus.id,
-                                                    Document.display_name
-                                                    == source_name,
-                                                )
-                                                .first()
-                                            )
-                                        if doc:
-                                            cited_sources.append(
-                                                {
-                                                    "title": doc.display_name,
-                                                    "uri": None,
-                                                    "_corpus_id": best_corpus.id,
-                                                    "_corpus_is_public": True,
-                                                    "_corpus_name": best_corpus.display_name,
-                                                }
-                                            )
-                                            logger.info(
-                                                f"Citation from retrieval: {doc.display_name} ({best_corpus.display_name})"
-                                            )
-                                    else:
-                                        logger.info(
-                                            "Best corpus is private, no citation link provided"
-                                        )
+                            # citation determined post-synthesis (see ##SOURCE correction block below)
 
                             # Record retrieval usage
                             if db_session and tenant_id:
@@ -1291,48 +1403,7 @@ class ChatService:
                     session_id,
                 )
 
-            # Resolve the single cited source - generate signed URL
-            if cited_sources:
-                source = cited_sources[0]
-                corpus_id = source.pop("_corpus_id", None)
-                source.pop("_corpus_is_public", None)
-                source.pop("_corpus_name", None)
-
-                if db_session and corpus_id:
-                    try:
-                        from ..models.corpus import Document
-                        from ..services import gcs_service
-
-                        doc = (
-                            db_session.query(Document)
-                            .filter(
-                                Document.display_name == source["title"],
-                                Document.corpus_id == corpus_id,
-                                Document.gcs_path.isnot(None),
-                            )
-                            .first()
-                        )
-                        if (
-                            doc
-                            and doc.gcs_path
-                            and gcs_service.is_configured(
-                                tenant_id=doc.tenant_id, db=db_session
-                            )
-                        ):
-                            signed_url = gcs_service.generate_signed_url(
-                                doc.gcs_path,
-                                expiration_minutes=60,
-                                tenant_id=doc.tenant_id,
-                                db=db_session,
-                            )
-                            if signed_url:
-                                source["uri"] = signed_url
-                    except Exception as e:
-                        logger.warning(f"Error resolving source link: {e}")
-
-                logger.info(
-                    f"Final cited sources: {len(cited_sources)} (top: {cited_sources[0]['title'] if cited_sources else 'none'})"
-                )
+            # (Signed URL resolution moved to after citation correction below)
 
             logger.info("Smart query completed successfully")
             logger.info(
@@ -1393,6 +1464,149 @@ class ChatService:
                     if retry_response.text
                     else "답변을 생성할 수 없습니다. 다시 시도해 주세요."
                 )
+
+            # Determine citation from synthesized answer (post-hoc)
+            import re as _re
+
+            # Always strip ##SOURCE tag from user-visible text
+            _source_match = _re.search(r"##SOURCE:(.+?)(?:\n|$)", final_text)
+            final_text = _re.sub(r"\n?##SOURCE:.+?(?:\n|$)", "", final_text).strip()
+            _llm_source = _source_match.group(1).strip() if _source_match else None
+
+            logger.info(
+                f"[Citation] ##SOURCE={_llm_source!r} | chunks={len(all_retrieved_chunks_for_citation)}"
+            )
+
+            # Reset — citation determined entirely here, not from initial pre-synthesis guess
+            cited_sources = []
+
+            if all_retrieved_chunks_for_citation:
+                _resolved_chunk = None
+
+                if _llm_source:
+                    # Case 1: LLM explicitly named a source via ##SOURCE:
+                    # LLM sees display_name in context, so match against display_name first
+                    for _ch in all_retrieved_chunks_for_citation:
+                        _ch_display = _ch.get("display_name") or ""
+                        _ch_source = _ch.get("source") or ""
+                        if (
+                            (_ch_display and _ch_display == _llm_source)
+                            or (_ch_source and _ch_source == _llm_source)
+                            or (_ch_display and _llm_source in _ch_display)
+                            or (_ch_source and _llm_source in _ch_source)
+                        ):
+                            _resolved_chunk = _ch
+                            break
+                    if _resolved_chunk:
+                        logger.info(
+                            f"[Citation] ##SOURCE matched → {_resolved_chunk.get('display_name')!r}"
+                        )
+                    else:
+                        logger.warning(
+                            f"[Citation] ##SOURCE '{_llm_source}' — no matching chunk; reference cleared"
+                        )
+                else:
+                    # Case 2: No ##SOURCE — word-level overlap between answer and each chunk
+                    # Exact phrase matching fails when LLM paraphrases; word overlap is more robust
+                    _answer_words = set(
+                        w
+                        for w in _re.split(r"[\s\.,。!\?\(\)\[\]\{\}:;\"\'·\-]+", final_text)
+                        if len(w) >= 2 and not w.isdigit()
+                    )
+                    _best_word_overlap = 0
+                    for _ch in all_retrieved_chunks_for_citation:
+                        _chunk_text = _ch.get("text", "")
+                        # count how many answer words (or their substrings) appear in the chunk
+                        _word_overlap = sum(
+                            1 for w in _answer_words if w in _chunk_text
+                        )
+                        if _word_overlap > _best_word_overlap:
+                            _best_word_overlap = _word_overlap
+                            _resolved_chunk = _ch
+                    # Require at least 2 matching words to prevent random false matches
+                    _min_words = 2
+                    if _resolved_chunk and _best_word_overlap >= _min_words:
+                        logger.info(
+                            f"[Citation] Content-matched → {_resolved_chunk.get('display_name')!r} "
+                            f"(word_overlap={_best_word_overlap})"
+                        )
+                    else:
+                        logger.info(
+                            f"[Citation] No content-matching chunk (best={_best_word_overlap} words < {_min_words}); reference cleared"
+                        )
+                        _resolved_chunk = None
+
+                # Build citation entry from pre-resolved doc on the winning chunk
+                if _resolved_chunk:
+                    _pre_doc = _resolved_chunk.get("_doc")
+                    _pre_corpus_id = _resolved_chunk.get("_corpus_id")
+                    _pre_corpus_is_public = _resolved_chunk.get("_corpus_is_public", True)
+                    _pre_corpus_display = _resolved_chunk.get("_corpus_display_name", "")
+                    if _pre_doc and _pre_corpus_id and _pre_corpus_is_public:
+                        cited_sources.append(
+                            {
+                                "title": _pre_doc.display_name,
+                                "uri": None,
+                                "_corpus_id": _pre_corpus_id,
+                                "_corpus_is_public": True,
+                                "_corpus_name": _pre_corpus_display,
+                            }
+                        )
+                        logger.info(
+                            f"[Citation] Final citation: {_pre_doc.display_name}"
+                        )
+                    else:
+                        logger.info(
+                            "[Citation] Chunk resolved but _doc missing or private; reference cleared"
+                        )
+
+            # Resolve signed URL for the (possibly corrected) citation
+            if cited_sources and db_session:
+                _src = cited_sources[0]
+                _cid = _src.pop("_corpus_id", None)
+                _src.pop("_corpus_is_public", None)
+                _src.pop("_corpus_name", None)
+                if _cid and not _src.get("uri"):
+                    try:
+                        from ..models.corpus import Document as _Doc2
+                        from ..services import gcs_service
+
+                        _doc2 = (
+                            db_session.query(_Doc2)
+                            .filter(
+                                _Doc2.corpus_id == _cid,
+                                _Doc2.gcs_path.isnot(None),
+                                _Doc2.display_name == _src["title"],
+                            )
+                            .first()
+                        )
+                        if not _doc2:
+                            _doc2 = (
+                                db_session.query(_Doc2)
+                                .filter(
+                                    _Doc2.corpus_id == _cid,
+                                    _Doc2.gcs_path.isnot(None),
+                                    _Doc2.gcs_path.like(f"%{_src['title']}"),
+                                )
+                                .first()
+                            )
+                        if _doc2 and gcs_service.is_configured(
+                            tenant_id=_doc2.tenant_id, db=db_session
+                        ):
+                            _surl = gcs_service.generate_signed_url(
+                                _doc2.gcs_path,
+                                expiration_minutes=60,
+                                tenant_id=_doc2.tenant_id,
+                                db=db_session,
+                            )
+                            if _surl:
+                                _src["uri"] = _surl
+                    except Exception as _e:
+                        logger.warning(f"[Citation] Signed URL generation failed: {_e}")
+
+            logger.info(
+                f"[Citation] Final cited_sources: {[s.get('title') for s in cited_sources]}"
+            )
 
             return {
                 "text": filter_pii(final_text),
@@ -1488,7 +1702,7 @@ class ChatService:
                             "properties": {
                                 "query": {
                                     "type": "string",
-                                    "description": "문서에서 검색할 질문",
+                                    "description": "문서에서 찾을 구체적인 내용이나 주제. 예: '강사 소개', '입학 절차', '수업 시간표'. 사용자의 원문 표현을 그대로 쓰지 말고 핵심 검색어로 변환하세요.",
                                 }
                             },
                             "required": ["query"],
@@ -1671,17 +1885,22 @@ class ChatService:
                                     rag_retrieval_config=rag.RagRetrievalConfig(
                                         top_k=10,
                                         filter=rag.Filter(
-                                            vector_distance_threshold=0.75
+                                            vector_distance_threshold=0.85
                                         ),
                                     ),
                                 )
                                 for ctx in rag_response.contexts.contexts:
+                                    _s_uri = getattr(ctx, "source_uri", "") or ""
+                                    _s_name = getattr(ctx, "source_display_name", "") or ""
+                                    if not _s_name and _s_uri:
+                                        _s_name = _s_uri.rstrip("/").split("/")[-1]
                                     all_chunks.append(
                                         {
                                             "text": ctx.text,
-                                            "source": ctx.source_display_name,
+                                            "source": _s_name,
+                                            "source_uri": _s_uri,
                                             "corpus": corpus_name_item,
-                                            "score": ctx.score,
+                                            "score": getattr(ctx, "score", 0) or 0,
                                         }
                                     )
                             except:
@@ -1694,20 +1913,46 @@ class ChatService:
                             ]
                         )
 
-                        # Handle citations (simplified)
+                        # Handle citations: use source with lowest average score (most relevant)
                         if all_chunks and db_session:
                             from ..models.corpus import Corpus as CorpusModel, Document
+                            from collections import defaultdict
 
-                            best_chunk = all_chunks[0]
+                            _src_scores: dict = defaultdict(list)
+                            _src_corpus: dict = {}
+                            for _ch in all_chunks:
+                                _src_scores[_ch["source"]].append(_ch["score"])
+                                _src_corpus[_ch["source"]] = _ch["corpus"]
+
+                            _best_src = min(
+                                _src_scores.items(),
+                                key=lambda x: sum(x[1]) / len(x[1]),
+                            )[0]
+                            best_chunk = next(
+                                c for c in all_chunks if c["source"] == _best_src
+                            )
                             best_corpus = (
                                 db_session.query(CorpusModel)
                                 .filter(CorpusModel.corpus_name == best_chunk["corpus"])
                                 .first()
                             )
                             if best_corpus and best_corpus.is_public:
-                                cited_sources.append(
-                                    {"title": best_chunk["source"], "uri": None}
+                                # Use robust lookup for citation display name
+                                _doc = ChatService._find_document_by_source(
+                                    db_session=db_session,
+                                    corpus_id=best_corpus.id,
+                                    source_name=best_chunk["source"],
+                                    source_uri=best_chunk.get("source_uri", ""),
                                 )
+                                if _doc:
+                                    cited_sources.append(
+                                        {"title": _doc.display_name, "uri": None}
+                                    )
+                                else:
+                                    # Fallback to source name if DB lookup fails, but at least we tried
+                                    cited_sources.append(
+                                        {"title": best_chunk["source"], "uri": None}
+                                    )
                     # [RAG Logic Copy-End]
 
                 elif func_name == "search_web":
