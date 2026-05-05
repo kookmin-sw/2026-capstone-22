@@ -241,6 +241,74 @@ CONSULTING (일반 안내로 충분):
             logger.error(f"Error in RouterAgent: {e}")
             return AgentType.CONSULTING
 
+    # 빠른 사전 필터 — 이 단어가 없으면 LLM 호출 없이 바로 통과
+    _VERIFY_HINT_KEYWORDS = {"본인", "인증", "확인", "verify"}
+
+    @staticmethod
+    def _classify_verify_intent(query: str, model_name: str = "gemini-1.5-flash") -> str:
+        """본인인증 관련 의도를 분류한다.
+
+        Returns:
+            "STATUS"  — 인증 완료 여부를 묻는 질문
+            "HOWTO"   — 인증 방법/절차를 묻는 질문
+            "OTHER"   — 인증과 무관
+        """
+        # 힌트 키워드 없으면 LLM 비용 없이 즉시 반환
+        if not any(kw in query for kw in RouterAgent._VERIFY_HINT_KEYWORDS):
+            return "OTHER"
+
+        _INSTRUCTION = """당신은 의도 분류기입니다.
+사용자 메시지를 읽고 아래 세 가지 중 하나만 출력하세요.
+
+STATUS  — 본인인증(본인확인/OTP)이 이미 완료됐는지 현재 상태를 확인하려는 질문
+예:
+- "나 본인인증 됐나?"
+- "내가 본인확인이 완료됐어?"
+- "아니 본인확인 됐냐고"
+- "인증 완료된 거 맞아?"
+- "본인인증 됐는지 알려주고 안됐으면 인증할래"
+- "나 인증 여부 확인해줘"
+- "인증이 됐는지 모르겠어"
+
+HOWTO   — 본인인증을 어떻게 하는지 방법/절차를 묻는 질문
+예:
+- "본인인증 어떻게 해?"
+- "인증 방법 알려줘"
+- "본인확인 어떻게 하나요?"
+- "인증은 어떻게 진행되나요?"
+
+OTHER   — 인증 상태/방법과 무관한 질문
+예:
+- "성적 알려줘"
+- "학원 위치 어떻게 돼요?"
+- "출결 확인해줘"
+
+STATUS, HOWTO, OTHER 중 하나만 출력하세요."""
+
+        try:
+            gen_params = _get_model_generation_params()
+            response = _get_genai_client().models.generate_content(
+                model=model_name,
+                contents=f'사용자 메시지: "{query}"',
+                config=types.GenerateContentConfig(
+                    system_instruction=_INSTRUCTION,
+                    temperature=0.0,
+                    **{
+                        k: v
+                        for k, v in gen_params.items()
+                        if k not in ["temperature", "thinking_config"]
+                    },
+                ),
+            )
+            result = response.text.strip().upper()
+            logger.info(f"[VerifyIntentCheck] '{query[:60]}' -> {result}")
+            if result in ("STATUS", "HOWTO"):
+                return result
+            return "OTHER"
+        except Exception as e:
+            logger.error(f"[VerifyIntentCheck] LLM call failed: {e}")
+            return "OTHER"
+
 
 class ChatService:
     """Service for chatbot queries — RAG search, web search, calendar, file chat"""
@@ -785,23 +853,46 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
-            # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
-            # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
-            # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
-            _VERIFY_QUERY_KEYWORDS = {
-                "본인확인",
-                "본인 확인",
-                "인증 방법",
-                "인증방법",
-                "어떻게 인증",
-                "인증 어떻게",
-                "verify",
-                "인증하는 방법",
-                "인증은 어떻게",
-            }
+            # --- [본인인증 의도 처리] STATUS(완료 여부 확인) / HOWTO(방법 질문) ---
+            # 힌트 키워드가 있을 때만 LLM 분류 호출, 라우팅 결과와 무관하게 선처리.
             if is_authenticated and user_id and tenant_id and db_session:
-                if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
-                    logger.info(f"Verify-query detected for user_id={user_id}")
+                _verify_intent = RouterAgent._classify_verify_intent(
+                    query, model_name=model_name
+                )
+                if _verify_intent == "STATUS":
+                    logger.info(f"Verify-status-query detected for user_id={user_id}")
+                    from ..models.user import User as _User
+                    from .policy_service import check_personal_access
+
+                    _user = db_session.query(_User).filter(_User.id == user_id).first()
+                    if _user:
+                        _policy = check_personal_access(
+                            db_session, _user, tenant_id, tenant_slug or ""
+                        )
+                        if _policy.allowed:
+                            return {
+                                "text": "네, 본인인증이 완료되어 있습니다. 성적, 출결, 과제 등 개인 정보를 조회하실 수 있습니다.",
+                                "used_calendar": False,
+                                "cited_sources": [],
+                                "verification_required": False,
+                                "verification_url": None,
+                            }
+                        else:
+                            denied = _policy.denied_response
+                            ver_url = getattr(denied, "verification_url", None)
+                            text = "아직 본인인증이 완료되지 않았습니다. 성적, 출결, 과제 정보를 조회하려면 본인 확인이 필요합니다."
+                            if ver_url:
+                                text += f"<!-- verify:{ver_url} -->"
+                            return {
+                                "text": text,
+                                "used_calendar": False,
+                                "cited_sources": [],
+                                "verification_required": bool(ver_url),
+                                "verification_url": ver_url,
+                            }
+
+                elif _verify_intent == "HOWTO":
+                    logger.info(f"Verify-howto-query detected for user_id={user_id}")
                     try:
                         from .verification_service import create_verification_token
                         from ..config import settings as _settings
@@ -809,14 +900,14 @@ class ChatService:
                         _vtoken = create_verification_token(user_id, tenant_id)
                         _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
                         return {
-                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
+                            "text": "본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
                             "used_calendar": False,
                             "cited_sources": [],
                             "verification_required": True,
                             "verification_url": _vurl,
                         }
                     except Exception as _ve:
-                        logger.error(f"Verify-query URL generation failed: {_ve}")
+                        logger.error(f"Verify-howto URL generation failed: {_ve}")
                         return {
                             "text": "본인 확인은 채팅 화면의 '본인 확인하기' 버튼을 통해 하실 수 있습니다. 먼저 개인 정보가 필요한 질문(예: '내 분반 알려줘')을 입력하시면 버튼이 표시됩니다.",
                             "used_calendar": False,
