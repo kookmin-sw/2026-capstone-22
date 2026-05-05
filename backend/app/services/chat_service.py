@@ -175,6 +175,57 @@ CONSULTING (일반 안내로 충분):
         return len(query_stripped) < 20
 
     @staticmethod
+    def _is_hitl_follow_up_query(history: list, query: str) -> bool:
+        """직전 assistant 응답에서 HITL 전달/상담 연결 안내가 있었고,
+        현재 쿼리가 그 전달 방식을 묻는 후속 질문인지 감지한다.
+
+        탐지 조건:
+          1. 직전 model 메시지에 HITL 전달 안내 문구가 있고
+          2. 현재 쿼리가 전달 방식/경로/담당자를 묻는 질문인 경우
+        """
+        if not history:
+            return False
+
+        last_assistant_text = ""
+        for msg in reversed(history):
+            if msg.get("role") == "model":
+                for part in msg.get("parts", []):
+                    if isinstance(part, dict):
+                        last_assistant_text += part.get("text", "")
+                    elif hasattr(part, "text") and part.text:
+                        last_assistant_text += part.text
+                break
+
+        if not last_assistant_text:
+            return False
+
+        # 직전 응답에 HITL 전달/상담 연결 안내 문구가 있는지 확인
+        HITL_PHRASES = {
+            "원장님께 전달", "선생님께 전달", "전달드린 뒤", "문의 남겨드릴게요",
+            "안내해 드리겠습니다", "안내드리겠습니다", "상담 연결",
+            "원장님께 문의", "운영자",
+        }
+        if not any(phrase in last_assistant_text for phrase in HITL_PHRASES):
+            return False
+
+        # 현재 쿼리가 전달 방식/경로/담당자를 묻는 후속 질문인지 확인
+        query_stripped = query.strip()
+        FOLLOW_UP_PATTERNS = {
+            "어떻게 전달", "어디로 전달", "어떻게 연결", "누가 전달", "언제 전달",
+            "어떻게 해", "어떻게 하면", "어떻게 되", "어디로 가", "누가 보",
+            "언제 연락", "어떤 방식", "어떻게 돼", "어디로 돼",
+        }
+        if any(kw in query_stripped for kw in FOLLOW_UP_PATTERNS):
+            return True
+
+        # 짧은 후속 질문 + 전달/연결 관련 단어 조합
+        DELIVERY_WORDS = {"전달", "연결", "연락", "방식", "방법", "어떻게", "어디로", "누가", "언제"}
+        if len(query_stripped) < 15 and any(w in query_stripped for w in DELIVERY_WORDS):
+            return True
+
+        return False
+
+    @staticmethod
     def determine_agent(
         query: str, is_authenticated: bool, model_name: str = "gemini-1.5-flash"
     ) -> str:
@@ -853,6 +904,13 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [CONSULTING HITL 후속 질문 감지] ---
+            is_hitl_follow_up = False
+            if agent_type == AgentType.CONSULTING and history:
+                if RouterAgent._is_hitl_follow_up_query(history, query):
+                    is_hitl_follow_up = True
+                    logger.info("[Routing] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template")
+
             # --- [본인인증 의도 처리] STATUS(완료 여부 확인) / HOWTO(방법 질문) ---
             # 힌트 키워드가 있을 때만 LLM 분류 호출, 라우팅 결과와 무관하게 선처리.
             if is_authenticated and user_id and tenant_id and db_session:
@@ -1091,6 +1149,16 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+                if is_hitl_follow_up:
+                    agent_persona += (
+                        "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
+                        "현재 질문은 그 전달 방식을 묻는 후속 질문입니다.**\n"
+                        "- HITL 태그(<HITL>)를 추가하지 마세요.\n"
+                        "- '원장님께 전달드린 뒤 안내드리겠습니다' 같은 문구를 반복하지 마세요.\n"
+                        "- 대신 전달 방식을 자연스럽게 설명하세요: 채팅 대화 내용이 상담 요청으로 "
+                        "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
+                        "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
+                    )
 
             effective_instruction = base_instruction + agent_persona
 
@@ -1773,6 +1841,13 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [CONSULTING HITL 후속 질문 감지] ---
+            is_hitl_follow_up = False
+            if agent_type == AgentType.CONSULTING and history:
+                if RouterAgent._is_hitl_follow_up_query(history, query):
+                    is_hitl_follow_up = True
+                    logger.info("[Routing/Stream] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template")
+
             # Build function declarations (same as query_smart)
             function_declarations = []
             if agent_type == AgentType.PERSONAL and has_calendar:
@@ -1897,6 +1972,16 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+                if is_hitl_follow_up:
+                    agent_persona += (
+                        "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
+                        "현재 질문은 그 전달 방식을 묻는 후속 질문입니다.**\n"
+                        "- HITL 태그(<HITL>)를 추가하지 마세요.\n"
+                        "- '원장님께 전달드린 뒤 안내드리겠습니다' 같은 문구를 반복하지 마세요.\n"
+                        "- 대신 전달 방식을 자연스럽게 설명하세요: 채팅 대화 내용이 상담 요청으로 "
+                        "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
+                        "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
+                    )
 
             effective_instruction = base_instruction + agent_persona
             gen_params = _get_model_generation_params()
