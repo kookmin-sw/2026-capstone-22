@@ -226,6 +226,85 @@ CONSULTING (일반 안내로 충분):
         return False
 
     @staticmethod
+    def _augment_personal_query(history: list, query: str) -> str:
+        """PERSONAL 멀티턴에서 현재 쿼리가 학생 이름만인 경우,
+        이전 대화 문맥(주제·기간)을 합쳐 보강된 쿼리를 반환한다.
+
+        보강 조건:
+          1. 현재 쿼리가 10자 미만이고 날짜/주제 키워드가 없음 (이름 보충으로 추정)
+          2. 직전 assistant 메시지에 학생 이름 요청 표현이 있음
+          3. 대화 history에서 주제(성적/출결/과제)와 기간을 추출할 수 있음
+        """
+        query_stripped = query.strip()
+
+        # 이미 충분한 컨텍스트가 있으면 보강 불필요
+        CONTEXT_KEYWORDS = {
+            "성적", "시험", "출결", "과제", "분반",
+            "최근", "이번", "지난", "한달", "한 달", "기간", "날짜",
+        }
+        if len(query_stripped) >= 10 or any(kw in query_stripped for kw in CONTEXT_KEYWORDS):
+            return query
+
+        # 직전 assistant 메시지 추출
+        last_assistant_text = ""
+        for msg in reversed(history):
+            if msg.get("role") == "model":
+                for part in msg.get("parts", []):
+                    if isinstance(part, dict):
+                        last_assistant_text += part.get("text", "")
+                    elif hasattr(part, "text") and part.text:
+                        last_assistant_text += part.text
+                break
+
+        # 직전 응답이 학생 이름 요청 표현인지 확인
+        NAME_REQUEST_PHRASES = {
+            "어떤 자녀", "자녀의 이름", "이름을 지정", "이름을 알려",
+            "어느 자녀", "학생 이름", "누구의", "어떤 학생",
+        }
+        if not any(phrase in last_assistant_text for phrase in NAME_REQUEST_PHRASES):
+            return query
+
+        # 전체 대화에서 주제와 기간 추출
+        full_text = ""
+        for msg in history:
+            for part in msg.get("parts", []):
+                t = ""
+                if isinstance(part, dict):
+                    t = part.get("text", "")
+                elif hasattr(part, "text") and part.text:
+                    t = part.text
+                full_text += t + " "
+
+        # 주제 감지
+        topic = ""
+        if any(kw in full_text for kw in {"성적", "시험", "점수"}):
+            topic = "성적"
+        elif any(kw in full_text for kw in {"출결", "출석", "결석", "지각"}):
+            topic = "출결"
+        elif any(kw in full_text for kw in {"과제", "숙제"}):
+            topic = "과제"
+
+        # 기간 감지
+        period = ""
+        PERIOD_MAP = [
+            ({"최근 한달", "최근 한 달", "지난 한달", "지난 한 달"}, "최근 한 달간"),
+            ({"이번 달", "이번달"}, "이번 달"),
+            ({"지난달", "지난 달"}, "지난달"),
+            ({"이번 주", "이번주"}, "이번 주"),
+            ({"지난 주", "지난주", "저번 주", "저번주"}, "지난주"),
+        ]
+        for keywords, label in PERIOD_MAP:
+            if any(kw in full_text for kw in keywords):
+                period = label
+                break
+
+        if topic and period:
+            return f"{query_stripped} 학생의 {period} {topic}을 조회해줘"
+        if topic:
+            return f"{query_stripped} 학생의 {topic}을 조회해줘"
+        return query
+
+    @staticmethod
     def determine_agent(
         query: str, is_authenticated: bool, model_name: str = "gemini-1.5-flash"
     ) -> str:
@@ -904,6 +983,14 @@ class ChatService:
                 f"[Routing] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
+
+            # --- [PERSONAL 이름 보충 쿼리 보강] ---
+            # is_personal_continuation이고 현재 쿼리가 이름만인 경우, history에서 주제/기간을 합쳐 보강
+            if is_personal_continuation and history:
+                _aug = RouterAgent._augment_personal_query(history, query)
+                if _aug != query:
+                    contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
+                    logger.info(f"[Routing] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'")
 
             # --- [CONSULTING HITL 후속 질문 감지] ---
             is_hitl_follow_up = False
@@ -1841,6 +1928,13 @@ class ChatService:
                 f"[Routing/Stream] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
+
+            # --- [PERSONAL 이름 보충 쿼리 보강] ---
+            if is_personal_continuation and history:
+                _aug = RouterAgent._augment_personal_query(history, query)
+                if _aug != query:
+                    contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
+                    logger.info(f"[Routing/Stream] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'")
 
             # --- [CONSULTING HITL 후속 질문 감지] ---
             is_hitl_follow_up = False
