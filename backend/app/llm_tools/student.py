@@ -2,6 +2,8 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from ..models.student import Student, StudentStatus
+from ..models.user import User
 from ..services.attendance_queries import get_students_by_user
 
 logger = logging.getLogger(__name__)
@@ -11,8 +13,8 @@ STUDENT_FUNCTION_DECLARATIONS = [
         "name": "get_my_student_profile",
         "description": (
             "연결된 학생의 기본 프로필 정보를 조회합니다. "
-            "분반(반 이름), 담당 선생님, 수업 요일/시간, 과목, 학교, 학년 등을 반환합니다. "
-            "학부모가 자녀의 반·분반·선생님·수업 시간·시간표·수업 요일을 물어볼 때 이 함수를 호출하세요. "
+            "분반(반 이름), 수업 상태(진행 중/종료됨), 담당 선생님, 수업 요일/시간, 과목, 학교, 학년 등을 반환합니다. "
+            "학부모나 관리자가 학생의 반·분반·선생님·수업 시간·시간표·수업 요일·수업 종료 여부를 물어볼 때 이 함수를 호출하세요. "
             "연결된 학생이 여러 명이고 특정 학생을 조회하려면 student_name을 전달하세요. "
             "student_name 미전달 시 연결된 전체 학생 프로필을 반환합니다."
         ),
@@ -35,10 +37,12 @@ def _build_profile(student) -> dict:
         "student_name": student.name,
         "school_name": student.school_name,
         "grade": student.grade,
+        "status": student.status.value,
     }
     if student.student_class:
         sc = student.student_class
         profile["class_name"] = sc.name
+        profile["class_status"] = "진행 중" if sc.status.value == "active" else "종료됨"
         profile["class_code"] = sc.code
         profile["subject"] = sc.subject
         profile["teacher_name"] = sc.teacher_name
@@ -48,6 +52,7 @@ def _build_profile(student) -> dict:
         profile["end_time"] = sc.end_time
     else:
         profile["class_name"] = None
+        profile["class_status"] = None
         profile["teacher_name"] = None
     return profile
 
@@ -59,9 +64,26 @@ def execute_student_tool(
     user_id: int,
     db: Session,
 ) -> dict:
-    students = get_students_by_user(db, tenant_id, user_id)
+    # 사용자 권한 확인
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if user and user.is_admin:
+        # 관리자는 테넌트 내 모든 활성 학생 조회 가능
+        students = (
+            db.query(Student)
+            .filter(
+                Student.tenant_id == tenant_id,
+                Student.status == StudentStatus.active
+            )
+            .all()
+        )
+    else:
+        # 일반 사용자는 연결된 학생만 조회 가능
+        students = get_students_by_user(db, tenant_id, user_id)
 
     if not students:
+        if user and user.is_admin:
+            return {"message": "등록된 학생이 없습니다."}
         return {
             "error": "verification_required",
             "message": "연결된 학생이 없습니다. 먼저 학생 연동 인증을 완료해 주세요.",
