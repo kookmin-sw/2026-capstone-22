@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..models.exam import ExamResultStatus
-from ..services.attendance_queries import MultipleStudentsError, get_student_by_user
+from ..services.attendance_queries import get_students_by_user
 from ..services.exam_queries import fetch_exam_results, fetch_exam_summary
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,10 @@ EXAM_FUNCTION_DECLARATIONS = [
                 "to_date": {
                     "type": "string",
                     "description": "조회 종료일 (YYYY-MM-DD)",
+                },
+                "student_name": {
+                    "type": "string",
+                    "description": "연결된 학생이 여러 명일 때 조회할 학생 이름 또는 이름 일부. 생략 시 학생 목록만 반환됩니다.",
                 },
             },
             "required": ["from_date", "to_date"],
@@ -46,6 +50,10 @@ EXAM_FUNCTION_DECLARATIONS = [
                 "status_filter": {
                     "type": "string",
                     "description": "필터할 시험 상태 (pending|completed|absent|excused). 생략 시 전체 조회.",
+                },
+                "student_name": {
+                    "type": "string",
+                    "description": "연결된 학생이 여러 명일 때 조회할 학생 이름 또는 이름 일부. 생략 시 학생 목록만 반환됩니다.",
                 },
             },
             "required": ["from_date", "to_date"],
@@ -84,19 +92,33 @@ def execute_exam_tool(
         dict — 정상 결과 또는 {"error": ..., "message": ...} 형태의 에러
     """
     # 1. 연결된 학생 resolve
-    try:
-        student = get_student_by_user(db, tenant_id, user_id)
-    except MultipleStudentsError:
-        return {
-            "error": "multiple_students_not_supported",
-            "message": "연결된 학생이 2명 이상입니다. 현재 버전에서는 지원되지 않습니다.",
-        }
-
-    if student is None:
+    students = get_students_by_user(db, tenant_id, user_id)
+    if not students:
         return {
             "error": "verification_required",
             "message": "연결된 학생이 없습니다. 먼저 학생 연동 인증을 완료해 주세요.",
         }
+
+    name_filter = (args.get("student_name") or "").strip()
+    if len(students) > 1:
+        if name_filter:
+            matched = [s for s in students if name_filter in s.name]
+            if not matched:
+                names = ", ".join(s.name for s in students)
+                return {
+                    "error": "student_not_found",
+                    "message": f"'{name_filter}' 이름의 학생을 찾을 수 없습니다. 연결된 학생: {names}",
+                }
+            student = matched[0]
+        else:
+            names = [s.name for s in students]
+            return {
+                "multiple_students": True,
+                "students": [{"name": n} for n in names],
+                "message": f"연결된 학생이 {len(students)}명입니다: {', '.join(names)}. student_name 파라미터로 조회할 학생을 지정해 주세요.",
+            }
+    else:
+        student = students[0]
 
     # 2. 날짜 파싱
     from_date = _parse_date(args.get("from_date", ""), "from_date")

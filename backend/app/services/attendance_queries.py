@@ -16,6 +16,25 @@ class MultipleStudentsError(Exception):
     pass
 
 
+def get_students_by_user(db: Session, tenant_id: int, user_id: int) -> list:
+    """학부모 user_id로 연결된 활성 학생 목록을 반환한다 (0~N명).
+
+    MultipleStudentsError를 발생시키지 않으며 항상 list를 반환한다.
+    """
+    links = (
+        db.query(StudentAccessLink)
+        .join(Student, StudentAccessLink.student_id == Student.id)
+        .filter(
+            StudentAccessLink.tenant_id == tenant_id,
+            StudentAccessLink.user_id == user_id,
+            StudentAccessLink.status == AccessLinkStatus.active,
+            Student.status == StudentStatus.active,
+        )
+        .all()
+    )
+    return [link.student for link in links]
+
+
 def get_student_by_user(db: Session, tenant_id: int, user_id: int) -> Optional[Student]:
     """학부모 user_id로 연결된 학생 1명을 반환한다.
 
