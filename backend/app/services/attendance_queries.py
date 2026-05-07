@@ -23,16 +23,28 @@ def get_students_by_user(db: Session, tenant_id: int, user_id: int) -> list:
     """
     links = (
         db.query(StudentAccessLink)
-        .join(Student, StudentAccessLink.student_id == Student.id)
         .filter(
             StudentAccessLink.tenant_id == tenant_id,
             StudentAccessLink.user_id == user_id,
             StudentAccessLink.status == AccessLinkStatus.active,
-            Student.status == StudentStatus.active,
         )
         .all()
     )
-    return [link.student for link in links]
+    if not links:
+        return []
+
+    student_ids = [link.student_id for link in links]
+    return (
+        db.query(Student)
+        .options(joinedload(Student.student_class))
+        .filter(
+            Student.id.in_(student_ids),
+            Student.tenant_id == tenant_id,
+            Student.status == StudentStatus.active,
+        )
+        .populate_existing()
+        .all()
+    )
 
 
 def get_student_by_user(db: Session, tenant_id: int, user_id: int) -> Optional[Student]:
