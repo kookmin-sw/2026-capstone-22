@@ -14,6 +14,7 @@ from .student import StudentClass, StudentClassStatus, Student, StudentStatus
 from .attendance import AttendanceRecord, AttendanceStatus
 from .assignment import Assignment, AssignmentSubmission, AssignmentSubmissionStatus
 from .exam import Exam, ExamResult, ExamResultStatus
+from .exam_paper import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
 from .student_access_link import (
     StudentAccessLink,
     RelationshipType,
@@ -53,6 +54,10 @@ __all__ = [
     "Exam",
     "ExamResult",
     "ExamResultStatus",
+    "ExamPaper",
+    "PaperStatus",
+    "QuestionItem",
+    "ReviewStatus",
     "StudentAccessLink",
     "RelationshipType",
     "AccessLinkStatus",
