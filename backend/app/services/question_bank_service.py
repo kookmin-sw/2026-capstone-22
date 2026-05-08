@@ -1,10 +1,9 @@
-"""문제은행 서비스: PDF → Gemini 분석 → DB 저장"""
+"""문제은행 서비스: PDF/이미지 → 텍스트 추출 → 정제 → 블록 분리 → Gemini 분류 → DB 저장"""
 
 import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Optional
 
 from google.genai import types
 from sqlalchemy.orm import Session
@@ -12,6 +11,9 @@ from sqlalchemy.orm import Session
 from ..models.exam_paper import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
 from ..schemas.question_bank import AnalysisResult
 from .gemini_client import _get_genai_client, _get_platform_setting
+from .question_split_service import split_questions
+from .text_cleaning_service import clean_text
+from .text_extraction_service import extract_text_hybrid
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,50 @@ ENGLISH_TAXONOMY = {
     ],
 }
 
-_CLASSIFICATION_PROMPT = """
+# ── 프롬프트 템플릿 ───────────────────────────────────────────────────────────
+
+# 텍스트 추출·분리에 성공했을 때: 블록을 그대로 Gemini에 전달
+_BLOCK_PROMPT_TEMPLATE = """
+아래는 영어 시험 문제지에서 추출·분리된 문항 블록들입니다.
+각 문항을 분석하고 JSON으로 반환하세요.
+
+{blocks_text}
+
+반환 형식 (questions 배열):
+{{
+  "questions": [
+    {{
+      "number": <문항 번호 정수>,
+      "area": "<듣기 | 독해>",
+      "problem_type": "<아래 taxonomy에서 정확히 선택>",
+      "difficulty": "<하 | 중 | 상>",
+      "is_listening": <true | false>,
+      "score_point": <배점 정수, 2 또는 3>,
+      "question_body": "<문항 지문 또는 질문 텍스트 (선택지 제외)>",
+      "choices": ["①...", "②...", "③...", "④...", "⑤..."],
+      "reason": "<분류 근거 한 줄>"
+    }}
+  ]
+}}
+
+taxonomy (반드시 이 목록 안에서만 선택):
+- 듣기 영역: {listening_types}
+- 독해 영역: {reading_types}
+
+난이도 기준:
+- 하: 개념 확인, 단순 사실 파악
+- 중: 추론, 흐름 파악
+- 상: 고난도 추론, 3점 문항
+
+주의:
+- choices는 없으면 null
+- 듣기 문항(1~17번)은 is_listening=true, area="듣기"
+- 모든 문항을 빠짐없이 포함할 것
+- JSON 외 다른 텍스트 출력 금지
+""".strip()
+
+# 텍스트 추출이 불충분할 때(스캔 PDF 등): PDF 파일 자체를 Gemini에 업로드
+_PDF_FALLBACK_PROMPT_TEMPLATE = """
 이 PDF는 영어 시험 문제지입니다. 모든 문항을 분석하여 아래 JSON 형식으로 반환하세요.
 
 반환 형식 (questions 배열):
@@ -70,13 +115,41 @@ taxonomy (반드시 이 목록 안에서만 선택):
 """.strip()
 
 
-def _build_prompt() -> str:
-    listening = ", ".join(ENGLISH_TAXONOMY["듣기"])
-    reading = ", ".join(ENGLISH_TAXONOMY["독해"])
-    return _CLASSIFICATION_PROMPT.format(
-        listening_types=listening,
-        reading_types=reading,
+# ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
+
+def _taxonomy_args() -> dict:
+    return {
+        "listening_types": ", ".join(ENGLISH_TAXONOMY["듣기"]),
+        "reading_types": ", ".join(ENGLISH_TAXONOMY["독해"]),
+    }
+
+
+def _build_blocks_prompt(blocks: list[dict]) -> str:
+    """분리된 문항 블록 목록으로 Gemini 텍스트 분류 프롬프트를 생성한다."""
+    parts = []
+    for b in blocks:
+        num = b["question_number"]
+        header = f"[문항 {num}]" if num > 0 else "[문항]"
+        parts.append(f"{header}\n{b['block_text']}")
+    blocks_text = "\n\n".join(parts)
+    return _BLOCK_PROMPT_TEMPLATE.format(blocks_text=blocks_text, **_taxonomy_args())
+
+
+def _build_pdf_fallback_prompt() -> str:
+    return _PDF_FALLBACK_PROMPT_TEMPLATE.format(**_taxonomy_args())
+
+
+def _call_gemini(client, model: str, contents: list) -> dict:
+    """Gemini API를 호출하고 JSON 응답을 파싱한다."""
+    response = client.models.generate_content(
+        model=model,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.0,
+        ),
     )
+    return json.loads(response.text)
 
 
 def _validate_classified(data: dict) -> AnalysisResult:
@@ -99,10 +172,18 @@ def analyze_pdf(
     db: Session,
     paper: ExamPaper,
     pdf_path: str,
+    mime_type: str = "application/pdf",
 ) -> None:
     """
-    PDF를 Gemini File API로 업로드하고 문항을 분류하여 DB에 저장.
-    paper.status를 processing → done / failed 로 업데이트.
+    PDF/이미지 파일을 분석하여 문항별 분류 결과를 DB에 저장한다.
+
+    흐름:
+    1. 텍스트 추출 (text_extraction_service)  — PDF 파서 또는 Vision OCR
+    2. 텍스트 정제 (text_cleaning_service)    — 페이지 번호·헤더 제거, 공백 정리
+    3. 문항 블록 분리 (question_split_service) — 번호 패턴 기반 분리
+    4a. 블록 2개 이상 → 블록 텍스트를 Gemini에 직접 전달 (텍스트 모드)
+    4b. 블록 부족 또는 텍스트 추출 실패 → PDF 파일을 Gemini File API로 업로드 (fallback)
+    5. 검증 및 DB 저장 (raw_text에 원본 블록 텍스트 보존)
     """
     client = _get_genai_client()
     if not client:
@@ -111,41 +192,69 @@ def analyze_pdf(
 
     model = _get_platform_setting("DEFAULT_MODEL") or "gemini-2.5-flash"
 
-    # 1. 상태 → processing
+    # 상태 → processing
     paper.status = PaperStatus.processing
     paper.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     uploaded_file = None
     try:
-        # 2. PDF를 Gemini File API에 업로드
-        logger.info(f"[QuestionBank] Uploading PDF: {pdf_path}")
-        with open(pdf_path, "rb") as f:
-            uploaded_file = client.files.upload(
-                file=f,
-                config={"mime_type": "application/pdf"},
-            )
-        logger.info(f"[QuestionBank] File uploaded: {uploaded_file.name}")
-
-        # 3. 분류 요청
-        prompt = _build_prompt()
-        response = client.models.generate_content(
-            model=model,
-            contents=[uploaded_file, prompt],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.0,
-            ),
+        # ── Step 1: 텍스트 추출 ───────────────────────────────────────────────
+        logger.info("[QuestionBank] Step 1: extracting text — %s", pdf_path)
+        extraction = extract_text_hybrid(pdf_path, mime_type)
+        full_text = extraction.get("full_text", "")
+        extraction_method = extraction.get("extraction_method", "unknown")
+        logger.info(
+            "[QuestionBank] extraction_method=%s, text_len=%d",
+            extraction_method, len(full_text),
         )
 
-        raw_json = response.text
-        logger.info(f"[QuestionBank] Raw response length: {len(raw_json)}")
+        # ── Step 2: 텍스트 정제 ───────────────────────────────────────────────
+        cleaned_text = ""
+        if full_text.strip():
+            logger.info("[QuestionBank] Step 2: cleaning text")
+            cleaned_text = clean_text(full_text)["cleaned_text"]
+            logger.info("[QuestionBank] cleaned_len=%d", len(cleaned_text))
 
-        # 4. 파싱 및 검증
-        data = json.loads(raw_json)
+        # ── Step 3: 문항 블록 분리 ────────────────────────────────────────────
+        blocks: list[dict] = []
+        if cleaned_text.strip():
+            logger.info("[QuestionBank] Step 3: splitting into question blocks")
+            blocks = split_questions(cleaned_text)
+            logger.info("[QuestionBank] blocks=%d", len(blocks))
+
+        # ── Step 4: Gemini 분류 ───────────────────────────────────────────────
+        # 블록이 2개 이상이면 텍스트 모드; 그렇지 않으면 PDF File API fallback
+        use_text_mode = len(blocks) >= 2
+
+        if use_text_mode:
+            logger.info("[QuestionBank] Step 4: classifying via text-block mode")
+            prompt = _build_blocks_prompt(blocks)
+            data = _call_gemini(client, model, [prompt])
+        else:
+            logger.info(
+                "[QuestionBank] Step 4: falling back to PDF File API upload "
+                "(blocks=%d, text_len=%d)",
+                len(blocks), len(cleaned_text),
+            )
+            with open(pdf_path, "rb") as f:
+                uploaded_file = client.files.upload(
+                    file=f,
+                    config={"mime_type": "application/pdf"},
+                )
+            logger.info("[QuestionBank] uploaded file: %s", uploaded_file.name)
+            prompt = _build_pdf_fallback_prompt()
+            data = _call_gemini(client, model, [uploaded_file, prompt])
+
+        # ── Step 5: 검증 및 DB 저장 ───────────────────────────────────────────
         result = _validate_classified(data)
+        logger.info("[QuestionBank] validated questions=%d", len(result.questions))
 
-        # 5. QuestionItem 일괄 저장
+        # 블록 번호 → 원본 블록 텍스트 매핑 (raw_text 보존)
+        raw_text_map: dict[int, str] = {
+            b["question_number"]: b["block_text"] for b in blocks
+        }
+
         now = datetime.now(timezone.utc)
         items = [
             QuestionItem(
@@ -160,6 +269,7 @@ def analyze_pdf(
                 question_body=q.question_body,
                 choices=q.choices,
                 classifier_reason=q.reason,
+                raw_text=raw_text_map.get(q.number),
                 review_status=ReviewStatus.pending,
                 question_format="객관식",
                 created_at=now,
@@ -168,20 +278,18 @@ def analyze_pdf(
         ]
         db.add_all(items)
 
-        # 6. 상태 → done
         paper.status = PaperStatus.done
         paper.total_questions = len(items)
         paper.updated_at = now
         db.commit()
-        logger.info(f"[QuestionBank] Done. {len(items)} questions saved.")
+        logger.info("[QuestionBank] done. saved %d items.", len(items))
 
     except json.JSONDecodeError as e:
         _fail(db, paper, f"JSON 파싱 실패: {e}")
     except Exception as e:
-        logger.exception("[QuestionBank] Analysis failed")
+        logger.exception("[QuestionBank] analysis failed")
         _fail(db, paper, str(e))
     finally:
-        # Gemini 임시 파일 삭제
         if uploaded_file:
             try:
                 client.files.delete(name=uploaded_file.name)
@@ -194,4 +302,4 @@ def _fail(db: Session, paper: ExamPaper, message: str) -> None:
     paper.error_message = message
     paper.updated_at = datetime.now(timezone.utc)
     db.commit()
-    logger.error(f"[QuestionBank] Failed: {message}")
+    logger.error("[QuestionBank] failed: %s", message)

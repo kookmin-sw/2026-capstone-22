@@ -22,6 +22,14 @@ from ..utils.dependencies import get_current_admin_user
 
 router = APIRouter()
 
+_ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
+_EXT_TO_MIME = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+}
+
 
 # ── POST /papers/upload ────────────────────────────────────────────────────
 
@@ -41,11 +49,16 @@ async def upload_paper(
     current_user: User = Depends(get_current_admin_user),
 ):
     """
-    PDF 시험지를 업로드하고 Gemini 분석을 백그라운드로 시작합니다.
+    PDF/이미지 시험지를 업로드하고 Gemini 분석을 백그라운드로 시작합니다.
     응답은 즉시 반환되며, status 필드로 진행 상태를 확인하세요.
     """
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="PDF 파일만 업로드할 수 있습니다.")
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="PDF, PNG, JPG/JPEG 파일만 업로드할 수 있습니다.",
+        )
+    mime_type = _EXT_TO_MIME[ext]
 
     # ExamPaper 레코드 먼저 생성 (status=pending)
     paper = ExamPaper(
@@ -65,8 +78,8 @@ async def upload_paper(
     db.commit()
     db.refresh(paper)
 
-    # PDF를 임시 파일로 저장 (백그라운드 작업에서 읽음)
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    # 업로드 파일을 임시 경로에 저장 (백그라운드 작업에서 읽음)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
     try:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
@@ -74,21 +87,23 @@ async def upload_paper(
         tmp.close()
 
     # 백그라운드에서 분석 실행 (임시 파일은 작업 완료 후 삭제)
-    background_tasks.add_task(_run_analysis, db, paper.id, tmp_path)
+    background_tasks.add_task(_run_analysis, db, paper.id, tmp_path, mime_type)
 
     return ExamPaperResponse.model_validate(paper)
 
 
-async def _run_analysis(db: Session, paper_id: int, pdf_path: str) -> None:
+async def _run_analysis(
+    db: Session, paper_id: int, file_path: str, mime_type: str
+) -> None:
     """백그라운드 분석 태스크"""
     try:
         paper = db.query(ExamPaper).filter(ExamPaper.id == paper_id).first()
         if not paper:
             return
-        analyze_pdf(db=db, paper=paper, pdf_path=pdf_path)
+        analyze_pdf(db=db, paper=paper, pdf_path=file_path, mime_type=mime_type)
     finally:
-        if os.path.exists(pdf_path):
-            os.unlink(pdf_path)
+        if os.path.exists(file_path):
+            os.unlink(file_path)
 
 
 # ── GET /papers ────────────────────────────────────────────────────────────
