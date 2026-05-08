@@ -70,6 +70,9 @@ class Tenant(Base):
     exam_papers = relationship(
         "ExamPaper", back_populates="tenant", cascade="all, delete-orphan"
     )
+    question_items = relationship(
+        "QuestionItem", back_populates="tenant", cascade="all, delete-orphan"
+    )
 
 
 class TenantGcpConfig(Base):
