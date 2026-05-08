@@ -1,129 +1,221 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Box, Typography, Button, TextField, Grid, Select, MenuItem,
-  FormControl, InputLabel, Chip, Paper, Table, TableBody,
-  TableCell, TableHead, TableRow, CircularProgress, Alert,
-  FormHelperText,
+  FormControl, InputLabel, Chip, Table, TableBody, TableCell,
+  TableHead, TableRow, CircularProgress, Alert, FormHelperText,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
   InsertDriveFile as InsertDriveFileIcon,
   Close as CloseIcon,
   Quiz as QuizIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionBankAPI } from '../services/api';
 
-const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg'];
+// ── 상수 ──────────────────────────────────────────────────────────────────────
+
 const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
 const MAX_SIZE_MB = 20;
 
-const GRADE_OPTIONS = ['중1', '중2', '중3', '고1', '고2', '고3'];
+const GRADE_OPTIONS   = ['중1', '중2', '중3', '고1', '고2', '고3'];
 const EXAM_TYPE_OPTIONS = ['내신', '모의고사', '학원 자체 제작'];
-const YEAR_OPTIONS = Array.from({ length: 7 }, (_, i) => String(2020 + i));
+const YEAR_OPTIONS    = Array.from({ length: 7 }, (_, i) => String(2020 + i));
+const DIFFICULTY_OPTIONS = ['하', '중', '상'];
+const AREA_OPTIONS    = ['듣기', '독해'];
 
-const STATUS_CONFIG = {
-  '업로드 완료': { bg: 'rgba(59,130,246,0.15)', color: '#93c5fd', border: 'rgba(59,130,246,0.3)' },
-  'OCR 대기':    { bg: 'rgba(234,179,8,0.15)',  color: '#fde047', border: 'rgba(234,179,8,0.3)' },
-  '분석 중':     { bg: 'rgba(249,115,22,0.15)', color: '#fdba74', border: 'rgba(249,115,22,0.3)' },
-  '분석 완료':   { bg: 'rgba(34,197,94,0.15)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
-  '실패':        { bg: 'rgba(239,68,68,0.15)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
+const ENGLISH_TAXONOMY = {
+  듣기: ['목적 파악','의견 파악','요지 파악','그림 내용 파악','할 일 파악','금액 파악','이유 파악','언급 내용 파악','내용 일치','도표 파악','짧은 대화 응답','긴 대화 응답','상황 말하기','복합 문항'],
+  독해: ['목적 파악','심경 변화','주장 파악','밑줄 의미','요지 파악','주제 파악','제목 파악','도표 일치','내용 일치','안내문 일치','어법','어휘','빈칸 추론','무관 문장','글의 순서','문장 삽입','요약문 완성','장문 독해'],
 };
+const ALL_TYPES = [...new Set([...ENGLISH_TAXONOMY.듣기, ...ENGLISH_TAXONOMY.독해])];
 
-// API status → 화면 표시 텍스트 매핑
 const STATUS_MAP = {
-  pending: '업로드 완료',
+  pending:    '업로드 완료',
   processing: '분석 중',
-  done: '분석 완료',
-  failed: '실패',
+  done:       '분석 완료',
+  failed:     '실패',
 };
 
-function paperToRow(paper) {
-  return {
-    id: paper.id,
-    fileName: paper.file_name || paper.title,
-    subject: paper.subject,
-    grade: paper.grade || '-',
-    examName: paper.title,
-    examType: paper.source_type || '-',
-    year: paper.source_year ? String(paper.source_year) : '-',
-    source: paper.source || '-',
-    uploadedAt: paper.created_at
-      ? new Date(paper.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, 16)
-      : '-',
-    uploader: '-',
-    status: STATUS_MAP[paper.status] || paper.status,
-  };
-}
-
-const EMPTY_FORM = {
-  subject: '',
-  grade: '',
-  examName: '',
-  examType: '',
-  year: '',
-  source: '',
-  note: '',
+const STATUS_CFG = {
+  '업로드 완료': { bg: 'rgba(59,130,246,0.15)',  color: '#93c5fd', border: 'rgba(59,130,246,0.3)' },
+  '분석 중':     { bg: 'rgba(249,115,22,0.15)',  color: '#fdba74', border: 'rgba(249,115,22,0.3)' },
+  '분석 완료':   { bg: 'rgba(34,197,94,0.15)',   color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  '실패':        { bg: 'rgba(239,68,68,0.15)',   color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
 };
+
+const DIFF_CFG = {
+  '하': { bg: 'rgba(34,197,94,0.15)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  '중': { bg: 'rgba(234,179,8,0.15)',  color: '#fde047', border: 'rgba(234,179,8,0.3)' },
+  '상': { bg: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
+};
+
+const EMPTY_FORM = { subject:'', grade:'', examName:'', examType:'', year:'', source:'', note:'' };
+const EMPTY_EDIT = { area:'', problem_type:'', concept_tag:'', difficulty:'' };
+
+// ── 작은 칩 컴포넌트 ──────────────────────────────────────────────────────────
 
 function StatusChip({ status }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG['업로드 완료'];
+  const cfg = STATUS_CFG[status] || STATUS_CFG['업로드 완료'];
   return (
-    <Chip
-      label={status}
-      size="small"
-      sx={{
-        height: 22,
-        bgcolor: cfg.bg,
-        color: cfg.color,
-        fontWeight: 600,
-        fontSize: '0.6875rem',
-        border: `1px solid ${cfg.border}`,
-        '& .MuiChip-label': { px: 1 },
-      }}
-    />
+    <Chip label={status} size="small" sx={{
+      height: 22, bgcolor: cfg.bg, color: cfg.color, fontWeight: 600,
+      fontSize: '0.6875rem', border: `1px solid ${cfg.border}`,
+      '& .MuiChip-label': { px: 1 },
+    }} />
   );
 }
+
+function DiffChip({ v }) {
+  if (!v) return null;
+  const cfg = DIFF_CFG[v] || DIFF_CFG['중'];
+  return (
+    <Chip label={v} size="small" sx={{
+      height: 20, bgcolor: cfg.bg, color: cfg.color, fontWeight: 600,
+      fontSize: '0.625rem', border: `1px solid ${cfg.border}`,
+      '& .MuiChip-label': { px: 0.75 },
+    }} />
+  );
+}
+
+// ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 
 export default function ExamAnalysisPage() {
   useAuth();
 
-  // File state
-  const [file, setFile] = useState(null);
+  const [subTab, setSubTab] = useState(0);
+
+  // 업로드 탭
+  const [file, setFile]           = useState(null);
   const [fileError, setFileError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
-
-  // Form state
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm]     = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-
-  // Upload state
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading]     = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // History
+  // 이력 탭
   const [history, setHistory] = useState([]);
 
-  // 목록 불러오기
+  // 결과 뷰 (이력 탭 내부)
+  const [selectedPaper, setSelectedPaper] = useState(null);
+  const [items, setItems]           = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [editOpen, setEditOpen]     = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm]     = useState(EMPTY_EDIT);
+  const [saving, setSaving]         = useState(false);
+
+  // 문제은행 탭
+  const [bankItems, setBankItems]   = useState([]);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', problem_type:'', difficulty:'' });
+
+  // ── 이력 fetch + 폴링 ─────────────────────────────────────────────────────
   const fetchHistory = useCallback(async () => {
     try {
       const res = await questionBankAPI.listPapers();
-      setHistory(res.data.map(paperToRow));
+      setHistory(res.data);
     } catch (e) {
-      console.error('문제 분석 목록 조회 실패', e);
+      console.error('이력 조회 실패', e);
     }
   }, []);
 
-  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+  useEffect(() => {
+    if (subTab !== 1 || selectedPaper !== null) return;
+    fetchHistory();
+    const id = setInterval(fetchHistory, 2500);
+    return () => clearInterval(id);
+  }, [subTab, selectedPaper, fetchHistory]);
 
+  // ── 문제은행 fetch ────────────────────────────────────────────────────────
+  const loadBankItems = useCallback(async () => {
+    setBankLoading(true);
+    try {
+      const papersRes = await questionBankAPI.listPapers({ status: 'done' });
+      const groups = await Promise.all(
+        papersRes.data.map(p =>
+          questionBankAPI.listItems(p.id, { review_status: 'reviewed' })
+            .then(r => r.data.map(item => ({
+              ...item,
+              paper_title: p.title, paper_subject: p.subject, paper_grade: p.grade,
+            })))
+            .catch(() => [])
+        )
+      );
+      setBankItems(groups.flat());
+    } catch (e) {
+      console.error('문제은행 조회 실패', e);
+    } finally {
+      setBankLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (subTab !== 2) return;
+    loadBankItems();
+  }, [subTab, loadBankItems]);
+
+  // ── 결과 보기 ─────────────────────────────────────────────────────────────
+  const handleViewResult = async (paper) => {
+    setSelectedPaper(paper);
+    setItemsLoading(true);
+    setItems([]);
+    try {
+      const res = await questionBankAPI.listItems(paper.id);
+      setItems(res.data);
+    } catch (e) {
+      console.error('문항 조회 실패', e);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
+  // ── 검수 완료 ─────────────────────────────────────────────────────────────
+  const handleReview = async (itemId) => {
+    try {
+      const res = await questionBankAPI.updateItem(itemId, { review_status: 'reviewed' });
+      setItems(prev => prev.map(i => i.id === itemId ? res.data : i));
+    } catch (e) {
+      console.error('검수 완료 실패', e);
+    }
+  };
+
+  // ── 수정 다이얼로그 ───────────────────────────────────────────────────────
+  const openEdit = (item) => {
+    setEditTarget(item);
+    setEditForm({
+      area: item.area || '',
+      problem_type: item.problem_type || '',
+      concept_tag: item.concept_tag || '',
+      difficulty: item.difficulty || '',
+    });
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    try {
+      const res = await questionBankAPI.updateItem(editTarget.id, editForm);
+      setItems(prev => prev.map(i => i.id === editTarget.id ? res.data : i));
+      setEditOpen(false);
+    } catch (e) {
+      console.error('수정 실패', e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── 파일 검증 / 업로드 ───────────────────────────────────────────────────
   const validateFile = (f) => {
-    if (!ALLOWED_TYPES.includes(f.type) && !ALLOWED_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext))) {
+    if (!ALLOWED_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext)))
       return 'PDF, PNG, JPG/JPEG 형식만 업로드 가능합니다.';
-    }
-    if (f.size > MAX_SIZE_MB * 1024 * 1024) {
+    if (f.size > MAX_SIZE_MB * 1024 * 1024)
       return `파일 크기는 ${MAX_SIZE_MB}MB 이하여야 합니다.`;
-    }
     return '';
   };
 
@@ -137,56 +229,47 @@ export default function ExamAnalysisPage() {
     e.preventDefault();
     setIsDragging(false);
     const f = e.dataTransfer.files[0];
-    if (f) handleFileSelect(f);
+    if (f) {
+      const err = validateFile(f);
+      setFileError(err);
+      if (!err) setFile(f);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
-  const handleDragLeave = () => setIsDragging(false);
 
   const handleFormChange = (field) => (e) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!file) { setFileError('파일을 선택해주세요.'); }
-    if (!form.subject.trim()) newErrors.subject = '필수 입력 항목입니다.';
-    if (!form.grade) newErrors.grade = '필수 입력 항목입니다.';
-    if (!form.examName.trim()) newErrors.examName = '필수 입력 항목입니다.';
-    if (!form.examType) newErrors.examType = '필수 입력 항목입니다.';
-    if (!form.year) newErrors.year = '필수 입력 항목입니다.';
-    if (!form.source.trim()) newErrors.source = '필수 입력 항목입니다.';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && !!file && !fileError;
-  };
-
   const handleUpload = async () => {
-    if (!validate()) return;
+    const errs = {};
+    if (!file) setFileError('파일을 선택해주세요.');
+    if (!form.subject.trim()) errs.subject = '필수 입력 항목입니다.';
+    if (!form.grade)          errs.grade   = '필수 입력 항목입니다.';
+    if (!form.examName.trim()) errs.examName = '필수 입력 항목입니다.';
+    if (!form.examType)       errs.examType = '필수 입력 항목입니다.';
+    if (!form.year)           errs.year     = '필수 입력 항목입니다.';
+    if (!form.source.trim())  errs.source   = '필수 입력 항목입니다.';
+    setErrors(errs);
+    if (Object.keys(errs).length > 0 || !file || fileError) return;
 
     setUploading(true);
-    setUploadSuccess(false);
-
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', form.examName);
-      formData.append('subject', form.subject);
-      if (form.grade) formData.append('grade', form.grade);
-      if (form.year) formData.append('source_year', form.year);
-      if (form.examType) formData.append('source_type', form.examType);
-      if (form.source) formData.append('source', form.source);
-      if (form.note) formData.append('memo', form.note);
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', form.examName);
+      fd.append('subject', form.subject);
+      if (form.grade)    fd.append('grade', form.grade);
+      if (form.year)     fd.append('source_year', form.year);
+      if (form.examType) fd.append('source_type', form.examType);
+      if (form.source)   fd.append('source', form.source);
+      if (form.note)     fd.append('memo', form.note);
 
-      await questionBankAPI.upload(formData);
-
-      await fetchHistory();
-      setFile(null);
-      setForm(EMPTY_FORM);
-      setErrors({});
-      setFileError('');
+      await questionBankAPI.upload(fd);
+      setFile(null); setForm(EMPTY_FORM); setErrors({}); setFileError('');
       setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
+      setTimeout(() => { setUploadSuccess(false); setSubTab(1); }, 1500);
     } catch (e) {
       console.error('업로드 실패', e);
       setFileError('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -195,12 +278,10 @@ export default function ExamAnalysisPage() {
     }
   };
 
+  // ── 공통 sx ──────────────────────────────────────────────────────────────
   const inputSx = {
     '& .MuiOutlinedInput-root': {
-      bgcolor: '#18181B',
-      borderRadius: 1.5,
-      color: 'rgba(255,255,255,0.85)',
-      fontSize: '0.875rem',
+      bgcolor: '#18181B', borderRadius: 1.5, color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem',
       '& fieldset': { borderColor: 'rgba(255,255,255,0.08)' },
       '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
       '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
@@ -211,298 +292,508 @@ export default function ExamAnalysisPage() {
     '& .MuiSelect-icon': { color: 'rgba(255,255,255,0.4)' },
   };
 
-  return (
-    <Box sx={{
-      p: { xs: 2, md: 4 },
-      minHeight: '100vh',
-      bgcolor: '#09090B',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-    }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');`}</style>
+  const colHSx = {
+    fontSize: '0.7rem', fontWeight: 700, color: '#52525B', textTransform: 'uppercase',
+    letterSpacing: '0.05em', bgcolor: '#111113',
+    borderBottom: '1px solid rgba(255,255,255,0.06)', py: 1.5, px: 2, whiteSpace: 'nowrap',
+  };
 
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-          <Box sx={{
-            width: 36, height: 36, borderRadius: 2,
-            bgcolor: 'rgba(167,139,250,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <QuizIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-          </Box>
-          <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>
-            문제 분석
-          </Typography>
+  const cellSx = {
+    borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2,
+    color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', whiteSpace: 'nowrap',
+  };
+
+  const subTabSx = (active) => ({
+    px: 2.5, py: 1, borderRadius: '10px', cursor: 'pointer',
+    fontSize: '0.8125rem', fontWeight: 600, transition: 'all 0.2s',
+    bgcolor: active ? 'rgba(167,139,250,0.12)' : 'transparent',
+    color: active ? '#a78bfa' : '#71717A',
+    border: active ? '1px solid rgba(167,139,250,0.25)' : '1px solid transparent',
+    '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#c4b5fd' },
+  });
+
+  // ── 문제은행 필터 ─────────────────────────────────────────────────────────
+  const uniqueSubjects = [...new Set(bankItems.map(i => i.paper_subject).filter(Boolean))];
+  const uniqueGrades   = [...new Set(bankItems.map(i => i.paper_grade).filter(Boolean))];
+  const filteredBank   = bankItems.filter(item => {
+    if (bankFilters.subject      && item.paper_subject !== bankFilters.subject)      return false;
+    if (bankFilters.grade        && item.paper_grade   !== bankFilters.grade)        return false;
+    if (bankFilters.problem_type && item.problem_type  !== bankFilters.problem_type) return false;
+    if (bankFilters.difficulty   && item.difficulty    !== bankFilters.difficulty)   return false;
+    return true;
+  });
+
+  const menuItemSx = { bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } };
+
+  // ── 렌더 ─────────────────────────────────────────────────────────────────
+  return (
+    <Box>
+      {/* 헤더 */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <QuizIcon sx={{ fontSize: 18, color: '#fff' }} />
         </Box>
-        <Typography sx={{ color: '#52525B', fontSize: '0.8125rem', ml: '52px' }}>
-          기출문제, 모의고사, 자체 제작 시험지를 업로드하고 분석 파이프라인을 시작합니다
-        </Typography>
+        <Box>
+          <Typography sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#FAFAFA' }}>기출문제 분석</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#71717A' }}>시험지를 업로드하고 문항을 자동 분류·관리합니다</Typography>
+        </Box>
       </Box>
 
-      {uploadSuccess && (
-        <Alert severity="success" sx={{ mb: 3, bgcolor: 'rgba(34,197,94,0.1)', color: '#86efac', border: '1px solid rgba(34,197,94,0.3)', '& .MuiAlert-icon': { color: '#86efac' } }}>
-          파일이 성공적으로 업로드되었습니다. OCR 분석이 대기열에 추가됩니다.
-        </Alert>
+      {/* 서브탭 */}
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+        {['파일 업로드', '분석 이력', '문제은행'].map((label, i) => (
+          <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); }} sx={subTabSx(subTab === i)}>
+            {label}
+          </Box>
+        ))}
+      </Box>
+
+      {/* ══════════════════════════════════════════════════════
+          탭 0: 파일 업로드
+      ══════════════════════════════════════════════════════ */}
+      {subTab === 0 && (
+        <Box>
+          {uploadSuccess && (
+            <Alert severity="success" sx={{ mb: 3, bgcolor: 'rgba(34,197,94,0.1)', color: '#86efac', border: '1px solid rgba(34,197,94,0.3)', '& .MuiAlert-icon': { color: '#86efac' } }}>
+              파일이 업로드되었습니다. 분석 이력에서 진행 상태를 확인하세요.
+            </Alert>
+          )}
+          <Box sx={{ bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', p: 3 }}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.9375rem', mb: 2.5 }}>
+              파일 업로드
+            </Typography>
+
+            {/* 드롭존 */}
+            <Box
+              onDrop={handleDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onClick={() => !file && fileInputRef.current?.click()}
+              sx={{
+                border: `2px dashed ${isDragging ? '#a78bfa' : fileError ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
+                borderRadius: 2.5, p: 4, mb: 2, textAlign: 'center',
+                cursor: file ? 'default' : 'pointer', bgcolor: '#111115',
+                bgcolor: isDragging ? 'rgba(167,139,250,0.05)' : '#111115',
+                transition: 'all 0.2s',
+                '&:hover': !file ? { borderColor: 'rgba(167,139,250,0.4)', bgcolor: 'rgba(167,139,250,0.03)' } : {},
+              }}
+            >
+              <input ref={fileInputRef} type="file" accept=".pdf,.png,.jpg,.jpeg" style={{ display: 'none' }}
+                onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])} />
+              {file ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                  <InsertDriveFileIcon sx={{ color: '#a78bfa', fontSize: 28 }} />
+                  <Box sx={{ textAlign: 'left' }}>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: '0.875rem' }}>{file.name}</Typography>
+                    <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</Typography>
+                  </Box>
+                  <Box onClick={(e) => { e.stopPropagation(); setFile(null); setFileError(''); }}
+                    sx={{ ml: 1, p: 0.5, borderRadius: 1, cursor: 'pointer', '&:hover': { bgcolor: 'rgba(239,68,68,0.1)' } }}>
+                    <CloseIcon sx={{ fontSize: 16, color: '#71717A' }} />
+                  </Box>
+                </Box>
+              ) : (
+                <>
+                  <CloudUploadIcon sx={{ fontSize: 40, color: isDragging ? '#a78bfa' : '#3F3F46', mb: 1.5 }} />
+                  <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.875rem', mb: 0.5 }}>
+                    파일을 드래그하거나 클릭하여 선택
+                  </Typography>
+                  <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>PDF, PNG, JPG/JPEG · 최대 {MAX_SIZE_MB}MB</Typography>
+                </>
+              )}
+            </Box>
+            {fileError && <Typography sx={{ color: '#f87171', fontSize: '0.75rem', mb: 2, mt: -1 }}>{fileError}</Typography>}
+
+            {/* 메타데이터 폼 */}
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="과목" placeholder="예: 영어" value={form.subject} onChange={handleFormChange('subject')}
+                  error={!!errors.subject} helperText={errors.subject} sx={inputSx} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!errors.grade} sx={inputSx}>
+                  <InputLabel shrink>학년</InputLabel>
+                  <Select value={form.grade} onChange={handleFormChange('grade')} label="학년" displayEmpty sx={{ color: form.grade ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+                    <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
+                    {GRADE_OPTIONS.map(g => <MenuItem key={g} value={g} sx={menuItemSx}>{g}</MenuItem>)}
+                  </Select>
+                  {errors.grade && <FormHelperText>{errors.grade}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="시험명" placeholder="예: 2025년 3월 모의고사" value={form.examName} onChange={handleFormChange('examName')}
+                  error={!!errors.examName} helperText={errors.examName} sx={inputSx} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!errors.examType} sx={inputSx}>
+                  <InputLabel shrink>시험 구분</InputLabel>
+                  <Select value={form.examType} onChange={handleFormChange('examType')} label="시험 구분" displayEmpty sx={{ color: form.examType ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+                    <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
+                    {EXAM_TYPE_OPTIONS.map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
+                  </Select>
+                  {errors.examType && <FormHelperText>{errors.examType}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!errors.year} sx={inputSx}>
+                  <InputLabel shrink>시행 연도</InputLabel>
+                  <Select value={form.year} onChange={handleFormChange('year')} label="시행 연도" displayEmpty sx={{ color: form.year ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+                    <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
+                    {YEAR_OPTIONS.map(y => <MenuItem key={y} value={y} sx={menuItemSx}>{y}</MenuItem>)}
+                  </Select>
+                  {errors.year && <FormHelperText>{errors.year}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="출처" placeholder="예: 한국교육과정평가원" value={form.source} onChange={handleFormChange('source')}
+                  error={!!errors.source} helperText={errors.source} sx={inputSx} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="비고 (선택)" placeholder="추가 메모" value={form.note} onChange={handleFormChange('note')}
+                  multiline rows={2} sx={inputSx} InputLabelProps={{ shrink: true }} />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2.5 }}>
+              <Button variant="contained" onClick={handleUpload} disabled={uploading}
+                startIcon={uploading ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <CloudUploadIcon />}
+                sx={{
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                  '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' },
+                  '&:disabled': { background: 'rgba(167,139,250,0.3)', color: 'rgba(255,255,255,0.4)' },
+                  fontWeight: 600, borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontSize: '0.875rem',
+                }}>
+                {uploading ? '업로드 중...' : '업로드 및 분석 시작'}
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       )}
 
-      {/* Upload Section */}
-      <Box sx={{ bgcolor: '#111115', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, p: 3, mb: 3 }}>
-        <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.9375rem', mb: 2.5 }}>
-          파일 업로드
-        </Typography>
+      {/* ══════════════════════════════════════════════════════
+          탭 1-A: 분석 이력 (paper 미선택)
+      ══════════════════════════════════════════════════════ */}
+      {subTab === 1 && !selectedPaper && (
+        <Box sx={{ bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+          <Box sx={{ px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.9375rem' }}>분석 이력</Typography>
+            <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>총 {history.length}건</Typography>
+          </Box>
 
-        {/* Drop Zone */}
-        <Box
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => !file && fileInputRef.current?.click()}
-          sx={{
-            border: `2px dashed ${isDragging ? '#a78bfa' : fileError ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
-            borderRadius: 2.5,
-            p: 4,
-            mb: 2,
-            textAlign: 'center',
-            cursor: file ? 'default' : 'pointer',
-            bgcolor: isDragging ? 'rgba(167,139,250,0.05)' : '#18181B',
-            transition: 'all 0.2s ease',
-            '&:hover': !file ? { borderColor: 'rgba(167,139,250,0.4)', bgcolor: 'rgba(167,139,250,0.03)' } : {},
-          }}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg"
-            style={{ display: 'none' }}
-            onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])}
-          />
-
-          {file ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-              <InsertDriveFileIcon sx={{ color: '#a78bfa', fontSize: 28 }} />
-              <Box sx={{ textAlign: 'left' }}>
-                <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: '0.875rem' }}>
-                  {file.name}
-                </Typography>
-                <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </Typography>
-              </Box>
-              <Box
-                onClick={(e) => { e.stopPropagation(); setFile(null); setFileError(''); }}
-                sx={{
-                  ml: 1, p: 0.5, borderRadius: 1, cursor: 'pointer',
-                  '&:hover': { bgcolor: 'rgba(239,68,68,0.1)' },
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 16, color: '#71717A' }} />
-              </Box>
+          {history.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>업로드된 파일이 없습니다.</Typography>
             </Box>
           ) : (
-            <>
-              <CloudUploadIcon sx={{ fontSize: 40, color: isDragging ? '#a78bfa' : '#3F3F46', mb: 1.5 }} />
-              <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.875rem', mb: 0.5 }}>
-                파일을 드래그하거나 클릭하여 선택
-              </Typography>
-              <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
-                PDF, PNG, JPG/JPEG · 최대 {MAX_SIZE_MB}MB
-              </Typography>
-            </>
+            <Box sx={{ overflowX: 'auto' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {['시험명','과목','학년','파일명','상태','업로드일','작업'].map(h => (
+                      <TableCell key={h} sx={colHSx}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {history.map((paper, idx) => {
+                    const statusLabel = STATUS_MAP[paper.status] || paper.status;
+                    const canView = paper.status === 'done';
+                    const uploadedAt = paper.created_at
+                      ? new Date(paper.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, 16)
+                      : '-';
+                    return (
+                      <TableRow key={paper.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' }, bgcolor: idx % 2 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
+                        <TableCell sx={{ ...cellSx, color: 'rgba(255,255,255,0.85)', fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {paper.title}
+                        </TableCell>
+                        <TableCell sx={cellSx}>{paper.subject}</TableCell>
+                        <TableCell sx={cellSx}>{paper.grade || '-'}</TableCell>
+                        <TableCell sx={{ ...cellSx, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <InsertDriveFileIcon sx={{ fontSize: 14, color: '#52525B', flexShrink: 0 }} />
+                            <Typography sx={{ color: '#71717A', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {paper.file_name || '-'}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ ...cellSx, minWidth: 120 }}>
+                          <StatusChip status={statusLabel} />
+                          {paper.status === 'failed' && paper.error_message && (
+                            <Typography sx={{ color: '#f87171', fontSize: '0.6875rem', mt: 0.5, maxWidth: 200, whiteSpace: 'normal', lineHeight: 1.3 }}>
+                              {paper.error_message}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ ...cellSx, color: '#52525B', fontSize: '0.75rem' }}>{uploadedAt}</TableCell>
+                        <TableCell sx={cellSx}>
+                          <Button size="small" disabled={!canView} onClick={() => handleViewResult(paper)}
+                            sx={{
+                              fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                              bgcolor: canView ? 'rgba(167,139,250,0.1)' : 'transparent',
+                              color: canView ? '#a78bfa' : '#3F3F46',
+                              border: canView ? '1px solid rgba(167,139,250,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                              '&:hover': canView ? { bgcolor: 'rgba(167,139,250,0.18)' } : {},
+                              '&.Mui-disabled': { color: '#3F3F46', border: '1px solid rgba(255,255,255,0.04)' },
+                            }}>
+                            결과 보기
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
           )}
         </Box>
-        {fileError && (
-          <Typography sx={{ color: '#f87171', fontSize: '0.75rem', mb: 2, mt: -1 }}>{fileError}</Typography>
-        )}
+      )}
 
-        {/* Metadata Form */}
-        <Grid container spacing={2}>
-          {/* 과목 */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth label="과목" placeholder="예: 수학, 영어, 국어"
-              value={form.subject} onChange={handleFormChange('subject')}
-              error={!!errors.subject} helperText={errors.subject}
-              sx={inputSx}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-
-          {/* 학년 */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={!!errors.grade} sx={inputSx}>
-              <InputLabel shrink>학년</InputLabel>
-              <Select
-                value={form.grade} onChange={handleFormChange('grade')}
-                label="학년" displayEmpty
-                sx={{ color: form.grade ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}
-              >
-                <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
-                {GRADE_OPTIONS.map(g => <MenuItem key={g} value={g} sx={{ bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>{g}</MenuItem>)}
-              </Select>
-              {errors.grade && <FormHelperText>{errors.grade}</FormHelperText>}
-            </FormControl>
-          </Grid>
-
-          {/* 시험명 */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth label="시험명" placeholder="예: 2025년 3월 모의고사"
-              value={form.examName} onChange={handleFormChange('examName')}
-              error={!!errors.examName} helperText={errors.examName}
-              sx={inputSx}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-
-          {/* 시험 구분 */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={!!errors.examType} sx={inputSx}>
-              <InputLabel shrink>시험 구분</InputLabel>
-              <Select
-                value={form.examType} onChange={handleFormChange('examType')}
-                label="시험 구분" displayEmpty
-                sx={{ color: form.examType ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}
-              >
-                <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
-                {EXAM_TYPE_OPTIONS.map(t => <MenuItem key={t} value={t} sx={{ bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>{t}</MenuItem>)}
-              </Select>
-              {errors.examType && <FormHelperText>{errors.examType}</FormHelperText>}
-            </FormControl>
-          </Grid>
-
-          {/* 시행 연도 */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={!!errors.year} sx={inputSx}>
-              <InputLabel shrink>시행 연도</InputLabel>
-              <Select
-                value={form.year} onChange={handleFormChange('year')}
-                label="시행 연도" displayEmpty
-                sx={{ color: form.year ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}
-              >
-                <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
-                {YEAR_OPTIONS.map(y => <MenuItem key={y} value={y} sx={{ bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } }}>{y}</MenuItem>)}
-              </Select>
-              {errors.year && <FormHelperText>{errors.year}</FormHelperText>}
-            </FormControl>
-          </Grid>
-
-          {/* 출처 */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth label="출처" placeholder="예: 한국교육과정평가원, 자체 출제"
-              value={form.source} onChange={handleFormChange('source')}
-              error={!!errors.source} helperText={errors.source}
-              sx={inputSx}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-
-          {/* 비고 */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth label="비고 (선택)" placeholder="추가 메모를 입력하세요"
-              value={form.note} onChange={handleFormChange('note')}
-              multiline rows={2}
-              sx={inputSx}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-        </Grid>
-
-        {/* Upload Button */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2.5 }}>
-          <Button
-            variant="contained"
-            onClick={handleUpload}
-            disabled={uploading}
-            startIcon={uploading ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <CloudUploadIcon />}
-            sx={{
-              background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-              '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' },
-              '&:disabled': { background: 'rgba(167,139,250,0.3)', color: 'rgba(255,255,255,0.4)' },
-              fontWeight: 600,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              textTransform: 'none',
-              fontSize: '0.875rem',
-            }}
-          >
-            {uploading ? '업로드 중...' : '파일 업로드'}
-          </Button>
-        </Box>
-      </Box>
-
-      {/* History Section */}
-      <Box sx={{ bgcolor: '#111115', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-        {/* Section header */}
-        <Box sx={{ px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.9375rem' }}>
-            업로드 이력
-          </Typography>
-          <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
-            총 {history.length}건
-          </Typography>
-        </Box>
-
-        {history.length === 0 ? (
-          <Box sx={{ py: 8, textAlign: 'center' }}>
-            <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>업로드된 파일이 없습니다.</Typography>
+      {/* ══════════════════════════════════════════════════════
+          탭 1-B: 분석 결과 (paper 선택됨)
+      ══════════════════════════════════════════════════════ */}
+      {subTab === 1 && selectedPaper && (
+        <Box>
+          {/* 브레드크럼 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+            <Button onClick={() => { setSelectedPaper(null); setItems([]); }}
+              startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+              sx={{ color: '#71717A', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#a78bfa' } }}>
+              분석 이력
+            </Button>
+            <Typography sx={{ color: '#3F3F46' }}>/</Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', fontWeight: 600 }}>{selectedPaper.title}</Typography>
+            <Chip label={`${selectedPaper.subject} · ${selectedPaper.grade || '-'}`} size="small"
+              sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.6875rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 1 } }} />
+            {selectedPaper.total_questions != null && (
+              <Typography sx={{ color: '#52525B', fontSize: '0.75rem', ml: 'auto' }}>총 {selectedPaper.total_questions}문항</Typography>
+            )}
           </Box>
-        ) : (
-          <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  {['파일명', '과목', '학년', '시험명', '시험 구분', '시행 연도', '업로드 시각', '업로더', '상태'].map(h => (
-                    <TableCell key={h} sx={{
-                      bgcolor: '#18181B',
-                      color: '#52525B',
-                      fontSize: '0.6875rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      borderBottom: '1px solid rgba(255,255,255,0.06)',
-                      py: 1.5, px: 2,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {h}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {history.map((row, idx) => (
-                  <TableRow key={row.id} sx={{
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
-                    bgcolor: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+
+          {itemsLoading ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <CircularProgress size={32} sx={{ color: '#a78bfa' }} />
+              <Typography sx={{ color: '#52525B', fontSize: '0.875rem', mt: 2 }}>문항 불러오는 중...</Typography>
+            </Box>
+          ) : items.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>저장된 문항이 없습니다.</Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={2}>
+              {items.map(item => (
+                <Grid item xs={12} md={6} key={item.id}>
+                  <Box sx={{
+                    bgcolor: '#18181B', borderRadius: '16px', p: 2.5,
+                    border: item.review_status === 'reviewed'
+                      ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                    display: 'flex', flexDirection: 'column', gap: 1.5,
                   }}>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <InsertDriveFileIcon sx={{ fontSize: 16, color: '#52525B', flexShrink: 0 }} />
-                        <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8125rem', fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {row.fileName}
+                    {/* 카드 헤더 */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
+                        {item.question_number}번
+                      </Typography>
+                      {item.area && (
+                        <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                      )}
+                      <DiffChip v={item.difficulty} />
+                      {item.score_point && (
+                        <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>{item.score_point}점</Typography>
+                      )}
+                      <Box sx={{ ml: 'auto' }}>
+                        {item.review_status === 'reviewed'
+                          ? <Chip label="검수 완료" size="small" sx={{ height: 20, bgcolor: 'rgba(34,197,94,0.1)', color: '#86efac', fontSize: '0.625rem', border: '1px solid rgba(34,197,94,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                          : <Chip label="검수 대기" size="small" sx={{ height: 20, bgcolor: 'rgba(234,179,8,0.1)', color: '#fde047', fontSize: '0.625rem', border: '1px solid rgba(234,179,8,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                        }
+                      </Box>
+                    </Box>
+
+                    {item.problem_type && (
+                      <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
+                        유형: <span style={{ color: '#a78bfa' }}>{item.problem_type}</span>
+                      </Typography>
+                    )}
+
+                    {item.question_body && (
+                      <Box sx={{ bgcolor: '#111115', borderRadius: 1.5, p: 1.5 }}>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                          {item.question_body}
                         </Typography>
                       </Box>
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{row.subject}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{row.grade}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.examName}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{row.examType}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: 'rgba(255,255,255,0.6)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{row.year}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: '#52525B', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{row.uploadedAt}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, color: '#52525B', fontSize: '0.75rem', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.uploader}</TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.04)', py: 1.25, px: 2, whiteSpace: 'nowrap' }}>
-                      <StatusChip status={row.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    )}
+
+                    {Array.isArray(item.choices) && item.choices.length > 0 && (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4, pl: 0.5 }}>
+                        {item.choices.map((c, ci) => (
+                          <Typography key={ci} sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8125rem' }}>{c}</Typography>
+                        ))}
+                      </Box>
+                    )}
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {item.concept_tag && (
+                        <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
+                          개념 태그: <span style={{ color: '#71717A' }}>{item.concept_tag}</span>
+                        </Typography>
+                      )}
+                      {item.classifier_reason && (
+                        <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', lineHeight: 1.4 }}>
+                          분류 근거: {item.classifier_reason}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button size="small" onClick={() => openEdit(item)}
+                        sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                        수정
+                      </Button>
+                      <Button size="small" disabled={item.review_status === 'reviewed'} onClick={() => handleReview(item.id)}
+                        sx={{
+                          fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                          bgcolor: item.review_status === 'reviewed' ? 'transparent' : 'rgba(34,197,94,0.1)',
+                          color: item.review_status === 'reviewed' ? '#3F3F46' : '#86efac',
+                          border: item.review_status === 'reviewed' ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(34,197,94,0.2)',
+                          '&:hover': item.review_status !== 'reviewed' ? { bgcolor: 'rgba(34,197,94,0.18)' } : {},
+                          '&.Mui-disabled': { color: '#3F3F46' },
+                        }}>
+                        검수 완료
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
+          탭 2: 문제은행
+      ══════════════════════════════════════════════════════ */}
+      {subTab === 2 && (
+        <Box>
+          {/* 필터 */}
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {[
+              { key: 'subject',      label: '과목', options: uniqueSubjects },
+              { key: 'grade',        label: '학년', options: uniqueGrades },
+              { key: 'problem_type', label: '유형', options: ALL_TYPES },
+              { key: 'difficulty',   label: '난이도', options: DIFFICULTY_OPTIONS },
+            ].map(({ key, label, options }) => (
+              <FormControl key={key} size="small" sx={{ minWidth: 110, ...inputSx }}>
+                <InputLabel shrink>{label}</InputLabel>
+                <Select value={bankFilters[key]}
+                  onChange={(e) => setBankFilters(prev => ({ ...prev, [key]: e.target.value }))}
+                  label={label} displayEmpty
+                  sx={{ color: bankFilters[key] ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
+                  <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
+                  {options.map(opt => <MenuItem key={opt} value={opt} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{opt}</MenuItem>)}
+                </Select>
+              </FormControl>
+            ))}
+            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', problem_type:'', difficulty:'' })}
+              sx={{ color: '#52525B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
+              초기화
+            </Button>
+            <Typography sx={{ color: '#52525B', fontSize: '0.75rem', ml: 'auto' }}>
+              {filteredBank.length}건
+            </Typography>
           </Box>
-        )}
-      </Box>
+
+          <Box sx={{ bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            {bankLoading ? (
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <CircularProgress size={28} sx={{ color: '#a78bfa' }} />
+                <Typography sx={{ color: '#52525B', fontSize: '0.875rem', mt: 2 }}>불러오는 중...</Typography>
+              </Box>
+            ) : filteredBank.length === 0 ? (
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>
+                  {bankItems.length === 0 ? '검수 완료된 문항이 없습니다.' : '필터 조건에 맞는 문항이 없습니다.'}
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ overflowX: 'auto' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {['번호','시험명','과목','학년','영역','유형','난이도','배점'].map(h => (
+                        <TableCell key={h} sx={colHSx}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredBank.map((item, idx) => (
+                      <TableRow key={item.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' }, bgcolor: idx % 2 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
+                        <TableCell sx={{ ...cellSx, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{item.question_number}</TableCell>
+                        <TableCell sx={{ ...cellSx, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.paper_title}</TableCell>
+                        <TableCell sx={cellSx}>{item.paper_subject}</TableCell>
+                        <TableCell sx={cellSx}>{item.paper_grade || '-'}</TableCell>
+                        <TableCell sx={cellSx}>
+                          {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
+                        </TableCell>
+                        <TableCell sx={{ ...cellSx, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.problem_type || '-'}</TableCell>
+                        <TableCell sx={cellSx}><DiffChip v={item.difficulty} /></TableCell>
+                        <TableCell sx={{ ...cellSx, color: '#71717A' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
+          수정 다이얼로그
+      ══════════════════════════════════════════════════════ */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', minWidth: 400 } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', pb: 2 }}>
+          문항 수정{editTarget ? ` — ${editTarget.question_number}번` : ''}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <FormControl fullWidth sx={inputSx}>
+            <InputLabel shrink>영역</InputLabel>
+            <Select value={editForm.area}
+              onChange={(e) => setEditForm(p => ({ ...p, area: e.target.value, problem_type: '' }))}
+              label="영역">
+              {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={menuItemSx}>{a}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={inputSx}>
+            <InputLabel shrink>문제 유형</InputLabel>
+            <Select value={editForm.problem_type}
+              onChange={(e) => setEditForm(p => ({ ...p, problem_type: e.target.value }))}
+              label="문제 유형">
+              {(editForm.area ? ENGLISH_TAXONOMY[editForm.area] || [] : ALL_TYPES).map(t => (
+                <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={inputSx}>
+            <InputLabel shrink>난이도</InputLabel>
+            <Select value={editForm.difficulty}
+              onChange={(e) => setEditForm(p => ({ ...p, difficulty: e.target.value }))}
+              label="난이도">
+              {DIFFICULTY_OPTIONS.map(d => <MenuItem key={d} value={d} sx={menuItemSx}>{d}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <TextField fullWidth label="개념 태그" placeholder="예: 빈칸, 추론, 구문"
+            value={editForm.concept_tag}
+            onChange={(e) => setEditForm(p => ({ ...p, concept_tag: e.target.value }))}
+            sx={inputSx} InputLabelProps={{ shrink: true }} />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 1 }}>
+          <Button onClick={() => setEditOpen(false)} sx={{ color: '#71717A', textTransform: 'none', fontSize: '0.875rem' }}>취소</Button>
+          <Button variant="contained" onClick={handleSaveEdit} disabled={saving}
+            sx={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' }, fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px' }}>
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
