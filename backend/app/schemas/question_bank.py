@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from ..models.question_bank import PaperStatus, ReviewStatus
+from ..models.exam_paper import PaperStatus, ReviewStatus
 
 
 # ── ExamPaper ──────────────────────────────────────────────────────────────
