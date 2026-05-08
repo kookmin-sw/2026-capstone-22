@@ -9,7 +9,7 @@ from typing import Optional
 from google.genai import types
 from sqlalchemy.orm import Session
 
-from ..models.question_bank import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
+from ..models.exam_paper import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
 from ..schemas.question_bank import AnalysisResult
 from .gemini_client import _get_genai_client, _get_platform_setting
 

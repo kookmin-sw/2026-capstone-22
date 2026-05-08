@@ -10,7 +10,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.question_bank import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
+from ..models.exam_paper import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
 from ..models.user import User
 from ..schemas.question_bank import (
     ExamPaperResponse,
