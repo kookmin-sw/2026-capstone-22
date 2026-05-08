@@ -153,16 +153,44 @@ def _call_gemini(client, model: str, contents: list) -> dict:
 
 
 def _validate_classified(data: dict) -> AnalysisResult:
-    """Gemini JSON 응답을 AnalysisResult로 검증. 잘못된 값은 보정."""
+    """Gemini JSON 응답을 AnalysisResult로 검증.
+
+    - area / difficulty: 기능 정상화를 위해 최선 추정값으로 보정하되 이슈 기록
+    - problem_type: taxonomy 밖의 값이면 "미분류"로 저장 (보정하지 않음)
+    - 이슈가 있으면 classifier_reason 앞에 "[검수 필요]" 마킹
+    """
     all_types = set(ENGLISH_TAXONOMY["듣기"] + ENGLISH_TAXONOMY["독해"])
     questions = data.get("questions", [])
+
     for q in questions:
-        if q.get("area") not in ("듣기", "독해"):
-            q["area"] = "듣기" if q.get("is_listening") else "독해"
-        if q.get("problem_type") not in all_types:
-            q["problem_type"] = "기타"
-        if q.get("difficulty") not in ("하", "중", "상"):
+        issues: list[str] = []
+        original_reason: str = q.get("reason") or ""
+
+        # area: UI 표시에 필요하므로 보정하되 이슈 기록
+        area_val = q.get("area")
+        if area_val not in ("듣기", "독해"):
+            corrected = "듣기" if q.get("is_listening") else "독해"
+            issues.append(f"area 불명확('{area_val}' → '{corrected}'으로 추정)")
+            q["area"] = corrected
+
+        # problem_type: taxonomy 밖이면 "미분류" 저장 (원본값 이슈에 기록)
+        pt_val = q.get("problem_type")
+        if pt_val not in all_types:
+            issues.append(f"problem_type taxonomy 불일치('{pt_val}')")
+            q["problem_type"] = "미분류"
+
+        # difficulty: 합리적 기본값으로 보정하되 이슈 기록
+        diff_val = q.get("difficulty")
+        if diff_val not in ("하", "중", "상"):
+            issues.append(f"difficulty 불명확('{diff_val}')")
             q["difficulty"] = "중"
+
+        # 이슈 있으면 classifier_reason에 마킹
+        if issues:
+            tag = "[검수 필요] " + "; ".join(issues)
+            q["reason"] = f"{tag} | {original_reason}" if original_reason else tag
+            logger.debug("[QuestionBank] 검수 필요 문항 %s: %s", q.get("number"), tag)
+
     return AnalysisResult(**data)
 
 
