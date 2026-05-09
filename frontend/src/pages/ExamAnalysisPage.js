@@ -818,7 +818,7 @@ export default function ExamAnalysisPage() {
                             '&:hover': rs !== 'reviewed' ? { bgcolor: 'rgba(34,197,94,0.18)' } : {},
                             '&.Mui-disabled': { color: '#3F3F46' },
                           }}>
-                          {rs === 'reviewed' ? '검수 완료' : 'AI 결과 확인'}
+                          검수 완료
                         </Button>
                       </Box>
                     </Box>
