@@ -131,6 +131,8 @@ export default function ExamAnalysisPage() {
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
   const [approveAllOpen, setApproveAllOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, type: '', id: null, label: '' });
+  const [deleting, setDeleting] = useState(false);
 
   // 문제은행 탭
   const [bankItems, setBankItems]   = useState([]);
@@ -257,6 +259,31 @@ export default function ExamAnalysisPage() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── 삭제 핸들러 ──────────────────────────────────────────────────────────
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
+    try {
+      if (deleteDialog.type === 'paper') {
+        await questionBankAPI.deletePaper(deleteDialog.id);
+        setHistory(prev => prev.filter(p => p.id !== deleteDialog.id));
+        if (selectedPaper?.id === deleteDialog.id) {
+          setSelectedPaper(null);
+          setItems([]);
+          setOnlyNeedsReview(false);
+        }
+      } else {
+        await questionBankAPI.deleteItem(deleteDialog.id);
+        setItems(prev => prev.filter(i => i.id !== deleteDialog.id));
+        setBankItems(prev => prev.filter(i => i.id !== deleteDialog.id));
+      }
+      setDeleteDialog({ open: false, type: '', id: null, label: '' });
+    } catch (e) {
+      console.error('삭제 실패', e);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -631,18 +658,30 @@ export default function ExamAnalysisPage() {
                           )}
                         </TableCell>
                         <TableCell sx={{ ...cellSx, color: '#52525B', fontSize: '0.75rem' }}>{uploadedAt}</TableCell>
-                        <TableCell sx={cellSx}>
-                          <Button size="small" disabled={!canView} onClick={() => handleViewResult(paper)}
-                            sx={{
-                              fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
-                              bgcolor: canView ? 'rgba(167,139,250,0.1)' : 'transparent',
-                              color: canView ? '#a78bfa' : '#3F3F46',
-                              border: canView ? '1px solid rgba(167,139,250,0.25)' : '1px solid rgba(255,255,255,0.06)',
-                              '&:hover': canView ? { bgcolor: 'rgba(167,139,250,0.18)' } : {},
-                              '&.Mui-disabled': { color: '#3F3F46', border: '1px solid rgba(255,255,255,0.04)' },
-                            }}>
-                            결과 보기
-                          </Button>
+                        <TableCell sx={{ ...cellSx, whiteSpace: 'nowrap' }}>
+                          <Box sx={{ display: 'flex', gap: 0.75 }}>
+                            <Button size="small" disabled={!canView} onClick={() => handleViewResult(paper)}
+                              sx={{
+                                fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                                bgcolor: canView ? 'rgba(167,139,250,0.1)' : 'transparent',
+                                color: canView ? '#a78bfa' : '#3F3F46',
+                                border: canView ? '1px solid rgba(167,139,250,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                                '&:hover': canView ? { bgcolor: 'rgba(167,139,250,0.18)' } : {},
+                                '&.Mui-disabled': { color: '#3F3F46', border: '1px solid rgba(255,255,255,0.04)' },
+                              }}>
+                              결과 보기
+                            </Button>
+                            <Button size="small"
+                              onClick={() => setDeleteDialog({ open: true, type: 'paper', id: paper.id, label: paper.title })}
+                              sx={{
+                                fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                                bgcolor: 'rgba(239,68,68,0.08)', color: '#fca5a5',
+                                border: '1px solid rgba(239,68,68,0.2)',
+                                '&:hover': { bgcolor: 'rgba(239,68,68,0.15)' },
+                              }}>
+                              삭제
+                            </Button>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     );
@@ -819,6 +858,16 @@ export default function ExamAnalysisPage() {
                             '&.Mui-disabled': { color: '#3F3F46' },
                           }}>
                           검수 완료
+                        </Button>
+                        <Button size="small"
+                          onClick={() => setDeleteDialog({ open: true, type: 'item', id: item.id, label: `${item.question_number}번` })}
+                          sx={{
+                            fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                            bgcolor: 'rgba(239,68,68,0.08)', color: '#fca5a5',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                            '&:hover': { bgcolor: 'rgba(239,68,68,0.15)' },
+                          }}>
+                          삭제
                         </Button>
                       </Box>
                     </Box>
@@ -997,6 +1046,46 @@ export default function ExamAnalysisPage() {
           <Button variant="contained" onClick={handleSaveEdit} disabled={saving}
             sx={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' }, fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px' }}>
             {saving ? '저장 중...' : '저장'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════
+          삭제 확인 다이얼로그
+      ══════════════════════════════════════════════════════ */}
+      <Dialog open={deleteDialog.open} onClose={() => !deleting && setDeleteDialog({ open: false, type: '', id: null, label: '' })}
+        PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', minWidth: 360 } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', pb: 2 }}>
+          {deleteDialog.type === 'paper' ? '시험지 삭제' : '문항 삭제'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+            <span style={{ color: '#FAFAFA', fontWeight: 600 }}>"{deleteDialog.label}"</span>을 삭제합니다.
+          </Typography>
+          {deleteDialog.type === 'paper' && (
+            <Typography sx={{ color: '#71717A', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+              연결된 문항 데이터도 함께 삭제됩니다.
+            </Typography>
+          )}
+          <Box sx={{ bgcolor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 1.5, px: 1.5, py: 1 }}>
+            <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem' }}>
+              이 작업은 되돌릴 수 없습니다.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 1 }}>
+          <Button onClick={() => setDeleteDialog({ open: false, type: '', id: null, label: '' })} disabled={deleting}
+            sx={{ color: '#71717A', textTransform: 'none', fontSize: '0.875rem' }}>
+            취소
+          </Button>
+          <Button variant="contained" onClick={handleDeleteConfirm} disabled={deleting}
+            sx={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+              '&:hover': { background: 'linear-gradient(135deg, #b91c1c 0%, #dc2626 100%)' },
+              '&.Mui-disabled': { background: 'rgba(239,68,68,0.2)', color: 'rgba(255,255,255,0.3)' },
+              fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px',
+            }}>
+            {deleting ? '삭제 중...' : '삭제'}
           </Button>
         </DialogActions>
       </Dialog>

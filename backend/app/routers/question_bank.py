@@ -165,6 +165,51 @@ async def list_items(
     return [QuestionItemResponse.model_validate(i) for i in items]
 
 
+# ── DELETE /papers/{paper_id} ─────────────────────────────────────────────
+
+
+@router.delete("/papers/{paper_id}", status_code=200)
+async def delete_paper(
+    paper_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """시험지 및 연결된 문항 전체 삭제"""
+    paper = (
+        db.query(ExamPaper)
+        .filter(ExamPaper.id == paper_id, ExamPaper.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not paper:
+        raise HTTPException(status_code=404, detail="시험지를 찾을 수 없습니다.")
+    db.query(QuestionItem).filter(QuestionItem.paper_id == paper_id).delete()
+    db.delete(paper)
+    db.commit()
+    return {"success": True}
+
+
+# ── DELETE /items/{item_id} ────────────────────────────────────────────────
+
+
+@router.delete("/items/{item_id}", status_code=200)
+async def delete_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """문항 1개 삭제"""
+    item = (
+        db.query(QuestionItem)
+        .filter(QuestionItem.id == item_id, QuestionItem.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="문항을 찾을 수 없습니다.")
+    db.delete(item)
+    db.commit()
+    return {"success": True}
+
+
 # ── PATCH /items/{item_id} ─────────────────────────────────────────────────
 
 

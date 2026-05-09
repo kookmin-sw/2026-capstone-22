@@ -325,6 +325,14 @@ export const questionBankAPI = {
   // 문항 분류 결과 수정 (교사 검수)
   updateItem: (itemId, data) =>
     api.patch(`/admin/question-bank/items/${itemId}`, data),
+
+  // 시험지 삭제 (연결 문항 포함)
+  deletePaper: (paperId) =>
+    api.delete(`/admin/question-bank/papers/${paperId}`),
+
+  // 문항 1개 삭제
+  deleteItem: (itemId) =>
+    api.delete(`/admin/question-bank/items/${itemId}`),
 };
 
 export default api;
