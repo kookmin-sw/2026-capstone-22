@@ -12,6 +12,8 @@ import {
   Close as CloseIcon,
   Quiz as QuizIcon,
   ArrowBack as ArrowBackIcon,
+  Print as PrintIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionBankAPI } from '../services/api';
@@ -144,6 +146,8 @@ export default function ExamAnalysisPage() {
   const [bankItems, setBankItems]   = useState([]);
   const [bankLoading, setBankLoading] = useState(false);
   const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', area:'', problem_type:'', difficulty:'' });
+  const [selectedBankItem, setSelectedBankItem] = useState(null);
+  const [printWithAnswers, setPrintWithAnswers] = useState(false);
 
   // ── 이력 fetch + 폴링 ─────────────────────────────────────────────────────
   const fetchHistory = useCallback(async () => {
@@ -404,6 +408,78 @@ export default function ExamAnalysisPage() {
     if (bankFilters.difficulty   && item.difficulty    !== bankFilters.difficulty)   return false;
     return true;
   });
+
+  // 문제지 인쇄 미리보기
+  const openPrintPreview = () => {
+    const CIRCLE = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+    const filterDesc = [
+      bankFilters.subject      && `과목: ${bankFilters.subject}`,
+      bankFilters.grade        && `학년: ${bankFilters.grade}`,
+      bankFilters.area         && `영역: ${bankFilters.area}`,
+      bankFilters.problem_type && `유형: ${bankFilters.problem_type}`,
+      bankFilters.difficulty   && `난이도: ${bankFilters.difficulty}`,
+    ].filter(Boolean).join(' | ') || '전체';
+
+    const questionsHTML = filteredBank.map((item, idx) => {
+      const num = idx + 1;
+      const score = item.score_point ? `<span class="score">[${item.score_point}점]</span>` : '';
+      const body = item.question_body
+        ? `<div class="body">${item.question_body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`
+        : '';
+      const choices = Array.isArray(item.choices) && item.choices.length > 0
+        ? `<div class="choices">${item.choices.map((c,i)=>`<div class="choice"><span class="cnum">${CIRCLE[i]??i+1}</span>${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
+        : '';
+      return `<div class="question"><p class="qnum">${num}. ${score}</p>${body}${choices}</div>`;
+    }).join('');
+
+    const answerRows = filteredBank
+      .map((item, idx) => item.answer ? `<span class="ans">${idx+1}.&nbsp;${item.answer}</span>` : null)
+      .filter(Boolean).join('');
+    const answerSection = printWithAnswers && answerRows
+      ? `<div class="answer-section"><h2>정 답</h2><div class="ans-grid">${answerRows}</div></div>`
+      : '';
+
+    const html = `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>문제은행 출력지</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:11pt;color:#111;background:#fff}
+.page{max-width:190mm;margin:0 auto;padding:18mm 15mm}
+.header{border-bottom:2.5px solid #111;padding-bottom:10px;margin-bottom:22px;text-align:center}
+.header h1{font-size:17pt;font-weight:700;letter-spacing:.04em}
+.header .meta{font-size:9pt;color:#555;margin-top:5px}
+.question{margin-bottom:22px;page-break-inside:avoid}
+.qnum{font-weight:700;font-size:11pt;margin-bottom:4px}
+.score{font-size:9pt;color:#777;font-weight:400;margin-left:4px}
+.body{font-size:10.5pt;line-height:1.75;margin:5px 0 8px 14px;white-space:pre-wrap;word-break:break-word}
+.choices{margin-left:14px;display:flex;flex-direction:column;gap:3px}
+.choice{font-size:10.5pt;line-height:1.6;display:flex;align-items:baseline;gap:6px}
+.cnum{min-width:16px;font-weight:500}
+.answer-section{margin-top:28px;border-top:1.5px solid #aaa;padding-top:14px}
+.answer-section h2{font-size:11pt;font-weight:700;margin-bottom:10px}
+.ans-grid{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:10pt}
+.ans{white-space:nowrap}
+@media print{
+  @page{size:A4;margin:15mm 12mm}
+  body{-webkit-print-color-adjust:exact}
+  .page{padding:0;max-width:100%}
+}
+</style></head>
+<body><div class="page">
+<div class="header">
+  <h1>문제은행 출력지</h1>
+  <p class="meta">${filterDesc}&nbsp;&nbsp;|&nbsp;&nbsp;총 ${filteredBank.length}문항&nbsp;&nbsp;|&nbsp;&nbsp;${new Date().toLocaleDateString('ko-KR')}</p>
+</div>
+${questionsHTML}
+${answerSection}
+</div>
+<script>window.onload=()=>window.print();</script>
+</body></html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
 
   // 선택된 영역에 해당하는 problem_type 목록 (영역 미선택 시 전 영역 합집합)
   const availableTypes = bankFilters.area
@@ -892,7 +968,6 @@ export default function ExamAnalysisPage() {
         <Box>
           {/* 필터 */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* 과목·학년·난이도: 공통 패턴 */}
             {[
               { key: 'subject',    label: '과목',   options: uniqueSubjects },
               { key: 'grade',      label: '학년',   options: uniqueGrades },
@@ -909,7 +984,6 @@ export default function ExamAnalysisPage() {
                 </Select>
               </FormControl>
             ))}
-            {/* 영역: 변경 시 유형 초기화 */}
             <FormControl size="small" sx={{ minWidth: 90, ...inputSx }}>
               <InputLabel shrink>영역</InputLabel>
               <Select value={bankFilters.area}
@@ -920,7 +994,6 @@ export default function ExamAnalysisPage() {
                 {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
               </Select>
             </FormControl>
-            {/* 유형: 선택된 영역의 taxonomy 목록만 표시 */}
             <FormControl size="small" sx={{ minWidth: 130, ...inputSx }}>
               <InputLabel shrink>유형</InputLabel>
               <Select value={bankFilters.problem_type}
@@ -935,50 +1008,159 @@ export default function ExamAnalysisPage() {
               sx={{ color: '#52525B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
               초기화
             </Button>
-            <Typography sx={{ color: '#52525B', fontSize: '0.75rem', ml: 'auto' }}>
-              {filteredBank.length}건
-            </Typography>
+            <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>{filteredBank.length}건</Typography>
+            {/* 정답 포함 토글 + 문제지 인쇄 */}
+            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', userSelect: 'none' }}>
+                <Box component="input" type="checkbox" checked={printWithAnswers}
+                  onChange={(e) => setPrintWithAnswers(e.target.checked)}
+                  sx={{ accentColor: '#a78bfa', width: 13, height: 13, cursor: 'pointer' }} />
+                <Typography sx={{ color: '#A1A1AA', fontSize: '0.75rem' }}>정답 포함</Typography>
+              </Box>
+              <Button size="small" startIcon={<PrintIcon sx={{ fontSize: '0.875rem !important' }} />}
+                onClick={openPrintPreview} disabled={filteredBank.length === 0}
+                sx={{ color: '#a78bfa', fontSize: '0.75rem', textTransform: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 1.5, px: 1.5,
+                  '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' }, '&:disabled': { color: '#3f3f46', borderColor: 'rgba(255,255,255,0.06)' } }}>
+                문제지 인쇄
+              </Button>
+            </Box>
           </Box>
 
-          <Box sx={{ bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            {bankLoading ? (
-              <Box sx={{ py: 8, textAlign: 'center' }}>
-                <CircularProgress size={28} sx={{ color: '#a78bfa' }} />
-                <Typography sx={{ color: '#52525B', fontSize: '0.875rem', mt: 2 }}>불러오는 중...</Typography>
-              </Box>
-            ) : filteredBank.length === 0 ? (
-              <Box sx={{ py: 8, textAlign: 'center' }}>
-                <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>
-                  {bankItems.length === 0 ? '검수 완료된 문항이 없습니다.' : '필터 조건에 맞는 문항이 없습니다.'}
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      {['번호','시험명','과목','학년','영역','유형','난이도','배점'].map(h => (
-                        <TableCell key={h} sx={colHSx}>{h}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredBank.map((item, idx) => (
-                      <TableRow key={item.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' }, bgcolor: idx % 2 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
-                        <TableCell sx={{ ...cellSx, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{item.question_number}</TableCell>
-                        <TableCell sx={{ ...cellSx, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.paper_title}</TableCell>
-                        <TableCell sx={cellSx}>{item.paper_subject}</TableCell>
-                        <TableCell sx={cellSx}>{item.paper_grade || '-'}</TableCell>
-                        <TableCell sx={cellSx}>
-                          {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
-                        </TableCell>
-                        <TableCell sx={{ ...cellSx, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.problem_type || '-'}</TableCell>
-                        <TableCell sx={cellSx}><DiffChip v={item.difficulty} /></TableCell>
-                        <TableCell sx={{ ...cellSx, color: '#71717A' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
+          {/* 테이블 + 상세 패널 */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            {/* 테이블 */}
+            <Box sx={{ flex: 1, minWidth: 0, bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              {bankLoading ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <CircularProgress size={28} sx={{ color: '#a78bfa' }} />
+                  <Typography sx={{ color: '#52525B', fontSize: '0.875rem', mt: 2 }}>불러오는 중...</Typography>
+                </Box>
+              ) : filteredBank.length === 0 ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>
+                    {bankItems.length === 0 ? '검수 완료된 문항이 없습니다.' : '필터 조건에 맞는 문항이 없습니다.'}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        {['번호','시험명','과목','학년','영역','유형','난이도','배점',''].map(h => (
+                          <TableCell key={h} sx={colHSx}>{h}</TableCell>
+                        ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+                    <TableBody>
+                      {filteredBank.map((item, idx) => {
+                        const isSelected = selectedBankItem?.id === item.id;
+                        return (
+                          <TableRow key={item.id}
+                            onClick={() => setSelectedBankItem(isSelected ? null : item)}
+                            sx={{ cursor: 'pointer',
+                              bgcolor: isSelected ? 'rgba(167,139,250,0.1)' : idx % 2 ? 'rgba(255,255,255,0.01)' : 'transparent',
+                              '&:hover': { bgcolor: isSelected ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.03)' } }}>
+                            <TableCell sx={{ ...cellSx, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{item.question_number}</TableCell>
+                            <TableCell sx={{ ...cellSx, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.paper_title}</TableCell>
+                            <TableCell sx={cellSx}>{item.paper_subject}</TableCell>
+                            <TableCell sx={cellSx}>{item.paper_grade || '-'}</TableCell>
+                            <TableCell sx={cellSx}>
+                              {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
+                            </TableCell>
+                            <TableCell sx={{ ...cellSx, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.problem_type || '-'}</TableCell>
+                            <TableCell sx={cellSx}><DiffChip v={item.difficulty} /></TableCell>
+                            <TableCell sx={{ ...cellSx, color: '#71717A' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
+                            <TableCell sx={{ ...cellSx, width: 32, p: '4px 8px' }}>
+                              <VisibilityIcon sx={{ fontSize: '0.9rem', color: isSelected ? '#a78bfa' : '#3f3f46' }} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+            </Box>
+
+            {/* 상세 패널 */}
+            {selectedBankItem && (
+              <Box sx={{ width: 360, flexShrink: 0, bgcolor: '#18181B', borderRadius: '16px',
+                border: '1px solid rgba(167,139,250,0.25)', p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* 헤더 */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box>
+                    <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
+                      {selectedBankItem.question_number}번 문항
+                    </Typography>
+                    <Typography sx={{ color: '#71717A', fontSize: '0.75rem', mt: 0.25 }}>
+                      {selectedBankItem.paper_title}
+                    </Typography>
+                  </Box>
+                  <Box component="button" onClick={() => setSelectedBankItem(null)}
+                    sx={{ background: 'none', border: 'none', cursor: 'pointer', p: 0.5, color: '#52525B', '&:hover': { color: '#FAFAFA' } }}>
+                    <CloseIcon sx={{ fontSize: '1rem' }} />
+                  </Box>
+                </Box>
+
+                {/* 메타 칩 */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                  {[
+                    { label: selectedBankItem.area, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+                    { label: selectedBankItem.problem_type, color: '#67e8f9', bg: 'rgba(103,232,249,0.1)', border: 'rgba(103,232,249,0.2)' },
+                    { label: selectedBankItem.concept_tag, color: '#fde68a', bg: 'rgba(253,230,138,0.1)', border: 'rgba(253,230,138,0.2)' },
+                  ].filter(c => c.label).map((c, i) => (
+                    <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.6875rem', border: `1px solid ${c.border}`, '& .MuiChip-label': { px: 0.75 } }} />
+                  ))}
+                  {selectedBankItem.difficulty && <DiffChip v={selectedBankItem.difficulty} />}
+                  {selectedBankItem.score_point && (
+                    <Chip label={`${selectedBankItem.score_point}점`} size="small" sx={{ height: 20, bgcolor: 'rgba(255,255,255,0.05)', color: '#71717A', fontSize: '0.6875rem', border: '1px solid rgba(255,255,255,0.08)', '& .MuiChip-label': { px: 0.75 } }} />
+                  )}
+                </Box>
+
+                {/* 문제 본문 */}
+                {selectedBankItem.question_body && (
+                  <Box>
+                    <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>문제 본문</Typography>
+                    <Box sx={{ bgcolor: '#0F0F11', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                        {selectedBankItem.question_body}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* 선택지 */}
+                {selectedBankItem.choices && selectedBankItem.choices.length > 0 && (
+                  <Box>
+                    <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>선택지</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {selectedBankItem.choices.map((c, i) => (
+                        <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1,
+                          bgcolor: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(34,197,94,0.08)' : 'transparent',
+                          borderRadius: 1, px: 1, py: 0.5, border: String(selectedBankItem.answer) === String(i + 1) ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
+                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? '#86efac' : '#52525B', fontSize: '0.75rem', fontWeight: 700, minWidth: 16, flexShrink: 0 }}>
+                            {i + 1}
+                          </Typography>
+                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                            {c}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* 정답 (선택지 없는 경우 또는 서술형) */}
+                {selectedBankItem.answer && (!selectedBankItem.choices || selectedBankItem.choices.length === 0) && (
+                  <Box>
+                    <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>정답</Typography>
+                    <Box sx={{ bgcolor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 1.5, px: 1.5, py: 1 }}>
+                      <Typography sx={{ color: '#86efac', fontSize: '0.875rem', fontWeight: 600 }}>
+                        {selectedBankItem.answer}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
               </Box>
             )}
           </Box>
