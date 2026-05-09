@@ -228,15 +228,33 @@ export default function ExamAnalysisPage() {
     if (!editTarget) return;
     setSaving(true);
     try {
-      const payload = {
-        ...editForm,
-        choices: editForm.choices.split('\n').filter(c => c.trim() !== ''), // Convert string back to array
-      };
-      const res = await questionBankAPI.updateItem(editTarget.id, payload);
+      const choicesArray = editForm.choices.split('\n').filter(c => c.trim() !== '');
+
+      const cleanedPayload = {};
+      for (const key in editForm) {
+        if (key === 'choices') {
+          cleanedPayload[key] = choicesArray;
+        } else if (key === 'score_point') {
+          const numValue = Number(editForm[key]);
+          cleanedPayload[key] = isNaN(numValue) || editForm[key] === '' ? null : numValue;
+        } else if (typeof editForm[key] === 'string' && editForm[key].trim() === '') {
+          cleanedPayload[key] = null;
+        } else {
+          cleanedPayload[key] = editForm[key];
+        }
+      }
+
+      console.log('Payload for updateItem:', cleanedPayload); // Log the payload
+
+      const res = await questionBankAPI.updateItem(editTarget.id, cleanedPayload);
       setItems(prev => prev.map(i => i.id === editTarget.id ? res.data : i));
       setEditOpen(false);
     } catch (e) {
       console.error('수정 실패', e);
+      if (e.response && e.response.data && e.response.data.detail) {
+        console.error('Backend error detail:', e.response.data.detail);
+        alert(`수정 실패: ${JSON.stringify(e.response.data.detail)}`); // Display backend error to user
+      }
     } finally {
       setSaving(false);
     }
