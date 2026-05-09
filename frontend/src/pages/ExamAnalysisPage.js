@@ -127,6 +127,9 @@ export default function ExamAnalysisPage() {
   const [editTarget, setEditTarget] = useState(null);
   const [editForm, setEditForm]     = useState(EMPTY_EDIT);
   const [saving, setSaving]         = useState(false);
+  const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
+  const [approvingAll, setApprovingAll] = useState(false);
+  const [approveAllOpen, setApproveAllOpen] = useState(false);
 
   // 문제은행 탭
   const [bankItems, setBankItems]   = useState([]);
@@ -181,6 +184,7 @@ export default function ExamAnalysisPage() {
   // ── 결과 보기 ─────────────────────────────────────────────────────────────
   const handleViewResult = async (paper) => {
     setSelectedPaper(paper);
+    setOnlyNeedsReview(false);
     setItemsLoading(true);
     setItems([]);
     try {
@@ -343,6 +347,59 @@ export default function ExamAnalysisPage() {
   });
 
   const menuItemSx = { bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } };
+
+  // ── 검수 상태 헬퍼 ────────────────────────────────────────────────────────
+  // DB enum(pending/reviewed)과 classifier_reason으로 3단계 시각 상태를 파생한다.
+  // DB 스키마 변경 없이 프론트에서만 해석하는 규칙:
+  //   reviewed                         → "검수 완료"
+  //   pending + [검수 필요] in reason  → "우선 확인 필요"
+  //   pending + no flag                → "검수 대기"
+  const getReviewState = (item) => {
+    if (item.review_status === 'reviewed') return 'reviewed';
+    if (item.classifier_reason?.includes('[검수 필요]')) return 'needs_review';
+    return 'pending';
+  };
+
+  const extractIssue = (reason) => {
+    if (!reason) return '';
+    const body = reason.startsWith('[검수 필요] ') ? reason.slice('[검수 필요] '.length) : reason;
+    const pipeIdx = body.indexOf(' | ');
+    return pipeIdx >= 0 ? body.slice(0, pipeIdx) : body;
+  };
+
+  const needsReviewCount = items.filter(i => getReviewState(i) === 'needs_review').length;
+  const pendingCount     = items.filter(i => getReviewState(i) === 'pending').length;
+  const reviewedCount    = items.filter(i => getReviewState(i) === 'reviewed').length;
+
+  const sortedItems = [...items].sort((a, b) => {
+    const order = { needs_review: 0, pending: 1, reviewed: 2 };
+    return order[getReviewState(a)] - order[getReviewState(b)];
+  });
+
+  const displayItems = onlyNeedsReview
+    ? sortedItems.filter(i => getReviewState(i) === 'needs_review')
+    : sortedItems;
+
+  const handleApproveAll = async () => {
+    setApprovingAll(true);
+    try {
+      const targets = items.filter(i => i.review_status !== 'reviewed');
+      const updated = await Promise.all(
+        targets.map(item =>
+          questionBankAPI.updateItem(item.id, { review_status: 'reviewed' }).then(r => r.data)
+        )
+      );
+      setItems(prev => {
+        const map = Object.fromEntries(updated.map(u => [u.id, u]));
+        return prev.map(i => map[i.id] ?? i);
+      });
+    } catch (e) {
+      console.error('전체 검수 완료 실패', e);
+    } finally {
+      setApprovingAll(false);
+      setApproveAllOpen(false);
+    }
+  };
 
   // ── 렌더 ─────────────────────────────────────────────────────────────────
   return (
@@ -574,7 +631,7 @@ export default function ExamAnalysisPage() {
         <Box>
           {/* 브레드크럼 */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-            <Button onClick={() => { setSelectedPaper(null); setItems([]); }}
+            <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); }}
               startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
               sx={{ color: '#71717A', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#a78bfa' } }}>
               분석 이력
@@ -588,6 +645,44 @@ export default function ExamAnalysisPage() {
             )}
           </Box>
 
+          {/* 검수 현황 통계 + 필터 컨트롤 */}
+          {!itemsLoading && items.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+              {needsReviewCount > 0 && (
+                <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600 }}>
+                  ⚠ 우선 확인 {needsReviewCount}건
+                </Typography>
+              )}
+              <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>검수 대기 {pendingCount}건</Typography>
+              <Typography sx={{ color: '#86efac', fontSize: '0.75rem' }}>검수 완료 {reviewedCount}건</Typography>
+              <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                {needsReviewCount > 0 && (
+                  <Button size="small" onClick={() => setOnlyNeedsReview(v => !v)}
+                    sx={{
+                      fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                      bgcolor: onlyNeedsReview ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.04)',
+                      color: onlyNeedsReview ? '#fca5a5' : '#71717A',
+                      border: onlyNeedsReview ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                      '&:hover': { bgcolor: onlyNeedsReview ? 'rgba(239,68,68,0.18)' : 'rgba(255,255,255,0.08)' },
+                    }}>
+                    {onlyNeedsReview ? '전체 보기' : '우선 확인만 보기'}
+                  </Button>
+                )}
+                {items.some(i => i.review_status !== 'reviewed') && (
+                  <Button size="small" onClick={() => setApproveAllOpen(true)}
+                    sx={{
+                      fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                      bgcolor: 'rgba(34,197,94,0.08)', color: '#86efac',
+                      border: '1px solid rgba(34,197,94,0.2)',
+                      '&:hover': { bgcolor: 'rgba(34,197,94,0.15)' },
+                    }}>
+                    전체 검수 완료
+                  </Button>
+                )}
+              </Box>
+            </Box>
+          )}
+
           {itemsLoading ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <CircularProgress size={32} sx={{ color: '#a78bfa' }} />
@@ -597,91 +692,116 @@ export default function ExamAnalysisPage() {
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>저장된 문항이 없습니다.</Typography>
             </Box>
+          ) : displayItems.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>우선 확인 필요 문항이 없습니다.</Typography>
+            </Box>
           ) : (
             <Grid container spacing={2}>
-              {items.map(item => (
-                <Grid item xs={12} md={6} key={item.id}>
-                  <Box sx={{
-                    bgcolor: '#18181B', borderRadius: '16px', p: 2.5,
-                    border: item.review_status === 'reviewed'
-                      ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.06)',
-                    display: 'flex', flexDirection: 'column', gap: 1.5,
-                  }}>
-                    {/* 카드 헤더 */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                      <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
-                        {item.question_number}번
-                      </Typography>
-                      {item.area && (
-                        <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
-                      )}
-                      <DiffChip v={item.difficulty} />
-                      {item.score_point && (
-                        <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>{item.score_point}점</Typography>
-                      )}
-                      <Box sx={{ ml: 'auto' }}>
-                        {item.review_status === 'reviewed'
-                          ? <Chip label="검수 완료" size="small" sx={{ height: 20, bgcolor: 'rgba(34,197,94,0.1)', color: '#86efac', fontSize: '0.625rem', border: '1px solid rgba(34,197,94,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
-                          : <Chip label="검수 대기" size="small" sx={{ height: 20, bgcolor: 'rgba(234,179,8,0.1)', color: '#fde047', fontSize: '0.625rem', border: '1px solid rgba(234,179,8,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
-                        }
-                      </Box>
-                    </Box>
-
-                    {item.problem_type && (
-                      <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
-                        유형: <span style={{ color: '#a78bfa' }}>{item.problem_type}</span>
-                      </Typography>
-                    )}
-
-                    {item.question_body && (
-                      <Box sx={{ bgcolor: '#111115', borderRadius: 1.5, p: 1.5 }}>
-                        <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                          {item.question_body}
+              {displayItems.map(item => {
+                const rs = getReviewState(item);
+                return (
+                  <Grid item xs={12} md={6} key={item.id}>
+                    <Box sx={{
+                      bgcolor: '#18181B', borderRadius: '16px', p: 2.5,
+                      border: rs === 'reviewed'
+                        ? '1px solid rgba(34,197,94,0.25)'
+                        : rs === 'needs_review'
+                        ? '1px solid rgba(239,68,68,0.3)'
+                        : '1px solid rgba(255,255,255,0.06)',
+                      display: 'flex', flexDirection: 'column', gap: 1.5,
+                    }}>
+                      {/* 카드 헤더 */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
+                          {item.question_number}번
                         </Typography>
+                        {item.area && (
+                          <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                        )}
+                        <DiffChip v={item.difficulty} />
+                        {item.score_point && (
+                          <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>{item.score_point}점</Typography>
+                        )}
+                        <Box sx={{ ml: 'auto' }}>
+                          {rs === 'reviewed' && (
+                            <Chip label="검수 완료" size="small" sx={{ height: 20, bgcolor: 'rgba(34,197,94,0.1)', color: '#86efac', fontSize: '0.625rem', border: '1px solid rgba(34,197,94,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                          )}
+                          {rs === 'needs_review' && (
+                            <Chip label="우선 확인 필요" size="small" sx={{ height: 20, bgcolor: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontSize: '0.625rem', border: '1px solid rgba(239,68,68,0.25)', '& .MuiChip-label': { px: 0.75 } }} />
+                          )}
+                          {rs === 'pending' && (
+                            <Chip label="검수 대기" size="small" sx={{ height: 20, bgcolor: 'rgba(234,179,8,0.1)', color: '#fde047', fontSize: '0.625rem', border: '1px solid rgba(234,179,8,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                          )}
+                        </Box>
                       </Box>
-                    )}
 
-                    {Array.isArray(item.choices) && item.choices.length > 0 && (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4, pl: 0.5 }}>
-                        {item.choices.map((c, ci) => (
-                          <Typography key={ci} sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8125rem' }}>{c}</Typography>
-                        ))}
-                      </Box>
-                    )}
+                      {/* 우선 확인 필요 사유 — taxonomy 불일치·필드 누락 등 자동 검증 결과 */}
+                      {rs === 'needs_review' && (
+                        <Box sx={{ bgcolor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 1.5, px: 1.5, py: 1 }}>
+                          <Typography sx={{ color: '#fca5a5', fontSize: '0.6875rem', lineHeight: 1.5 }}>
+                            ⚠ {extractIssue(item.classifier_reason)}
+                          </Typography>
+                        </Box>
+                      )}
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {item.concept_tag && (
-                        <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
-                          개념 태그: <span style={{ color: '#71717A' }}>{item.concept_tag}</span>
+                      {item.problem_type && (
+                        <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
+                          유형: <span style={{ color: '#a78bfa' }}>{item.problem_type}</span>
                         </Typography>
                       )}
-                      {item.classifier_reason && (
-                        <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', lineHeight: 1.4 }}>
-                          분류 근거: {item.classifier_reason}
-                        </Typography>
-                      )}
-                    </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button size="small" onClick={() => openEdit(item)}
-                        sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
-                        수정
-                      </Button>
-                      <Button size="small" disabled={item.review_status === 'reviewed'} onClick={() => handleReview(item.id)}
-                        sx={{
-                          fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
-                          bgcolor: item.review_status === 'reviewed' ? 'transparent' : 'rgba(34,197,94,0.1)',
-                          color: item.review_status === 'reviewed' ? '#3F3F46' : '#86efac',
-                          border: item.review_status === 'reviewed' ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(34,197,94,0.2)',
-                          '&:hover': item.review_status !== 'reviewed' ? { bgcolor: 'rgba(34,197,94,0.18)' } : {},
-                          '&.Mui-disabled': { color: '#3F3F46' },
-                        }}>
-                        검수 완료
-                      </Button>
+                      {item.question_body && (
+                        <Box sx={{ bgcolor: '#111115', borderRadius: 1.5, p: 1.5 }}>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            {item.question_body}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {Array.isArray(item.choices) && item.choices.length > 0 && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4, pl: 0.5 }}>
+                          {item.choices.map((c, ci) => (
+                            <Typography key={ci} sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8125rem' }}>{c}</Typography>
+                          ))}
+                        </Box>
+                      )}
+
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        {item.concept_tag && (
+                          <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
+                            개념 태그: <span style={{ color: '#71717A' }}>{item.concept_tag}</span>
+                          </Typography>
+                        )}
+                        {rs !== 'needs_review' && item.classifier_reason && (
+                          <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', lineHeight: 1.4 }}>
+                            분류 근거: {item.classifier_reason}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button size="small" onClick={() => openEdit(item)}
+                          sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                          수정
+                        </Button>
+                        <Button size="small" disabled={rs === 'reviewed'} onClick={() => handleReview(item.id)}
+                          title="AI 분류 결과를 확인 후 승인하세요"
+                          sx={{
+                            fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                            bgcolor: rs === 'reviewed' ? 'transparent' : 'rgba(34,197,94,0.1)',
+                            color: rs === 'reviewed' ? '#3F3F46' : '#86efac',
+                            border: rs === 'reviewed' ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(34,197,94,0.2)',
+                            '&:hover': rs !== 'reviewed' ? { bgcolor: 'rgba(34,197,94,0.18)' } : {},
+                            '&.Mui-disabled': { color: '#3F3F46' },
+                          }}>
+                          {rs === 'reviewed' ? '검수 완료' : 'AI 결과 확인'}
+                        </Button>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
-              ))}
+                  </Grid>
+                );
+              })}
             </Grid>
           )}
         </Box>
@@ -820,6 +940,48 @@ export default function ExamAnalysisPage() {
           <Button variant="contained" onClick={handleSaveEdit} disabled={saving}
             sx={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' }, fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px' }}>
             {saving ? '저장 중...' : '저장'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════
+          전체 검수 완료 확인 다이얼로그
+      ══════════════════════════════════════════════════════ */}
+      <Dialog open={approveAllOpen} onClose={() => !approvingAll && setApproveAllOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', minWidth: 380 } }}>
+        <DialogTitle sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', pb: 2 }}>
+          전체 검수 완료
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+            AI 분류 결과를 확인 후 승인하세요.
+          </Typography>
+          <Typography sx={{ color: '#71717A', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+            검수 대기 중인{' '}
+            <span style={{ color: '#FAFAFA', fontWeight: 600 }}>
+              {items.filter(i => i.review_status !== 'reviewed').length}개
+            </span>{' '}
+            문항을 모두 검수 완료 처리합니다. 우선 확인 필요 문항도 포함됩니다.
+          </Typography>
+          <Box sx={{ bgcolor: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)', borderRadius: 1.5, px: 1.5, py: 1 }}>
+            <Typography sx={{ color: '#fde047', fontSize: '0.75rem', lineHeight: 1.5 }}>
+              AI가 틀릴 수 있습니다. 문제은행 확정본으로 쓰려면 중요한 문항은 개별 확인을 권장합니다.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 1 }}>
+          <Button onClick={() => setApproveAllOpen(false)} disabled={approvingAll}
+            sx={{ color: '#71717A', textTransform: 'none', fontSize: '0.875rem' }}>
+            취소
+          </Button>
+          <Button variant="contained" onClick={handleApproveAll} disabled={approvingAll}
+            sx={{
+              background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+              '&:hover': { background: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)' },
+              '&.Mui-disabled': { background: 'rgba(34,197,94,0.2)', color: 'rgba(255,255,255,0.3)' },
+              fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px',
+            }}>
+            {approvingAll ? '처리 중...' : '확인했습니다, 전체 승인'}
           </Button>
         </DialogActions>
       </Dialog>
