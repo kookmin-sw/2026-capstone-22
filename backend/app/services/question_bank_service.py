@@ -310,18 +310,39 @@ def analyze_pdf(
             logger.info("[QuestionBank] blocks=%d", len(blocks))
 
         # ── Step 4: Gemini 분류 ───────────────────────────────────────────────
-        # 블록이 2개 이상이면 텍스트 모드; 그렇지 않으면 PDF File API fallback
-        use_text_mode = len(blocks) >= 2
+        _IMAGE_MIME = {"image/jpeg", "image/jpg", "image/png"}
+        is_image = mime_type.lower() in _IMAGE_MIME
+        file_size = os.path.getsize(pdf_path)
+        logger.info(
+            "[QuestionBank] Step 4: file_size=%d bytes, mime_type=%s, "
+            "is_image=%s, blocks=%d, cleaned_len=%d",
+            file_size, mime_type, is_image, len(blocks), len(cleaned_text),
+        )
+
+        # 이미지 파일은 항상 텍스트 모드 (File API는 PDF 전용)
+        # 텍스트가 조금이라도 추출됐으면 텍스트 모드 우선
+        use_text_mode = is_image or len(blocks) >= 2 or bool(cleaned_text.strip())
 
         if use_text_mode:
             logger.info("[QuestionBank] Step 4: classifying via text-block mode")
-            prompt = _build_blocks_prompt(blocks)
+            if blocks:
+                prompt = _build_blocks_prompt(blocks)
+            else:
+                # 블록 분리 실패했지만 OCR 텍스트가 있는 경우 단일 블록으로 전달
+                fallback_text = cleaned_text.strip() or "(텍스트 추출 실패)"
+                logger.info(
+                    "[QuestionBank] Step 4: no blocks — wrapping full text as single block",
+                )
+                prompt = _build_blocks_prompt(
+                    [{"question_number": 0, "block_text": fallback_text}]
+                )
             data = _call_gemini(client, model, [prompt])
         else:
+            # PDF이고 텍스트 추출이 완전히 실패한 경우에만 File API 사용
             logger.info(
-                "[QuestionBank] Step 4: falling back to PDF File API upload "
-                "(blocks=%d, text_len=%d)",
-                len(blocks), len(cleaned_text),
+                "[QuestionBank] Step 4: PDF File API fallback "
+                "(no text extracted, blocks=%d)",
+                len(blocks),
             )
             with open(pdf_path, "rb") as f:
                 uploaded_file = client.files.upload(
