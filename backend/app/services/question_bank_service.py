@@ -118,10 +118,41 @@ _SHARED_PROMPT_RULES = """
 - 빈칸 추론: question_body = _____ 포함 지문 전체, choices = ①②③④⑤ 선택지
 - 그 외 독해: question_body = stem + 지문, choices = ①②③④⑤
 
-난이도 기준:
-- 하: 직접 사실 확인, 기초 문법 (예: 단순 시제, 단어 뜻)
-- 중: 추론·응용 필요 (예: 글의 흐름, 어법 응용)
-- 상: 복합 추론·고난도 (예: 가정법 서술형, 빈칸 추론 고난도)
+[STEP 4] difficulty — 📌에 명시된 grade 기준 상대 난이도로 판단 (절대 기준 금지)
+grade 없음 → 중등 평균 (중2~중3) 기준 적용
+
+판단 5가지 축:
+① 개념 적용: 직접 확인 / 문맥 1회 적용 / 복합·예외 적용
+② 추론 단계: 0단계(찾기) / 1단계(연결) / 2단계+(복합 추론)
+③ 선택지 비교: 불필요 / 필요 / 함정 강함
+④ 함정 강도: 없음 / 단순 / 교란 강함
+⑤ 지문 이해: 단문 / 문맥 이해 / 전체 흐름 판단
+
+area별 기준:
+■ 문법 — 하: 단일 개념 직접 확인 / 중: 문맥에서 1개 개념 적용 / 상: 복합 개념·함정·예외 규칙
+■ 어휘 — 하: 직접 뜻 확인 / 중: 문맥 어휘 판단 / 상: 추론형·다의어 함정·문맥+추론
+■ 독해 — 하: 세부 정보 직접 찾기 / 중: 흐름/맥락 1단계 연결 / 상: 전체 흐름 판단·복합 추론
+■ 듣기 — 하: 숫자/시간/장소 직접 듣기 / 중: 의도·이유 1단계 파악 / 상: 심경·복합 추론
+■ 서술형 — 하 없음(최소 중) / 중: 단순 완성·짧은 변환 / 상: 조건 여러 개·복합 적용
+
+하/중/상 경계:
+- 하: 이미 배운 기본 개념, 지문 깊이 읽지 않아도 풀림, 선택지 비교 불필요
+- 중: 문맥 이해 또는 1단계 개념 적용 필요, 선택지 비교 필요
+- 상: 2단계 이상 추론, 복합 개념 또는 강한 함정, 전체 흐름 판단
+
+⚠ 상(上)은 유형 때문이 아니라 해당 학년 기준 사고 부담·추론 단계가 큰 경우에만 부여
+⚠ 수능·고등 수준·교재 기준 등 절대 기준 금지
+
+reason 작성 규칙 (반드시 준수):
+- 자연어 1문장, 40자 이내
+- 난이도 판단 핵심 이유만 작성
+- area·problem_type 설명 반복 금지
+- "area·problem_type 선택 근거:" 같은 서술 금지
+- 장황한 설명 금지
+형식: [학년 또는 "grade 없음, 중등 평균"] 기준, [판단 근거]이므로 [하/중/상]
+예시: 중3 기준, 글 전체 흐름 추론 필요하므로 상
+예시: grade 없음, 중등 평균 기준, 단어 뜻 직접 확인이므로 하
+예시: 중2 기준, 전치사를 문맥에 1회 적용하므로 중
 
 주의:
 - choices는 없으면 null
@@ -144,7 +175,7 @@ _JSON_SCHEMA = """
       "score_point": <배점 정수>,
       "question_body": "<문항 지문 또는 질문 텍스트>",
       "choices": ["①...", "②...", "③...", "④...", "⑤..."],
-      "reason": "<분류 근거 한 줄>"
+      "reason": "<40자 이내 자연어 1문장. 난이도 판단 핵심 이유만. 예: 중3 기준, 빈칸에서 글 전체 흐름 추론이 필요하므로 상>"
     }}
   ]
 }}
@@ -153,12 +184,14 @@ _JSON_SCHEMA = """
 _BLOCK_PROMPT_TEMPLATE = (
     "아래는 중등 영어 시험 문제지에서 추출·분리된 문항 블록들입니다.\n"
     "각 문항을 분석하고 JSON으로 반환하세요.\n\n"
+    "📌 {grade_context}\n\n"
     "{blocks_text}\n\n"
     "반환 형식:\n" + _JSON_SCHEMA + "\n\n" + _SHARED_PROMPT_RULES
 )
 
 _PDF_FALLBACK_PROMPT_TEMPLATE = (
     "이 PDF는 중등 영어 시험 문제지입니다. 모든 문항을 분석하여 아래 JSON 형식으로 반환하세요.\n\n"
+    "📌 {grade_context}\n\n"
     "반환 형식:\n" + _JSON_SCHEMA + "\n\n" + _SHARED_PROMPT_RULES
 )
 
@@ -176,7 +209,11 @@ def _taxonomy_args() -> dict:
     }
 
 
-def _build_blocks_prompt(blocks: list[dict]) -> str:
+def _grade_context(grade: str | None) -> str:
+    return f"대상 학년: {grade}" if grade else "대상 학년 정보 없음 (중등 평균 기준 적용)"
+
+
+def _build_blocks_prompt(blocks: list[dict], grade: str | None = None) -> str:
     """분리된 문항 블록 목록으로 Gemini 텍스트 분류 프롬프트를 생성한다."""
     parts = []
     for b in blocks:
@@ -184,11 +221,18 @@ def _build_blocks_prompt(blocks: list[dict]) -> str:
         header = f"[문항 {num}]" if num > 0 else "[문항]"
         parts.append(f"{header}\n{b['block_text']}")
     blocks_text = "\n\n".join(parts)
-    return _BLOCK_PROMPT_TEMPLATE.format(blocks_text=blocks_text, **_taxonomy_args())
+    return _BLOCK_PROMPT_TEMPLATE.format(
+        blocks_text=blocks_text,
+        grade_context=_grade_context(grade),
+        **_taxonomy_args(),
+    )
 
 
-def _build_pdf_fallback_prompt() -> str:
-    return _PDF_FALLBACK_PROMPT_TEMPLATE.format(**_taxonomy_args())
+def _build_pdf_fallback_prompt(grade: str | None = None) -> str:
+    return _PDF_FALLBACK_PROMPT_TEMPLATE.format(
+        grade_context=_grade_context(grade),
+        **_taxonomy_args(),
+    )
 
 
 def _call_gemini(client, model: str, contents: list) -> dict:
@@ -334,7 +378,7 @@ def analyze_pdf(
         if use_text_mode:
             logger.info("[QuestionBank] Step 4: classifying via text-block mode")
             if blocks:
-                prompt = _build_blocks_prompt(blocks)
+                prompt = _build_blocks_prompt(blocks, grade=paper.grade)
             else:
                 # 블록 분리 실패했지만 OCR 텍스트가 있는 경우 단일 블록으로 전달
                 fallback_text = cleaned_text.strip() or "(텍스트 추출 실패)"
@@ -342,7 +386,8 @@ def analyze_pdf(
                     "[QuestionBank] Step 4: no blocks — wrapping full text as single block",
                 )
                 prompt = _build_blocks_prompt(
-                    [{"question_number": 0, "block_text": fallback_text}]
+                    [{"question_number": 0, "block_text": fallback_text}],
+                    grade=paper.grade,
                 )
             data = _call_gemini(client, model, [prompt])
         else:
@@ -358,7 +403,7 @@ def analyze_pdf(
                     config={"mime_type": "application/pdf"},
                 )
             logger.info("[QuestionBank] uploaded file: %s", uploaded_file.name)
-            prompt = _build_pdf_fallback_prompt()
+            prompt = _build_pdf_fallback_prompt(grade=paper.grade)
             data = _call_gemini(client, model, [uploaded_file, prompt])
 
         # ── Step 5: 검증 및 DB 저장 ───────────────────────────────────────────
