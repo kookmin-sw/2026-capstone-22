@@ -147,6 +147,7 @@ export default function ExamAnalysisPage() {
   const [bankLoading, setBankLoading] = useState(false);
   const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', area:'', problem_type:'', difficulty:'' });
   const [selectedBankItem, setSelectedBankItem] = useState(null);
+  const [revertingBankItem, setRevertingBankItem] = useState(false);
   const [printWithAnswers, setPrintWithAnswers] = useState(false);
 
   // ── 이력 fetch + 폴링 ─────────────────────────────────────────────────────
@@ -408,6 +409,21 @@ export default function ExamAnalysisPage() {
     if (bankFilters.difficulty   && item.difficulty    !== bankFilters.difficulty)   return false;
     return true;
   });
+
+  // 검수 되돌리기
+  const handleRevertBankItem = async (item) => {
+    if (!window.confirm('이 문항을 검수 대기 상태로 되돌릴까요?')) return;
+    setRevertingBankItem(true);
+    try {
+      await questionBankAPI.updateItem(item.id, { review_status: 'pending' });
+      setSelectedBankItem(null);
+      await loadBankItems();
+    } catch (e) {
+      console.error('검수 되돌리기 실패', e);
+    } finally {
+      setRevertingBankItem(false);
+    }
+  };
 
   // 문제지 인쇄 미리보기
   const openPrintPreview = () => {
@@ -1161,6 +1177,18 @@ ${answerSection}
                     </Box>
                   </Box>
                 )}
+
+                {/* 검수 되돌리기 */}
+                <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.06)', pt: 1.5 }}>
+                  <Button fullWidth size="small" disabled={revertingBankItem}
+                    onClick={() => handleRevertBankItem(selectedBankItem)}
+                    sx={{ color: '#f87171', fontSize: '0.75rem', textTransform: 'none',
+                      border: '1px solid rgba(248,113,113,0.25)', borderRadius: 1.5,
+                      '&:hover': { bgcolor: 'rgba(248,113,113,0.07)' },
+                      '&:disabled': { color: '#3f3f46', borderColor: 'rgba(255,255,255,0.06)' } }}>
+                    {revertingBankItem ? '처리 중...' : '검수 되돌리기'}
+                  </Button>
+                </Box>
               </Box>
             )}
           </Box>
