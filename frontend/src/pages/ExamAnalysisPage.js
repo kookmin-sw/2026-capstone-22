@@ -22,7 +22,8 @@ const MAX_SIZE_MB = 20;
 
 const GRADE_OPTIONS   = ['중1', '중2', '중3', '고1', '고2', '고3'];
 const EXAM_TYPE_OPTIONS = ['내신', '모의고사', '학원 자체 제작'];
-const YEAR_OPTIONS    = Array.from({ length: 7 }, (_, i) => String(2020 + i));
+const _CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS  = Array.from({ length: _CURRENT_YEAR - 2009 }, (_, i) => String(_CURRENT_YEAR - i));
 const DIFFICULTY_OPTIONS = ['하', '중', '상'];
 const AREA_OPTIONS    = ['문법', '어휘', '독해', '듣기', '서술형'];
 
@@ -272,8 +273,6 @@ export default function ExamAnalysisPage() {
     if (!form.grade)          errs.grade   = '필수 입력 항목입니다.';
     if (!form.examName.trim()) errs.examName = '필수 입력 항목입니다.';
     if (!form.examType)       errs.examType = '필수 입력 항목입니다.';
-    if (!form.year)           errs.year     = '필수 입력 항목입니다.';
-    if (!form.source.trim())  errs.source   = '필수 입력 항목입니다.';
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !file || fileError) return;
 
@@ -511,18 +510,17 @@ export default function ExamAnalysisPage() {
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth error={!!errors.year} sx={inputSx}>
-                  <InputLabel shrink>시행 연도</InputLabel>
-                  <Select value={form.year} onChange={handleFormChange('year')} label="시행 연도" displayEmpty sx={{ color: form.year ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
-                    <MenuItem value="" disabled sx={{ color: '#52525B' }}>선택</MenuItem>
+                <FormControl fullWidth sx={inputSx}>
+                  <InputLabel shrink>시행 연도 (선택)</InputLabel>
+                  <Select value={form.year} onChange={handleFormChange('year')} label="시행 연도 (선택)" displayEmpty sx={{ color: form.year ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+                    <MenuItem value="" sx={{ color: '#52525B', fontSize: '0.875rem' }}>선택 안 함</MenuItem>
                     {YEAR_OPTIONS.map(y => <MenuItem key={y} value={y} sx={menuItemSx}>{y}</MenuItem>)}
                   </Select>
-                  {errors.year && <FormHelperText>{errors.year}</FormHelperText>}
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="출처" placeholder="예: 한국교육과정평가원" value={form.source} onChange={handleFormChange('source')}
-                  error={!!errors.source} helperText={errors.source} sx={inputSx} InputLabelProps={{ shrink: true }} />
+                <TextField fullWidth label="출처 (선택)" placeholder="예: 한국교육과정평가원" value={form.source} onChange={handleFormChange('source')}
+                  sx={inputSx} InputLabelProps={{ shrink: true }} />
               </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth label="비고 (선택)" placeholder="추가 메모" value={form.note} onChange={handleFormChange('note')}
