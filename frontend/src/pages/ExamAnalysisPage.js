@@ -797,18 +797,11 @@ export default function ExamAnalysisPage() {
                         </Box>
                       )}
 
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        {item.concept_tag && (
-                          <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem' }}>
-                            개념 태그: <span style={{ color: 'rgba(255,255,255,0.85)' }}>{item.concept_tag}</span>
-                          </Typography>
-                        )}
-                        {rs !== 'needs_review' && item.classifier_reason && (
-                          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.6875rem', lineHeight: 1.4 }}>
-                            분류 근거: {item.classifier_reason}
-                          </Typography>
-                        )}
-                      </Box>
+                      {item.concept_tag && (
+                        <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
+                          개념 태그: <span style={{ color: '#a78bfa' }}>{item.concept_tag}</span>
+                        </Typography>
+                      )}
 
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button size="small" onClick={() => openEdit(item)}
