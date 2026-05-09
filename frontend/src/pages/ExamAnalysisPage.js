@@ -135,7 +135,7 @@ export default function ExamAnalysisPage() {
   // 문제은행 탭
   const [bankItems, setBankItems]   = useState([]);
   const [bankLoading, setBankLoading] = useState(false);
-  const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', problem_type:'', difficulty:'' });
+  const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', area:'', problem_type:'', difficulty:'' });
 
   // ── 이력 fetch + 폴링 ─────────────────────────────────────────────────────
   const fetchHistory = useCallback(async () => {
@@ -366,10 +366,16 @@ export default function ExamAnalysisPage() {
   const filteredBank   = bankItems.filter(item => {
     if (bankFilters.subject      && item.paper_subject !== bankFilters.subject)      return false;
     if (bankFilters.grade        && item.paper_grade   !== bankFilters.grade)        return false;
+    if (bankFilters.area         && item.area          !== bankFilters.area)         return false;
     if (bankFilters.problem_type && item.problem_type  !== bankFilters.problem_type) return false;
     if (bankFilters.difficulty   && item.difficulty    !== bankFilters.difficulty)   return false;
     return true;
   });
+
+  // 선택된 영역에 해당하는 problem_type 목록 (영역 미선택 시 전 영역 합집합)
+  const availableTypes = bankFilters.area
+    ? (ENGLISH_TAXONOMY[bankFilters.area]?.problem_types ?? [])
+    : [...new Set(Object.values(ENGLISH_TAXONOMY).flatMap(v => v.problem_types))];
 
   const menuItemSx = { bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } };
 
@@ -838,13 +844,13 @@ export default function ExamAnalysisPage() {
         <Box>
           {/* 필터 */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* 과목·학년·난이도: 공통 패턴 */}
             {[
-              { key: 'subject',      label: '과목', options: uniqueSubjects },
-              { key: 'grade',        label: '학년', options: uniqueGrades },
-              { key: 'problem_type', label: '유형', options: ALL_TYPES },
-              { key: 'difficulty',   label: '난이도', options: DIFFICULTY_OPTIONS },
+              { key: 'subject',    label: '과목',   options: uniqueSubjects },
+              { key: 'grade',      label: '학년',   options: uniqueGrades },
+              { key: 'difficulty', label: '난이도', options: DIFFICULTY_OPTIONS },
             ].map(({ key, label, options }) => (
-              <FormControl key={key} size="small" sx={{ minWidth: 110, ...inputSx }}>
+              <FormControl key={key} size="small" sx={{ minWidth: 90, ...inputSx }}>
                 <InputLabel shrink>{label}</InputLabel>
                 <Select value={bankFilters[key]}
                   onChange={(e) => setBankFilters(prev => ({ ...prev, [key]: e.target.value }))}
@@ -855,7 +861,29 @@ export default function ExamAnalysisPage() {
                 </Select>
               </FormControl>
             ))}
-            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', problem_type:'', difficulty:'' })}
+            {/* 영역: 변경 시 유형 초기화 */}
+            <FormControl size="small" sx={{ minWidth: 90, ...inputSx }}>
+              <InputLabel shrink>영역</InputLabel>
+              <Select value={bankFilters.area}
+                onChange={(e) => setBankFilters(prev => ({ ...prev, area: e.target.value, problem_type: '' }))}
+                label="영역" displayEmpty
+                sx={{ color: bankFilters.area ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
+                <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
+                {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
+              </Select>
+            </FormControl>
+            {/* 유형: 선택된 영역의 taxonomy 목록만 표시 */}
+            <FormControl size="small" sx={{ minWidth: 130, ...inputSx }}>
+              <InputLabel shrink>유형</InputLabel>
+              <Select value={bankFilters.problem_type}
+                onChange={(e) => setBankFilters(prev => ({ ...prev, problem_type: e.target.value }))}
+                label="유형" displayEmpty
+                sx={{ color: bankFilters.problem_type ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
+                <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
+                {availableTypes.map(t => <MenuItem key={t} value={t} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{t}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', area:'', problem_type:'', difficulty:'' })}
               sx={{ color: '#52525B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
               초기화
             </Button>
