@@ -230,7 +230,8 @@ function App() {
                   <Route path="admin/students/assignments" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={3} /></AdminRoute>} />
                   <Route path="admin/students/exams" element={<AdminRoute><AdminPage section="students" initialStudentSubTab={4} /></AdminRoute>} />
                   <Route path="admin/chat-history" element={<AdminRoute><AdminPage section="chat-history" /></AdminRoute>} />
-                  <Route path="admin/exam-analysis" element={<AdminRoute><AdminPage section="exam-analysis" /></AdminRoute>} />
+                  <Route path="admin/exam-analysis" element={<Navigate to="upload" replace />} />
+                  <Route path="admin/exam-analysis/:examSubTab" element={<AdminRoute><AdminPage section="exam-analysis" /></AdminRoute>} />
                 </Route>
               </Route>
             </Routes>

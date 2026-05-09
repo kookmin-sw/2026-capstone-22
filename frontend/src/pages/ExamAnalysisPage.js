@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField, Grid, Select, MenuItem,
   FormControl, InputLabel, Chip, Table, TableBody, TableCell,
@@ -105,7 +106,12 @@ function DiffChip({ v }) {
 export default function ExamAnalysisPage() {
   useAuth();
 
-  const [subTab, setSubTab] = useState(0);
+  const { examSubTab } = useParams();
+  const navigate = useNavigate();
+  const _TAB_TO_URL = ['upload', 'history', 'bank'];
+  const _URL_TO_TAB = { upload: 0, history: 1, bank: 2 };
+  const subTab = _URL_TO_TAB[examSubTab] ?? 0;
+  const setSubTab = useCallback((i) => navigate(`../${_TAB_TO_URL[i]}`, { relative: 'path' }), [navigate]);
 
   // 업로드 탭
   const [file, setFile]           = useState(null);
