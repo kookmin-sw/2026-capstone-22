@@ -73,7 +73,7 @@ const DIFF_CFG = {
 };
 
 const EMPTY_FORM = { subject:'', grade:'', examName:'', examType:'', year:'', source:'', note:'' };
-const EMPTY_EDIT = { area:'', problem_type:'', concept_tag:'', difficulty:'' };
+const EMPTY_EDIT = { area:'', problem_type:'', concept_tag:'', difficulty:'', question_body:'', choices:'', answer:'', score_point:'' };
 
 // ── 작은 칩 컴포넌트 ──────────────────────────────────────────────────────────
 
@@ -216,6 +216,10 @@ export default function ExamAnalysisPage() {
       problem_type: item.problem_type || '',
       concept_tag: item.concept_tag || '',
       difficulty: item.difficulty || '',
+      question_body: item.question_body || '',
+      choices: item.choices ? item.choices.join('\n') : '', // Convert array to newline-separated string
+      answer: item.answer || '',
+      score_point: item.score_point || '',
     });
     setEditOpen(true);
   };
@@ -224,7 +228,11 @@ export default function ExamAnalysisPage() {
     if (!editTarget) return;
     setSaving(true);
     try {
-      const res = await questionBankAPI.updateItem(editTarget.id, editForm);
+      const payload = {
+        ...editForm,
+        choices: editForm.choices.split('\n').filter(c => c.trim() !== ''), // Convert string back to array
+      };
+      const res = await questionBankAPI.updateItem(editTarget.id, payload);
       setItems(prev => prev.map(i => i.id === editTarget.id ? res.data : i));
       setEditOpen(false);
     } catch (e) {
@@ -767,12 +775,12 @@ export default function ExamAnalysisPage() {
 
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         {item.concept_tag && (
-                          <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>
-                            개념 태그: <span style={{ color: '#71717A' }}>{item.concept_tag}</span>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem' }}>
+                            개념 태그: <span style={{ color: 'rgba(255,255,255,0.85)' }}>{item.concept_tag}</span>
                           </Typography>
                         )}
                         {rs !== 'needs_review' && item.classifier_reason && (
-                          <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', lineHeight: 1.4 }}>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.6875rem', lineHeight: 1.4 }}>
                             분류 근거: {item.classifier_reason}
                           </Typography>
                         )}
@@ -892,6 +900,18 @@ export default function ExamAnalysisPage() {
           문항 수정{editTarget ? ` — ${editTarget.question_number}번` : ''}
         </DialogTitle>
         <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField fullWidth label="질문 본문" multiline rows={4} value={editForm.question_body}
+            onChange={(e) => setEditForm(p => ({ ...p, question_body: e.target.value }))}
+            sx={inputSx} InputLabelProps={{ shrink: true }} />
+          <TextField fullWidth label="선택지 (줄 단위로 입력)" multiline rows={4} value={editForm.choices}
+            onChange={(e) => setEditForm(p => ({ ...p, choices: e.target.value }))}
+            sx={inputSx} InputLabelProps={{ shrink: true }} />
+          <TextField fullWidth label="정답" value={editForm.answer}
+            onChange={(e) => setEditForm(p => ({ ...p, answer: e.target.value }))}
+            sx={inputSx} InputLabelProps={{ shrink: true }} />
+          <TextField fullWidth label="배점" type="number" value={editForm.score_point}
+            onChange={(e) => setEditForm(p => ({ ...p, score_point: e.target.value }))}
+            sx={inputSx} InputLabelProps={{ shrink: true }} />
           <FormControl fullWidth sx={inputSx}>
             <InputLabel shrink>영역</InputLabel>
             <Select value={editForm.area}

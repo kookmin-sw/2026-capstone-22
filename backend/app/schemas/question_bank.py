@@ -67,6 +67,8 @@ class QuestionItemUpdate(BaseModel):
     concept_tag: Optional[str] = None
     difficulty: Optional[str] = None
     score_point: Optional[int] = None
+    question_body: Optional[str] = None
+    choices: Optional[List[str]] = None
     answer: Optional[str] = None
     review_status: Optional[ReviewStatus] = None
 
