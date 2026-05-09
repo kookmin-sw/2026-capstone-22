@@ -77,6 +77,7 @@ class ClassifiedQuestion(BaseModel):
     number: int
     area: str
     problem_type: str
+    concept_tag: Optional[str] = None
     difficulty: str
     is_listening: bool
     score_point: Optional[int] = None

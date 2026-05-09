@@ -24,13 +24,32 @@ const GRADE_OPTIONS   = ['중1', '중2', '중3', '고1', '고2', '고3'];
 const EXAM_TYPE_OPTIONS = ['내신', '모의고사', '학원 자체 제작'];
 const YEAR_OPTIONS    = Array.from({ length: 7 }, (_, i) => String(2020 + i));
 const DIFFICULTY_OPTIONS = ['하', '중', '상'];
-const AREA_OPTIONS    = ['듣기', '독해'];
+const AREA_OPTIONS    = ['문법', '어휘', '독해', '듣기', '서술형'];
 
+// 백엔드 ENGLISH_TAXONOMY와 동기화
 const ENGLISH_TAXONOMY = {
-  듣기: ['목적 파악','의견 파악','요지 파악','그림 내용 파악','할 일 파악','금액 파악','이유 파악','언급 내용 파악','내용 일치','도표 파악','짧은 대화 응답','긴 대화 응답','상황 말하기','복합 문항'],
-  독해: ['목적 파악','심경 변화','주장 파악','밑줄 의미','요지 파악','주제 파악','제목 파악','도표 일치','내용 일치','안내문 일치','어법','어휘','빈칸 추론','무관 문장','글의 순서','문장 삽입','요약문 완성','장문 독해'],
+  문법: {
+    problem_types: ['오답 고르기','밑줄 어법','문법 빈칸','문장 완성','문장 변환','영작','조건 영작'],
+    concept_tags:  ['시제','현재완료','수동태','조동사','부정사','동명사','분사','분사구문','관계대명사','관계부사','가정법','비교','접속사','전치사','간접의문문','일치','화법'],
+  },
+  어휘: {
+    problem_types: ['어휘 빈칸','어휘 완성','단어 쓰기','숙어 완성'],
+    concept_tags:  ['단어 의미','숙어','문맥 어휘','동의어','반의어','다의어','연어'],
+  },
+  독해: {
+    problem_types: ['빈칸 추론','문장 삽입','순서 배열','무관 문장','내용 일치','내용 불일치','심경 파악','제목 선택','주제 선택','도표 파악','요약'],
+    concept_tags:  ['주제 파악','요지 파악','목적 파악','심경 파악','세부 내용 파악','문맥 추론','글의 흐름','내용 연결','지칭 추론','요약 이해'],
+  },
+  듣기: {
+    problem_types: ['목적 파악','내용 일치','세부 정보 파악','도표 파악','대화 응답','상황 이해'],
+    concept_tags:  ['세부 정보 파악','의견 파악','이유 파악','목적 파악','심경 파악','상황 이해','화자 의도'],
+  },
+  서술형: {
+    problem_types: ['문장 완성','문장 변환','본문 변형','어순 배열','영작','조건 영작','요약 쓰기','본문 기반 서술'],
+    concept_tags:  ['문장 재구성','조건 충족','핵심 내용 요약','문법 적용','본문 이해'],
+  },
 };
-const ALL_TYPES = [...new Set([...ENGLISH_TAXONOMY.듣기, ...ENGLISH_TAXONOMY.독해])];
+const ALL_TYPES = [...new Set(Object.values(ENGLISH_TAXONOMY).flatMap(v => v.problem_types))];
 
 const STATUS_MAP = {
   pending:    '업로드 완료',
@@ -768,9 +787,10 @@ export default function ExamAnalysisPage() {
             <Select value={editForm.problem_type}
               onChange={(e) => setEditForm(p => ({ ...p, problem_type: e.target.value }))}
               label="문제 유형">
-              {(editForm.area ? ENGLISH_TAXONOMY[editForm.area] || [] : ALL_TYPES).map(t => (
-                <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>
-              ))}
+              {(editForm.area && ENGLISH_TAXONOMY[editForm.area]
+                ? ENGLISH_TAXONOMY[editForm.area].problem_types
+                : ALL_TYPES
+              ).map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
             </Select>
           </FormControl>
           <FormControl fullWidth sx={inputSx}>
@@ -781,10 +801,19 @@ export default function ExamAnalysisPage() {
               {DIFFICULTY_OPTIONS.map(d => <MenuItem key={d} value={d} sx={menuItemSx}>{d}</MenuItem>)}
             </Select>
           </FormControl>
-          <TextField fullWidth label="개념 태그" placeholder="예: 빈칸, 추론, 구문"
-            value={editForm.concept_tag}
-            onChange={(e) => setEditForm(p => ({ ...p, concept_tag: e.target.value }))}
-            sx={inputSx} InputLabelProps={{ shrink: true }} />
+          <FormControl fullWidth sx={inputSx}>
+            <InputLabel shrink>개념 태그</InputLabel>
+            <Select value={editForm.concept_tag || ''}
+              onChange={(e) => setEditForm(p => ({ ...p, concept_tag: e.target.value }))}
+              label="개념 태그" displayEmpty
+              sx={{ color: editForm.concept_tag ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+              <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.875rem' }}>선택 안 함</MenuItem>
+              {(editForm.area && ENGLISH_TAXONOMY[editForm.area]
+                ? ENGLISH_TAXONOMY[editForm.area].concept_tags
+                : []
+              ).map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 1 }}>
           <Button onClick={() => setEditOpen(false)} sx={{ color: '#71717A', textTransform: 'none', fontSize: '0.875rem' }}>취소</Button>
