@@ -85,6 +85,7 @@ class ClassifiedQuestion(BaseModel):
     score_point: Optional[int] = None
     question_body: Optional[str] = None
     choices: Optional[List[str]] = None
+    answer: Optional[str] = None
     reason: Optional[str] = None
 
 
