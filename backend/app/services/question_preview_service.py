@@ -1,35 +1,28 @@
-"""임시 문제지 미리보기 HTML 저장소 (in-memory, TTL 2시간)"""
+"""문제지 미리보기 HTML 저장소 — 파일 기반 (gunicorn 멀티 워커 공유 가능)
+
+/tmp/readytalk_previews/ 디렉토리에 저장하므로 같은 컨테이너 내 모든 워커가 접근 가능.
+"""
 
 import uuid
-from datetime import datetime, timedelta
+from pathlib import Path
 
-_store: dict[str, tuple[str, datetime]] = {}
+_PREVIEW_DIR = Path("/tmp/readytalk_previews")
+_PREVIEW_DIR.mkdir(exist_ok=True)
 
 
-def store_preview(html: str, expires_minutes: int = 120) -> str:
-    """HTML을 저장하고 UUID 토큰을 반환한다."""
+def store_preview(html: str) -> str:
+    """HTML을 파일로 저장하고 UUID 토큰을 반환한다."""
     token = str(uuid.uuid4())
-    expiry = datetime.utcnow() + timedelta(minutes=expires_minutes)
-    _store[token] = (html, expiry)
-    _purge_expired()
+    (_PREVIEW_DIR / f"{token}.html").write_text(html, encoding="utf-8")
     return token
 
 
 def get_preview(token: str) -> str | None:
-    """토큰에 해당하는 HTML을 반환한다. 만료되었거나 없으면 None."""
-    entry = _store.get(token)
-    if not entry:
+    """토큰에 해당하는 HTML 파일을 읽어 반환한다. 없으면 None."""
+    # UUID 형식 검증 — 경로 탐색(path traversal) 방지
+    if not all(c in "0123456789abcdefABCDEF-" for c in token):
         return None
-    html, expiry = entry
-    if datetime.utcnow() > expiry:
-        _store.pop(token, None)
+    file_path = _PREVIEW_DIR / f"{token}.html"
+    if not file_path.exists():
         return None
-    return html
-
-
-def _purge_expired() -> None:
-    """만료된 항목을 정리한다."""
-    now = datetime.utcnow()
-    expired = [k for k, (_, exp) in _store.items() if now > exp]
-    for k in expired:
-        _store.pop(k, None)
+    return file_path.read_text(encoding="utf-8")
