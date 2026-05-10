@@ -24,7 +24,7 @@ QUESTION_BANK_FUNCTION_DECLARATIONS = [
             "properties": {
                 "grade": {
                     "type": "string",
-                    "description": "학년 (예: 중1, 중2, 중3). 학부모가 명시하지 않았으면 null.",
+                    "description": "학년 (예: 중1, 중2, 중3, 고1, 고2, 고3). 중1부터 고3까지 가능. 학부모가 명시하지 않았으면 null.",
                 },
                 "area": {
                     "type": "string",
