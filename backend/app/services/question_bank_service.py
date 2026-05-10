@@ -185,6 +185,8 @@ _BLOCK_PROMPT_TEMPLATE = (
     "아래는 중등 영어 시험 문제지에서 추출·분리된 문항 블록들입니다.\n"
     "각 문항을 분석하고 JSON으로 반환하세요.\n\n"
     "📌 {grade_context}\n\n"
+    "※추출불완전 표시 문항은 텍스트 추출이 불완전하여 본문이 짧거나 단편적입니다.\n"
+    "  분류는 그대로 진행하되, reason 앞에 '[추출불완전]'을 붙여주세요.\n\n"
     "{blocks_text}\n\n"
     "반환 형식:\n" + _JSON_SCHEMA + "\n\n" + _SHARED_PROMPT_RULES
 )
