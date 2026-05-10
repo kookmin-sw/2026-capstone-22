@@ -1047,7 +1047,6 @@ ${answerSection}
           {/* 필터 */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             {[
-              { key: 'subject',    label: '과목',   options: uniqueSubjects },
               { key: 'grade',      label: '학년',   options: uniqueGrades },
               { key: 'difficulty', label: '난이도', options: DIFFICULTY_OPTIONS },
             ].map(({ key, label, options }) => (
@@ -1072,7 +1071,7 @@ ${answerSection}
                 {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
               </Select>
             </FormControl>
-            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', area:'', difficulty:'' })}
+            <Button size="small" onClick={() => setBankFilters({ grade:'', area:'', difficulty:'' })}
               sx={{ color: '#52525B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
               초기화
             </Button>
