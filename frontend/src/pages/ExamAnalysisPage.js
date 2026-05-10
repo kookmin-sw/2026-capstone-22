@@ -1129,7 +1129,6 @@ ${answerSection}
                               '&:hover': { bgcolor: isSelected ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.03)' } }}>
                             <TableCell sx={{ ...cellSx, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{item.question_number}</TableCell>
                             <TableCell sx={{ ...cellSx, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.paper_title}</TableCell>
-                            <TableCell sx={cellSx}>{item.paper_subject}</TableCell>
                             <TableCell sx={cellSx}>{item.paper_grade || '-'}</TableCell>
                             <TableCell sx={cellSx}>
                               {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
