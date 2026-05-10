@@ -1121,7 +1121,7 @@ ${answerSection}
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        {['번호','시험명','과목','학년','영역','유형','난이도','배점',''].map(h => (
+                        {['번호','시험명','과목','학년','영역','난이도','배점',''].map(h => (
                           <TableCell key={h} sx={colHSx}>{h}</TableCell>
                         ))}
                       </TableRow>
@@ -1142,7 +1142,6 @@ ${answerSection}
                             <TableCell sx={cellSx}>
                               {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
                             </TableCell>
-                            <TableCell sx={{ ...cellSx, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.problem_type || '-'}</TableCell>
                             <TableCell sx={cellSx}><DiffChip v={item.difficulty} /></TableCell>
                             <TableCell sx={{ ...cellSx, color: '#71717A' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
                             <TableCell sx={{ ...cellSx, width: 32, p: '4px 8px' }}>
