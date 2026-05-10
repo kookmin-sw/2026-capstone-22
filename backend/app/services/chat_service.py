@@ -23,6 +23,10 @@ from ..llm_tools.assignment import (
 )
 from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 from ..llm_tools.student import STUDENT_FUNCTION_DECLARATIONS, execute_student_tool
+from ..llm_tools.question_bank import (
+    QUESTION_BANK_FUNCTION_DECLARATIONS,
+    execute_question_bank_tool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +146,19 @@ CONSULTING (일반 안내로 충분):
 
         # 직전 assistant 메시지에 PERSONAL 학생 데이터 주제 키워드가 있는지 확인
         PERSONAL_DATA_KEYWORDS = {
-            "출결", "과제", "시험", "성적", "출석", "결석", "지각", "조퇴",
-            "보강", "분반", "시간표", "담당 선생", "담당선생",
+            "출결",
+            "과제",
+            "시험",
+            "성적",
+            "출석",
+            "결석",
+            "지각",
+            "조퇴",
+            "보강",
+            "분반",
+            "시간표",
+            "담당 선생",
+            "담당선생",
         }
         if not any(kw in last_assistant_text for kw in PERSONAL_DATA_KEYWORDS):
             return False
@@ -153,19 +168,58 @@ CONSULTING (일반 안내로 충분):
         # 2-A: 기간·날짜·비교 관련 표현 포함 시 (길이 제한 없음)
         PERIOD_KEYWORDS = {
             # 이전/다음 시점 표현
-            "그 전", "그전", "이전", "전달", "전 달", "전주", "전 주",
-            "다음 달", "다음달", "다음 주", "다음주",
-            "저번 주", "저번주", "저번 달",
-            "그때", "그 때", "그 기간", "그기간",
+            "그 전",
+            "그전",
+            "이전",
+            "전달",
+            "전 달",
+            "전주",
+            "전 주",
+            "다음 달",
+            "다음달",
+            "다음 주",
+            "다음주",
+            "저번 주",
+            "저번주",
+            "저번 달",
+            "그때",
+            "그 때",
+            "그 기간",
+            "그기간",
             # 기존 키워드
-            "지난", "이번", "최근", "오늘", "어제",
-            "일주일", "한 달", "한달",
-            "이번 달", "이번달", "이번 주", "이번주",
-            "지난달", "저번달", "지난 달",
-            "전체", "모두", "전부",
-            "주일", "학기", "분기",
-            "1월", "2월", "3월", "4월", "5월", "6월",
-            "7월", "8월", "9월", "10월", "11월", "12월",
+            "지난",
+            "이번",
+            "최근",
+            "오늘",
+            "어제",
+            "일주일",
+            "한 달",
+            "한달",
+            "이번 달",
+            "이번달",
+            "이번 주",
+            "이번주",
+            "지난달",
+            "저번달",
+            "지난 달",
+            "전체",
+            "모두",
+            "전부",
+            "주일",
+            "학기",
+            "분기",
+            "1월",
+            "2월",
+            "3월",
+            "4월",
+            "5월",
+            "6월",
+            "7월",
+            "8월",
+            "9월",
+            "10월",
+            "11월",
+            "12월",
         }
         if any(kw in query_stripped for kw in PERIOD_KEYWORDS):
             return True
@@ -201,9 +255,15 @@ CONSULTING (일반 안내로 충분):
 
         # 직전 응답에 HITL 전달/상담 연결 안내 문구가 있는지 확인
         HITL_PHRASES = {
-            "원장님께 전달", "선생님께 전달", "전달드린 뒤", "문의 남겨드릴게요",
-            "안내해 드리겠습니다", "안내드리겠습니다", "상담 연결",
-            "원장님께 문의", "운영자",
+            "원장님께 전달",
+            "선생님께 전달",
+            "전달드린 뒤",
+            "문의 남겨드릴게요",
+            "안내해 드리겠습니다",
+            "안내드리겠습니다",
+            "상담 연결",
+            "원장님께 문의",
+            "운영자",
         }
         if not any(phrase in last_assistant_text for phrase in HITL_PHRASES):
             return False
@@ -211,16 +271,39 @@ CONSULTING (일반 안내로 충분):
         # 현재 쿼리가 전달 방식/경로/담당자를 묻는 후속 질문인지 확인
         query_stripped = query.strip()
         FOLLOW_UP_PATTERNS = {
-            "어떻게 전달", "어디로 전달", "어떻게 연결", "누가 전달", "언제 전달",
-            "어떻게 해", "어떻게 하면", "어떻게 되", "어디로 가", "누가 보",
-            "언제 연락", "어떤 방식", "어떻게 돼", "어디로 돼",
+            "어떻게 전달",
+            "어디로 전달",
+            "어떻게 연결",
+            "누가 전달",
+            "언제 전달",
+            "어떻게 해",
+            "어떻게 하면",
+            "어떻게 되",
+            "어디로 가",
+            "누가 보",
+            "언제 연락",
+            "어떤 방식",
+            "어떻게 돼",
+            "어디로 돼",
         }
         if any(kw in query_stripped for kw in FOLLOW_UP_PATTERNS):
             return True
 
         # 짧은 후속 질문 + 전달/연결 관련 단어 조합
-        DELIVERY_WORDS = {"전달", "연결", "연락", "방식", "방법", "어떻게", "어디로", "누가", "언제"}
-        if len(query_stripped) < 15 and any(w in query_stripped for w in DELIVERY_WORDS):
+        DELIVERY_WORDS = {
+            "전달",
+            "연결",
+            "연락",
+            "방식",
+            "방법",
+            "어떻게",
+            "어디로",
+            "누가",
+            "언제",
+        }
+        if len(query_stripped) < 15 and any(
+            w in query_stripped for w in DELIVERY_WORDS
+        ):
             return True
 
         return False
@@ -239,10 +322,22 @@ CONSULTING (일반 안내로 충분):
 
         # 이미 충분한 컨텍스트가 있으면 보강 불필요
         CONTEXT_KEYWORDS = {
-            "성적", "시험", "출결", "과제", "분반",
-            "최근", "이번", "지난", "한달", "한 달", "기간", "날짜",
+            "성적",
+            "시험",
+            "출결",
+            "과제",
+            "분반",
+            "최근",
+            "이번",
+            "지난",
+            "한달",
+            "한 달",
+            "기간",
+            "날짜",
         }
-        if len(query_stripped) >= 10 or any(kw in query_stripped for kw in CONTEXT_KEYWORDS):
+        if len(query_stripped) >= 10 or any(
+            kw in query_stripped for kw in CONTEXT_KEYWORDS
+        ):
             return query
 
         # 직전 assistant 메시지 추출
@@ -258,8 +353,14 @@ CONSULTING (일반 안내로 충분):
 
         # 직전 응답이 학생 이름 요청 표현인지 확인
         NAME_REQUEST_PHRASES = {
-            "어떤 자녀", "자녀의 이름", "이름을 지정", "이름을 알려",
-            "어느 자녀", "학생 이름", "누구의", "어떤 학생",
+            "어떤 자녀",
+            "자녀의 이름",
+            "이름을 지정",
+            "이름을 알려",
+            "어느 자녀",
+            "학생 이름",
+            "누구의",
+            "어떤 학생",
         }
         if not any(phrase in last_assistant_text for phrase in NAME_REQUEST_PHRASES):
             return query
@@ -375,7 +476,9 @@ CONSULTING (일반 안내로 충분):
     _VERIFY_HINT_KEYWORDS = {"본인", "인증", "확인", "verify"}
 
     @staticmethod
-    def _classify_verify_intent(query: str, model_name: str = "gemini-1.5-flash") -> str:
+    def _classify_verify_intent(
+        query: str, model_name: str = "gemini-1.5-flash"
+    ) -> str:
         """본인인증 관련 의도를 분류한다.
 
         Returns:
@@ -697,12 +800,16 @@ class ChatService:
                     .first()
                 )
                 if doc:
-                    logger.info(f"[Citation._find] ✓ ragFiles ID from URI: {rag_file_id}")
+                    logger.info(
+                        f"[Citation._find] ✓ ragFiles ID from URI: {rag_file_id}"
+                    )
                     return doc
 
         # 2. source_name 기반 다중 전략 매칭
         if source_name:
-            base_name = source_name.rsplit(".", 1)[0] if "." in source_name else source_name
+            base_name = (
+                source_name.rsplit(".", 1)[0] if "." in source_name else source_name
+            )
 
             # 2a. source_name에서 ragFiles/{id} 추출
             rag_file_match_name = _re.search(r"ragFiles/(\w+)", source_name)
@@ -717,7 +824,9 @@ class ChatService:
                     .first()
                 )
                 if doc:
-                    logger.info(f"[Citation._find] ✓ ragFiles ID from name: {rag_file_id}")
+                    logger.info(
+                        f"[Citation._find] ✓ ragFiles ID from name: {rag_file_id}"
+                    )
                     return doc
 
             # 패턴 목록: 전체이름, stem, .txt→.pdf 변환
@@ -927,6 +1036,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ) -> dict:
         """Unified smart query with function calling
 
@@ -991,17 +1101,41 @@ class ChatService:
                 _aug = RouterAgent._augment_personal_query(history, query)
                 if _aug != query:
                     contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
-                    logger.info(f"[Routing] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'")
+                    logger.info(
+                        f"[Routing] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'"
+                    )
 
             # --- [CONSULTING HITL 후속 질문 감지] ---
             is_hitl_follow_up = False
             if agent_type == AgentType.CONSULTING and history:
                 if RouterAgent._is_hitl_follow_up_query(history, query):
                     is_hitl_follow_up = True
-                    logger.info("[Routing] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template")
+                    logger.info(
+                        "[Routing] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template"
+                    )
 
-            # --- [본인인증 의도 처리] STATUS(완료 여부 확인) / HOWTO(방법 질문) ---
-            # 힌트 키워드가 있을 때만 LLM 분류 호출, 라우팅 결과와 무관하게 선처리.
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                return {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
+
+            # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
+            # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
+            # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
+            _VERIFY_QUERY_KEYWORDS = {
+                "본인확인",
+                "본인 확인",
+                "인증 방법",
+                "인증방법",
+                "어떻게 인증",
+                "인증 어떻게",
+                "verify",
+                "인증하는 방법",
+                "인증은 어떻게",
+            }
             if is_authenticated and user_id and tenant_id and db_session:
                 _verify_intent = RouterAgent._classify_verify_intent(
                     query, model_name=model_name
@@ -1127,6 +1261,10 @@ class ChatService:
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
 
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
+
             # 2. Document search: CONSULTING 및 PERSONAL(연속 흐름이 아닌 경우)에 제공
             # 멀티턴 PERSONAL 연속 흐름(is_personal_continuation=True)에서는
             # search_documents 대신 학생 DB 조회 tool 사용을 유도하기 위해 제외한다.
@@ -1238,6 +1376,7 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+
                 if is_hitl_follow_up:
                     agent_persona += (
                         "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
@@ -1248,6 +1387,26 @@ class ChatService:
                         "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
                         "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
                     )
+
+            elif agent_type == AgentType.ACADEMIC:
+                agent_persona = (
+                    "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
+                    "- 당신은 학원 문제은행에서 학부모(또는 학생)에게 연습 문제를 제공하는 보조 교사입니다.\n"
+                    "- **반드시 아래 순서로 처리하세요:**\n"
+                    "  1. 학년(중1~고3)과 영역이 모두 명확하면 get_practice_questions를 호출하세요.\n"
+                    "  2. 학년이나 영역 중 하나라도 불명확하면 함수를 호출하지 말고, 먼저 친절하게 질문하세요.\n"
+                    "     예: '몇 학년인지와 [어휘, 문법, 독해, 듣기, 서술형] 중 어떤 영역 문제를 드릴까요?'\n"
+                    "  3. 표현이 모호해서 영역을 추측해야 한다면, 함수를 호출하기 전에 반드시 확인하세요.\n"
+                    "     예: '혹시 \"독해\" 문제를 말씀하시는 건가요?'\n"
+                    "- **제공 가능한 영역:** 어휘, 문법, 독해, 듣기, 서술형\n"
+                    "- **제공 가능한 학년:** 중1, 중2, 중3, 고1, 고2, 고3\n"
+                    "- **결과 처리 규칙:**\n"
+                    "  · found=0이면: '해당 조건의 문제가 아직 준비되어 있지 않습니다'라고 친절히 안내하세요.\n"
+                    "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
+                    "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
+                    "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
+                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                )
 
             effective_instruction = base_instruction + agent_persona
 
@@ -1439,11 +1598,20 @@ class ChatService:
                                         for ctx in response.contexts.contexts:
                                             chunk_text = getattr(ctx, "text", "")
                                             if chunk_text:
-                                                ctx_source_uri = getattr(ctx, "source_uri", "") or ""
-                                                source_name = getattr(ctx, "source_display_name", "") or ""
+                                                ctx_source_uri = (
+                                                    getattr(ctx, "source_uri", "") or ""
+                                                )
+                                                source_name = (
+                                                    getattr(
+                                                        ctx, "source_display_name", ""
+                                                    )
+                                                    or ""
+                                                )
                                                 if not source_name and ctx_source_uri:
                                                     # GCS URI → filename (gs://bucket/path/file.pdf → file.pdf)
-                                                    source_name = ctx_source_uri.rstrip("/").split("/")[-1]
+                                                    source_name = ctx_source_uri.rstrip(
+                                                        "/"
+                                                    ).split("/")[-1]
                                                 logger.debug(
                                                     f"[Citation] ctx source_display_name={getattr(ctx, 'source_display_name', 'N/A')!r} "
                                                     f"source_uri={ctx_source_uri!r} resolved_source={source_name!r} "
@@ -1454,7 +1622,10 @@ class ChatService:
                                                         "text": chunk_text,
                                                         "source": source_name,
                                                         "source_uri": ctx_source_uri,
-                                                        "score": getattr(ctx, "score", 0) or 0,
+                                                        "score": getattr(
+                                                            ctx, "score", 0
+                                                        )
+                                                        or 0,
                                                         "corpus": corpus_name_item,
                                                     }
                                                 )
@@ -1480,9 +1651,14 @@ class ChatService:
                             # UUID 기반 chunk source를 display_name으로 변환하여
                             # LLM에게 의미 있는 출처명을 제공한다.
                             if db_session and all_chunks:
-                                from ..models.corpus import Corpus as CorpusModel, Document as _DocModel
+                                from ..models.corpus import (
+                                    Corpus as CorpusModel,
+                                    Document as _DocModel,
+                                )
 
-                                _corpus_cache: dict = {}  # corpus_name → (CorpusModel | None)
+                                _corpus_cache: dict = (
+                                    {}
+                                )  # corpus_name → (CorpusModel | None)
                                 for _ch in all_chunks:
                                     _cname = _ch["corpus"]
                                     if _cname not in _corpus_cache:
@@ -1493,19 +1669,25 @@ class ChatService:
                                         )
                                     _corp = _corpus_cache[_cname]
                                     if _corp:
-                                        _resolved_doc = ChatService._find_document_by_source(
-                                            db_session=db_session,
-                                            corpus_id=_corp.id,
-                                            source_name=_ch["source"],
-                                            source_uri=_ch.get("source_uri", ""),
+                                        _resolved_doc = (
+                                            ChatService._find_document_by_source(
+                                                db_session=db_session,
+                                                corpus_id=_corp.id,
+                                                source_name=_ch["source"],
+                                                source_uri=_ch.get("source_uri", ""),
+                                            )
                                         )
                                         _ch["display_name"] = (
-                                            _resolved_doc.display_name if _resolved_doc else _ch["source"]
+                                            _resolved_doc.display_name
+                                            if _resolved_doc
+                                            else _ch["source"]
                                         )
                                         _ch["_doc"] = _resolved_doc
                                         _ch["_corpus_id"] = _corp.id
                                         _ch["_corpus_is_public"] = (
-                                            _corp.is_public if _corp.is_public is not None else True
+                                            _corp.is_public
+                                            if _corp.is_public is not None
+                                            else True
                                         )
                                         _ch["_corpus_display_name"] = _corp.display_name
                                     else:
@@ -1517,7 +1699,9 @@ class ChatService:
                                 context_parts = []
                                 for chunk in all_chunks[:10]:
                                     label = chunk.get("display_name") or chunk["source"]
-                                    context_parts.append(f"[출처: {label}]\n{chunk['text']}")
+                                    context_parts.append(
+                                        f"[출처: {label}]\n{chunk['text']}"
+                                    )
                                 unique_labels = list(
                                     dict.fromkeys(
                                         c.get("display_name") or c["source"]
@@ -1601,6 +1785,32 @@ class ChatService:
                     result = execute_exam_tool(
                         func_name, func_args, tenant_id, user_id, db_session
                     )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
+                    )
+                    raw_items = result.pop("_raw_items", [])
+                    if raw_items:
+                        try:
+                            from ..llm_tools.question_bank import generate_question_html
+                            from .question_preview_service import store_preview
+                            from ..config import settings as _cfg
+
+                            html = generate_question_html(
+                                raw_items,
+                                grade=func_args.get("grade"),
+                                area=func_args.get("area"),
+                            )
+                            token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
+                            result["preview_url"] = (
+                                f"{_base}/api/admin/question-bank/preview/{token}"
+                            )
+                        except Exception as _pe:
+                            logger.warning(
+                                f"[QuestionBank] preview generation failed: {_pe}"
+                            )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
@@ -1768,7 +1978,9 @@ class ChatService:
                     # Exact phrase matching fails when LLM paraphrases; word overlap is more robust
                     _answer_words = set(
                         w
-                        for w in _re.split(r"[\s\.,。!\?\(\)\[\]\{\}:;\"\'·\-]+", final_text)
+                        for w in _re.split(
+                            r"[\s\.,。!\?\(\)\[\]\{\}:;\"\'·\-]+", final_text
+                        )
                         if len(w) >= 2 and not w.isdigit()
                     )
                     _best_word_overlap = 0
@@ -1798,8 +2010,12 @@ class ChatService:
                 if _resolved_chunk:
                     _pre_doc = _resolved_chunk.get("_doc")
                     _pre_corpus_id = _resolved_chunk.get("_corpus_id")
-                    _pre_corpus_is_public = _resolved_chunk.get("_corpus_is_public", True)
-                    _pre_corpus_display = _resolved_chunk.get("_corpus_display_name", "")
+                    _pre_corpus_is_public = _resolved_chunk.get(
+                        "_corpus_is_public", True
+                    )
+                    _pre_corpus_display = _resolved_chunk.get(
+                        "_corpus_display_name", ""
+                    )
                     if _pre_doc and _pre_corpus_id and _pre_corpus_is_public:
                         cited_sources.append(
                             {
@@ -1894,6 +2110,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ):
         """Unified smart query with streaming support.
         Identical routing and tool logic as query_smart, but yields tokens.
@@ -1935,14 +2152,26 @@ class ChatService:
                 _aug = RouterAgent._augment_personal_query(history, query)
                 if _aug != query:
                     contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
-                    logger.info(f"[Routing/Stream] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'")
+                    logger.info(
+                        f"[Routing/Stream] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'"
+                    )
 
             # --- [CONSULTING HITL 후속 질문 감지] ---
             is_hitl_follow_up = False
             if agent_type == AgentType.CONSULTING and history:
                 if RouterAgent._is_hitl_follow_up_query(history, query):
                     is_hitl_follow_up = True
-                    logger.info("[Routing/Stream] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template")
+                    logger.info(
+                        "[Routing/Stream] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template"
+                    )
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                yield {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
+                return
 
             # Build function declarations (same as query_smart)
             function_declarations = []
@@ -1960,6 +2189,10 @@ class ChatService:
                 function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
 
             if (
                 agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
@@ -2068,6 +2301,7 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+
                 if is_hitl_follow_up:
                     agent_persona += (
                         "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
@@ -2078,6 +2312,26 @@ class ChatService:
                         "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
                         "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
                     )
+
+            elif agent_type == AgentType.ACADEMIC:
+                agent_persona = (
+                    "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
+                    "- 당신은 학원 문제은행에서 학부모(또는 학생)에게 연습 문제를 제공하는 보조 교사입니다.\n"
+                    "- **반드시 아래 순서로 처리하세요:**\n"
+                    "  1. 학년(중1~고3)과 영역이 모두 명확하면 get_practice_questions를 호출하세요.\n"
+                    "  2. 학년이나 영역 중 하나라도 불명확하면 함수를 호출하지 말고, 먼저 친절하게 질문하세요.\n"
+                    "     예: '몇 학년인지와 [어휘, 문법, 독해, 듣기, 서술형] 중 어떤 영역 문제를 드릴까요?'\n"
+                    "  3. 표현이 모호해서 영역을 추측해야 한다면, 함수를 호출하기 전에 반드시 확인하세요.\n"
+                    "     예: '혹시 \"독해\" 문제를 말씀하시는 건가요?'\n"
+                    "- **제공 가능한 영역:** 어휘, 문법, 독해, 듣기, 서술형\n"
+                    "- **제공 가능한 학년:** 중1, 중2, 중3, 고1, 고2, 고3\n"
+                    "- **결과 처리 규칙:**\n"
+                    "  · found=0이면: '해당 조건의 문제가 아직 준비되어 있지 않습니다'라고 친절히 안내하세요.\n"
+                    "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
+                    "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
+                    "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
+                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                )
 
             effective_instruction = base_instruction + agent_persona
             gen_params = _get_model_generation_params()
@@ -2173,7 +2427,9 @@ class ChatService:
                                 )
                                 for ctx in rag_response.contexts.contexts:
                                     _s_uri = getattr(ctx, "source_uri", "") or ""
-                                    _s_name = getattr(ctx, "source_display_name", "") or ""
+                                    _s_name = (
+                                        getattr(ctx, "source_display_name", "") or ""
+                                    )
                                     if not _s_name and _s_uri:
                                         _s_name = _s_uri.rstrip("/").split("/")[-1]
                                     all_chunks.append(
@@ -2266,6 +2522,32 @@ class ChatService:
                     result = execute_exam_tool(
                         func_name, func_args, tenant_id, user_id, db_session
                     )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
+                    )
+                    raw_items = result.pop("_raw_items", [])
+                    if raw_items:
+                        try:
+                            from ..llm_tools.question_bank import generate_question_html
+                            from .question_preview_service import store_preview
+                            from ..config import settings as _cfg
+
+                            html = generate_question_html(
+                                raw_items,
+                                grade=func_args.get("grade"),
+                                area=func_args.get("area"),
+                            )
+                            token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
+                            result["preview_url"] = (
+                                f"{_base}/api/admin/question-bank/preview/{token}"
+                            )
+                        except Exception as _pe:
+                            logger.warning(
+                                f"[QuestionBank/Stream] preview generation failed: {_pe}"
+                            )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"

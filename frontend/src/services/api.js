@@ -224,6 +224,7 @@ export const chatbotSettingsAPI = {
 export const hitlAPI = {
   list: () => api.get('/hitl'),
   resolve: (id) => api.patch(`/hitl/${id}`),
+  reply: (id, data) => api.post(`/hitl/${id}/reply`, data),
 };
 
 export const verifyAPI = {
@@ -306,6 +307,33 @@ export const attendanceAPI = {
   // 단건 수정
   // body: { status?, memo? }
   update: (recordId, data) => api.put(`/admin/students/attendance/${recordId}`, data),
+};
+
+export const questionBankAPI = {
+  // 시험지 업로드 + 분석 시작 (multipart/form-data)
+  upload: (formData) =>
+    api.post('/admin/question-bank/papers/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  // 시험지 목록 조회 — params: { subject?, status? }
+  listPapers: (params) => api.get('/admin/question-bank/papers', { params }),
+
+  // 특정 시험지의 문항 목록 — params: { area?, problem_type?, difficulty?, review_status? }
+  listItems: (paperId, params) =>
+    api.get(`/admin/question-bank/papers/${paperId}/items`, { params }),
+
+  // 문항 분류 결과 수정 (교사 검수)
+  updateItem: (itemId, data) =>
+    api.patch(`/admin/question-bank/items/${itemId}`, data),
+
+  // 시험지 삭제 (연결 문항 포함)
+  deletePaper: (paperId) =>
+    api.delete(`/admin/question-bank/papers/${paperId}`),
+
+  // 문항 1개 삭제
+  deleteItem: (itemId) =>
+    api.delete(`/admin/question-bank/items/${itemId}`),
 };
 
 export default api;

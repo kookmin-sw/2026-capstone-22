@@ -37,6 +37,10 @@ google-cloud-discoveryengine>=0.13.0
 # HTTP Client (for external API calls)
 httpx>=0.25.0
 
+# PDF 텍스트 추출 및 OCR (문제 분석 파이프라인)
+pymupdf>=1.24.0
+google-cloud-vision>=3.7.0
+
 # Utilities
 pydantic>=2.9.0
 pydantic-settings>=2.1.0
@@ -44,3 +48,5 @@ email-validator==2.1.0
 
 # Scheduler
 apscheduler>=3.10.0
+
+PyMuPDF
