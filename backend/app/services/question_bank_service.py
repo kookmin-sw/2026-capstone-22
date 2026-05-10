@@ -220,7 +220,9 @@ def _build_blocks_prompt(blocks: list[dict], grade: str | None = None) -> str:
     parts = []
     for b in blocks:
         num = b["question_number"]
-        header = f"[문항 {num}]" if num > 0 else "[문항]"
+        is_incomplete = b.get("status") == "need_review"
+        label = f"[문항 {num}]" if num > 0 else "[문항]"
+        header = f"{label} ※추출불완전" if is_incomplete else label
         parts.append(f"{header}\n{b['block_text']}")
     blocks_text = "\n\n".join(parts)
     return _BLOCK_PROMPT_TEMPLATE.format(
