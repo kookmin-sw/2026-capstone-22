@@ -478,7 +478,11 @@ const filterDesc = [
       const body = item.question_body
         ? `<div class="body">${item.question_body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`
         : '';
-      const choices = Array.isArray(item.choices) && item.choices.length > 0
+      const _bodyText = item.question_body || '';
+      const _circleCount = '①②③④⑤'.split('').filter(c => _bodyText.includes(c)).length;
+      const _abcCount = ['(A)','(B)','(C)'].filter(p => _bodyText.includes(p)).length;
+      const _bodyHasChoices = _circleCount >= 3 || _abcCount >= 2;
+      const choices = Array.isArray(item.choices) && item.choices.length > 0 && !_bodyHasChoices
         ? `<div class="choices">${item.choices.map((c)=>`<div class="choice">${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
         : '';
       return `<div class="question"><p class="qnum">${num}. ${score}</p>${body}${choices}</div>`;

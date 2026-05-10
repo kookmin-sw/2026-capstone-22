@@ -161,7 +161,11 @@ def generate_question_html(
             else ""
         )
         choices_html = ""
-        if item.get("choices"):
+        body_text = item.get("question_body") or ""
+        _circle_count = sum(1 for c in "①②③④⑤" if c in body_text)
+        _abc_count = sum(1 for p in ("(A)", "(B)", "(C)") if p in body_text)
+        body_has_choices = _circle_count >= 3 or _abc_count >= 2
+        if item.get("choices") and not body_has_choices:
             choice_items = "".join(
                 f'<div class="choice">{esc(c)}</div>' for c in item["choices"]
             )
