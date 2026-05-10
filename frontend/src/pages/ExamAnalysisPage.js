@@ -51,7 +51,7 @@ const DIFF_CFG = {
   '상': { bg: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
 };
 
-const EMPTY_FORM = { subject:'', grade:'', examName:'', examType:'', year:'', source:'', note:'' };
+const EMPTY_FORM = { grade:'', examName:'', examType:'', year:'', source:'', note:'' };
 const EMPTY_EDIT = { area:'', difficulty:'', question_body:'', choices:'', answer:'', score_point:'' };
 
 // ── 작은 칩 컴포넌트 ──────────────────────────────────────────────────────────
