@@ -103,6 +103,7 @@ export default function ExamAnalysisPage() {
 
   // 이력 탭
   const [history, setHistory] = useState([]);
+  const [reviewCounts, setReviewCounts] = useState({});
 
   // 결과 뷰 (이력 탭 내부)
   const [selectedPaper, setSelectedPaper] = useState(null);
