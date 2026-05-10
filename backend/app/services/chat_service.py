@@ -1830,6 +1830,24 @@ class ChatService:
                     result = execute_question_bank_tool(
                         func_name, func_args, tenant_id, db_session
                     )
+                    raw_items = result.pop("_raw_items", [])
+                    if raw_items:
+                        try:
+                            from ..llm_tools.question_bank import generate_question_html
+                            from .question_preview_service import store_preview
+                            from ..config import settings as _cfg
+
+                            html = generate_question_html(
+                                raw_items,
+                                grade=func_args.get("grade"),
+                                area=func_args.get("area"),
+                            )
+                            token = store_preview(html)
+                            result["preview_url"] = (
+                                f"{_cfg.APP_BASE_URL}/api/admin/question-bank/preview/{token}"
+                            )
+                        except Exception as _pe:
+                            logger.warning(f"[QuestionBank/Stream] preview generation failed: {_pe}")
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"
