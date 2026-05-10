@@ -23,6 +23,10 @@ from ..llm_tools.assignment import (
 )
 from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 from ..llm_tools.student import STUDENT_FUNCTION_DECLARATIONS, execute_student_tool
+from ..llm_tools.question_bank import (
+    QUESTION_BANK_FUNCTION_DECLARATIONS,
+    execute_question_bank_tool,
+)
 
 logger = logging.getLogger(__name__)
 
