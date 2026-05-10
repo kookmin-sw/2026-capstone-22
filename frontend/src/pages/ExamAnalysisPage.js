@@ -439,7 +439,6 @@ export default function ExamAnalysisPage() {
   // 문제지 인쇄 미리보기
   const openPrintPreview = () => {
 const filterDesc = [
-      bankFilters.subject    && `과목: ${bankFilters.subject}`,
       bankFilters.grade      && `학년: ${bankFilters.grade}`,
       bankFilters.area       && `영역: ${bankFilters.area}`,
       bankFilters.difficulty && `난이도: ${bankFilters.difficulty}`,
