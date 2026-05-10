@@ -358,7 +358,13 @@ export default function ExamAnalysisPage() {
       setTimeout(() => { setUploadSuccess(false); setSubTab(1); }, 1500);
     } catch (e) {
       console.error('업로드 실패', e);
-      setFileError('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+      if (!e.response) {
+        // 네트워크 오류 — 서버는 파일을 수신했을 가능성이 높음
+        setFile(null); setForm(EMPTY_FORM); setErrors({}); setFileError('');
+        setTimeout(() => { setSubTab(1); }, 800);
+      } else {
+        setFileError(`업로드 중 오류가 발생했습니다. (${e.response.status})`);
+      }
     } finally {
       setUploading(false);
     }
