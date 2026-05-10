@@ -458,26 +458,39 @@ const filterDesc = [
 <html lang="ko"><head><meta charset="UTF-8"><title>문제 목록 출력지</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:11pt;color:#111;background:#fff}
-.page{max-width:190mm;margin:0 auto;padding:18mm 15mm}
-.header{border-bottom:2.5px solid #111;padding-bottom:10px;margin-bottom:22px;text-align:center}
-.header h1{font-size:17pt;font-weight:700;letter-spacing:.04em}
-.header .meta{font-size:9pt;color:#555;margin-top:5px}
-.question{margin-bottom:22px;page-break-inside:avoid}
-.qnum{font-weight:700;font-size:11pt;margin-bottom:4px}
+body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:10.5pt;color:#111;background:#fff}
+.page{max-width:190mm;margin:0 auto;padding:16mm 14mm}
+.header{border-bottom:2.5px solid #111;padding-bottom:8px;margin-bottom:16px;text-align:center}
+.header h1{font-size:16pt;font-weight:700;letter-spacing:.04em}
+.header .meta{font-size:8.5pt;color:#555;margin-top:4px}
+.questions-wrap{
+  column-count:2;
+  column-gap:10mm;
+  column-rule:1px solid #ccc;
+}
+.question{
+  margin-bottom:14px;
+  break-inside:avoid;
+  page-break-inside:avoid;
+  display:inline-block;
+  width:100%;
+}
+.qnum{font-weight:700;font-size:10.5pt;margin-bottom:3px}
 .score{font-size:9pt;color:#777;font-weight:400;margin-left:4px}
-.body{font-size:10.5pt;line-height:1.75;margin:5px 0 8px 14px;white-space:pre-wrap;word-break:break-word}
-.choices{margin-left:14px;display:flex;flex-direction:column;gap:3px}
-.choice{font-size:10.5pt;line-height:1.6;display:flex;align-items:baseline;gap:6px}
-.cnum{min-width:16px;font-weight:500}
-.answer-section{margin-top:28px;border-top:1.5px solid #aaa;padding-top:14px}
-.answer-section h2{font-size:11pt;font-weight:700;margin-bottom:10px}
-.ans-grid{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:10pt}
+.body{font-size:10pt;line-height:1.65;margin:4px 0 6px 12px;white-space:pre-wrap;word-break:break-word}
+.choices{margin-left:12px;display:flex;flex-direction:column;gap:2px}
+.choice{font-size:10pt;line-height:1.55}
+.answer-section{margin-top:24px;border-top:1.5px solid #aaa;padding-top:12px}
+.answer-section h2{font-size:10.5pt;font-weight:700;margin-bottom:8px}
+.ans-grid{display:flex;flex-wrap:wrap;gap:3px 16px;font-size:9.5pt}
 .ans{white-space:nowrap}
 @media print{
-  @page{size:A4;margin:15mm 12mm}
+  @page{size:A4;margin:14mm 12mm}
   body{-webkit-print-color-adjust:exact}
   .page{padding:0;max-width:100%}
+  .questions-wrap{column-count:2}
+  .question{break-inside:avoid;page-break-inside:avoid}
+  .answer-section{break-before:avoid}
 }
 </style></head>
 <body><div class="page">
@@ -485,7 +498,9 @@ body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Go
   <h1>문제 목록 출력지</h1>
   <p class="meta">${filterDesc}&nbsp;&nbsp;|&nbsp;&nbsp;총 ${filteredBank.length}문항&nbsp;&nbsp;|&nbsp;&nbsp;${new Date().toLocaleDateString('ko-KR')}</p>
 </div>
+<div class="questions-wrap">
 ${questionsHTML}
+</div>
 ${answerSection}
 </div>
 <script>window.onload=()=>window.print();</script>
