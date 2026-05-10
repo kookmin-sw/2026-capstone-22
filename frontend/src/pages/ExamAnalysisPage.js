@@ -658,10 +658,6 @@ ${answerSection}
             {/* 메타데이터 폼 */}
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="과목" placeholder="예: 영어" value={form.subject} onChange={handleFormChange('subject')}
-                  error={!!errors.subject} helperText={errors.subject} sx={inputSx} InputLabelProps={{ shrink: true }} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!errors.grade} sx={inputSx}>
                   <InputLabel shrink>학년</InputLabel>
                   <Select value={form.grade} onChange={handleFormChange('grade')} label="학년" displayEmpty sx={{ color: form.grade ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
