@@ -224,6 +224,7 @@ export const chatbotSettingsAPI = {
 export const hitlAPI = {
   list: () => api.get('/hitl'),
   resolve: (id) => api.patch(`/hitl/${id}`),
+  reply: (id, data) => api.post(`/hitl/${id}/reply`, data),
 };
 
 export const verifyAPI = {

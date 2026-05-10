@@ -1001,6 +1001,9 @@ function HITLPanel() {
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState({}); // { id: true/false }
   const [expandedHitl, setExpandedHitl] = useState({}); // { [id]: bool }
+  const [replyDraft, setReplyDraft] = useState({}); // { [id]: string }
+  const [replyOpen, setReplyOpen] = useState({}); // { [id]: bool }
+  const [replying, setReplying] = useState({}); // { [id]: bool }
 
   const toggleExpand = (id) =>
     setExpandedHitl((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -1030,6 +1033,23 @@ function HITLPanel() {
       alert('처리 실패: ' + err.message);
     } finally {
       setResolving((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleReply = async (id) => {
+    const text = (replyDraft[id] || '').trim();
+    if (!text) return;
+    setReplying((prev) => ({ ...prev, [id]: true }));
+    try {
+      await hitlAPI.reply(id, { message: text });
+      setReplyDraft((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      setReplyOpen((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      loadHITL();
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.message;
+      alert('답변 처리 실패: ' + detail);
+    } finally {
+      setReplying((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -1163,23 +1183,89 @@ function HITLPanel() {
                   </Box>
                 )}
 
-                {/* 완료 처리 버튼 */}
+                {/* 완료 처리 / 답변 후 완료 버튼 영역 */}
                 {item.status === 'pending' && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      disabled={resolving[item.id]}
-                      onClick={() => handleResolve(item.id)}
-                      sx={{
-                        borderColor: 'rgba(134,239,172,0.3)', color: '#86efac',
-                        borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
-                        '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
-                        '&.Mui-disabled': { opacity: 0.3 }
-                      }}
-                    >
-                      {resolving[item.id] ? <CircularProgress size={16} color="inherit" /> : '✓ 완료 처리'}
-                    </Button>
+                  <Box>
+                    {replyOpen[item.id] && (
+                      <Box sx={{ mb: 1.5 }}>
+                        <TextField
+                          multiline
+                          minRows={3}
+                          fullWidth
+                          placeholder="사용자에게 전달할 답변을 입력하세요..."
+                          value={replyDraft[item.id] || ''}
+                          onChange={(e) =>
+                            setReplyDraft((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                          disabled={replying[item.id]}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: '#09090B',
+                              borderRadius: '10px',
+                              fontSize: '0.875rem',
+                              color: 'rgba(255,255,255,0.85)',
+                              '& fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
+                              '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
+                              '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                            },
+                          }}
+                        />
+                      </Box>
+                    )}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      {/* 답변 후 완료 토글 버튼 */}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={!item.session_id}
+                        title={!item.session_id ? '연결된 채팅 세션이 없습니다' : ''}
+                        onClick={() =>
+                          setReplyOpen((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
+                        }
+                        sx={{
+                          borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa',
+                          borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
+                          '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
+                          '&.Mui-disabled': { opacity: 0.3 },
+                        }}
+                      >
+                        {replyOpen[item.id] ? '취소' : '답변 후 완료'}
+                      </Button>
+
+                      {/* 전송 버튼 (textarea 열렸을 때만) */}
+                      {replyOpen[item.id] && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled={replying[item.id] || !(replyDraft[item.id] || '').trim()}
+                          onClick={() => handleReply(item.id)}
+                          sx={{
+                            borderColor: 'rgba(167,139,250,0.5)', color: '#a78bfa',
+                            borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
+                            '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' },
+                            '&.Mui-disabled': { opacity: 0.3 },
+                          }}
+                        >
+                          {replying[item.id] ? <CircularProgress size={16} color="inherit" /> : '전송 및 완료'}
+                        </Button>
+                      )}
+
+                      {/* 기존 완료 처리 버튼 (유지) */}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={resolving[item.id]}
+                        onClick={() => handleResolve(item.id)}
+                        sx={{
+                          borderColor: 'rgba(134,239,172,0.3)', color: '#86efac',
+                          borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
+                          '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
+                          '&.Mui-disabled': { opacity: 0.3 },
+                        }}
+                      >
+                        {resolving[item.id] ? <CircularProgress size={16} color="inherit" /> : '✓ 완료 처리'}
+                      </Button>
+                    </Box>
                   </Box>
                 )}
               </CardContent>
