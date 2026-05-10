@@ -1275,20 +1275,9 @@ ${answerSection}
           <FormControl fullWidth sx={inputSx}>
             <InputLabel shrink>영역</InputLabel>
             <Select value={editForm.area}
-              onChange={(e) => setEditForm(p => ({ ...p, area: e.target.value, problem_type: '' }))}
+              onChange={(e) => setEditForm(p => ({ ...p, area: e.target.value }))}
               label="영역">
               {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={menuItemSx}>{a}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={inputSx}>
-            <InputLabel shrink>문제 유형</InputLabel>
-            <Select value={editForm.problem_type}
-              onChange={(e) => setEditForm(p => ({ ...p, problem_type: e.target.value }))}
-              label="문제 유형">
-              {(editForm.area && ENGLISH_TAXONOMY[editForm.area]
-                ? ENGLISH_TAXONOMY[editForm.area].problem_types
-                : ALL_TYPES
-              ).map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
             </Select>
           </FormControl>
           <FormControl fullWidth sx={inputSx}>
@@ -1297,19 +1286,6 @@ ${answerSection}
               onChange={(e) => setEditForm(p => ({ ...p, difficulty: e.target.value }))}
               label="난이도">
               {DIFFICULTY_OPTIONS.map(d => <MenuItem key={d} value={d} sx={menuItemSx}>{d}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={inputSx}>
-            <InputLabel shrink>개념 태그</InputLabel>
-            <Select value={editForm.concept_tag || ''}
-              onChange={(e) => setEditForm(p => ({ ...p, concept_tag: e.target.value }))}
-              label="개념 태그" displayEmpty
-              sx={{ color: editForm.concept_tag ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
-              <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.875rem' }}>선택 안 함</MenuItem>
-              {(editForm.area && ENGLISH_TAXONOMY[editForm.area]
-                ? ENGLISH_TAXONOMY[editForm.area].concept_tags
-                : []
-              ).map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
             </Select>
           </FormControl>
         </DialogContent>
