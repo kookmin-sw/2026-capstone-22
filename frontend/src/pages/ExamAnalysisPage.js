@@ -1070,10 +1070,10 @@ ${answerSection}
               </FormControl>
             ))}
             <FormControl size="small" sx={{ minWidth: 90, ...inputSx }}>
-              <InputLabel shrink>영역</InputLabel>
+              <InputLabel shrink>유형</InputLabel>
               <Select value={bankFilters.area}
                 onChange={(e) => setBankFilters(prev => ({ ...prev, area: e.target.value }))}
-                label="영역" displayEmpty
+                label="유형" displayEmpty
                 sx={{ color: bankFilters.area ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
                 <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
                 {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
@@ -1121,7 +1121,7 @@ ${answerSection}
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        {['번호','시험명','과목','학년','영역','난이도','배점',''].map(h => (
+                        {['번호','시험명','과목','학년','유형','난이도','배점',''].map(h => (
                           <TableCell key={h} sx={colHSx}>{h}</TableCell>
                         ))}
                       </TableRow>
@@ -1273,10 +1273,10 @@ ${answerSection}
             onChange={(e) => setEditForm(p => ({ ...p, score_point: e.target.value }))}
             sx={inputSx} InputLabelProps={{ shrink: true }} />
           <FormControl fullWidth sx={inputSx}>
-            <InputLabel shrink>영역</InputLabel>
+            <InputLabel shrink>유형</InputLabel>
             <Select value={editForm.area}
               onChange={(e) => setEditForm(p => ({ ...p, area: e.target.value }))}
-              label="영역">
+              label="유형">
               {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={menuItemSx}>{a}</MenuItem>)}
             </Select>
           </FormControl>
