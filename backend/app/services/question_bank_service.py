@@ -447,6 +447,7 @@ def analyze_pdf(
                 score_point=q.score_point,
                 question_body=q.question_body,
                 choices=q.choices,
+                answer=q.answer,
                 classifier_reason=q.reason,
                 raw_text=raw_text_map.get(q.number),
                 review_status=ReviewStatus.pending,
