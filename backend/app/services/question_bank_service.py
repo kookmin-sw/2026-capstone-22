@@ -158,6 +158,10 @@ reason 작성 규칙 (반드시 준수):
 - choices는 없으면 null
 - is_listening은 area가 "듣기"일 때만 true
 - concept_tag는 반드시 해당 area의 목록 안에서 선택; 없으면 null
+- answer 규칙:
+  · 객관식(choices 있음): 정답 선택지 번호 (예: "③")
+  · 서술형(choices 없음): 핵심 내용을 포함한 모범 답안 1~2문장
+  · 듣기(is_listening=true): 반드시 null (음성 없이 판단 불가)
 - 모든 문항을 빠짐없이 포함할 것
 - JSON 외 다른 텍스트 출력 금지
 """.strip()
