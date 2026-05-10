@@ -1072,24 +1072,14 @@ ${answerSection}
             <FormControl size="small" sx={{ minWidth: 90, ...inputSx }}>
               <InputLabel shrink>영역</InputLabel>
               <Select value={bankFilters.area}
-                onChange={(e) => setBankFilters(prev => ({ ...prev, area: e.target.value, problem_type: '' }))}
+                onChange={(e) => setBankFilters(prev => ({ ...prev, area: e.target.value }))}
                 label="영역" displayEmpty
                 sx={{ color: bankFilters.area ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
                 <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
                 {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 130, ...inputSx }}>
-              <InputLabel shrink>유형</InputLabel>
-              <Select value={bankFilters.problem_type}
-                onChange={(e) => setBankFilters(prev => ({ ...prev, problem_type: e.target.value }))}
-                label="유형" displayEmpty
-                sx={{ color: bankFilters.problem_type ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)', fontSize: '0.8125rem' }}>
-                <MenuItem value="" sx={{ color: '#71717A', fontSize: '0.8125rem' }}>전체</MenuItem>
-                {availableTypes.map(t => <MenuItem key={t} value={t} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{t}</MenuItem>)}
-              </Select>
-            </FormControl>
-            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', area:'', problem_type:'', difficulty:'' })}
+            <Button size="small" onClick={() => setBankFilters({ subject:'', grade:'', area:'', difficulty:'' })}
               sx={{ color: '#52525B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
               초기화
             </Button>
