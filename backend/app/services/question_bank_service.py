@@ -363,7 +363,16 @@ def analyze_pdf(
         if cleaned_text.strip():
             logger.info("[QuestionBank] Step 3: splitting into question blocks")
             blocks = split_questions(cleaned_text)
-            logger.info("[QuestionBank] blocks=%d", len(blocks))
+            low_conf = [b for b in blocks if b.get("status") == "need_review"]
+            logger.info(
+                "[QuestionBank] blocks=%d (need_review=%d)",
+                len(blocks), len(low_conf),
+            )
+            if low_conf:
+                logger.warning(
+                    "[QuestionBank] 추출 불완전 블록 번호: %s",
+                    [b["question_number"] for b in low_conf],
+                )
 
         # ── Step 4: Gemini 분류 ───────────────────────────────────────────────
         _IMAGE_MIME = {"image/jpeg", "image/jpg", "image/png"}
