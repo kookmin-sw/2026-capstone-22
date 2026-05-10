@@ -23,6 +23,10 @@ from ..llm_tools.assignment import (
 )
 from ..llm_tools.exam import EXAM_FUNCTION_DECLARATIONS, execute_exam_tool
 from ..llm_tools.student import STUDENT_FUNCTION_DECLARATIONS, execute_student_tool
+from ..llm_tools.question_bank import (
+    QUESTION_BANK_FUNCTION_DECLARATIONS,
+    execute_question_bank_tool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -609,6 +613,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ) -> dict:
         """Unified smart query with function calling
 
@@ -658,6 +663,14 @@ class ChatService:
                 f"[Routing] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
+
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                return {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
 
             # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
             # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
@@ -762,6 +775,10 @@ class ChatService:
                 function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
 
             # 2. Document search: CONSULTING 및 PERSONAL(연속 흐름이 아닌 경우)에 제공
             # 멀티턴 PERSONAL 연속 흐름(is_personal_continuation=True)에서는
@@ -874,6 +891,25 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+            elif agent_type == AgentType.ACADEMIC:
+                agent_persona = (
+                    "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
+                    "- 당신은 학원 문제은행에서 학부모(또는 학생)에게 연습 문제를 제공하는 보조 교사입니다.\n"
+                    "- **반드시 아래 순서로 처리하세요:**\n"
+                    "  1. 학년(중1~고3)과 영역이 모두 명확하면 get_practice_questions를 호출하세요.\n"
+                    "  2. 학년이나 영역 중 하나라도 불명확하면 함수를 호출하지 말고, 먼저 친절하게 질문하세요.\n"
+                    "     예: '몇 학년인지와 [어휘, 문법, 독해, 듣기, 서술형] 중 어떤 영역 문제를 드릴까요?'\n"
+                    "  3. 표현이 모호해서 영역을 추측해야 한다면, 함수를 호출하기 전에 반드시 확인하세요.\n"
+                    "     예: '혹시 \"독해\" 문제를 말씀하시는 건가요?'\n"
+                    "- **제공 가능한 영역:** 어휘, 문법, 독해, 듣기, 서술형\n"
+                    "- **제공 가능한 학년:** 중1, 중2, 중3, 고1, 고2, 고3\n"
+                    "- **결과 처리 규칙:**\n"
+                    "  · found=0이면: '해당 조건의 문제가 아직 준비되어 있지 않습니다'라고 친절히 안내하세요.\n"
+                    "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
+                    "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
+                    "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
+                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                )
 
             effective_instruction = base_instruction + agent_persona
 
@@ -1232,6 +1268,30 @@ class ChatService:
                         func_name, func_args, tenant_id, user_id, db_session
                     )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
+                    )
+                    raw_items = result.pop("_raw_items", [])
+                    if raw_items:
+                        try:
+                            from ..llm_tools.question_bank import generate_question_html
+                            from .question_preview_service import store_preview
+                            from ..config import settings as _cfg
+
+                            html = generate_question_html(
+                                raw_items,
+                                grade=func_args.get("grade"),
+                                area=func_args.get("area"),
+                            )
+                            token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
+                            result["preview_url"] = (
+                                f"{_base}/api/admin/question-bank/preview/{token}"
+                            )
+                        except Exception as _pe:
+                            logger.warning(f"[QuestionBank] preview generation failed: {_pe}")
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
 
@@ -1422,6 +1482,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ):
         """Unified smart query with streaming support.
         Identical routing and tool logic as query_smart, but yields tokens.
@@ -1458,6 +1519,15 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                yield {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
+                return
+
             # Build function declarations (same as query_smart)
             function_declarations = []
             if agent_type == AgentType.PERSONAL and has_calendar:
@@ -1474,6 +1544,10 @@ class ChatService:
                 function_declarations.extend(ATTENDANCE_FUNCTION_DECLARATIONS)
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
+
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
 
             if (
                 agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
@@ -1582,6 +1656,25 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+            elif agent_type == AgentType.ACADEMIC:
+                agent_persona = (
+                    "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
+                    "- 당신은 학원 문제은행에서 학부모(또는 학생)에게 연습 문제를 제공하는 보조 교사입니다.\n"
+                    "- **반드시 아래 순서로 처리하세요:**\n"
+                    "  1. 학년(중1~고3)과 영역이 모두 명확하면 get_practice_questions를 호출하세요.\n"
+                    "  2. 학년이나 영역 중 하나라도 불명확하면 함수를 호출하지 말고, 먼저 친절하게 질문하세요.\n"
+                    "     예: '몇 학년인지와 [어휘, 문법, 독해, 듣기, 서술형] 중 어떤 영역 문제를 드릴까요?'\n"
+                    "  3. 표현이 모호해서 영역을 추측해야 한다면, 함수를 호출하기 전에 반드시 확인하세요.\n"
+                    "     예: '혹시 \"독해\" 문제를 말씀하시는 건가요?'\n"
+                    "- **제공 가능한 영역:** 어휘, 문법, 독해, 듣기, 서술형\n"
+                    "- **제공 가능한 학년:** 중1, 중2, 중3, 고1, 고2, 고3\n"
+                    "- **결과 처리 규칙:**\n"
+                    "  · found=0이면: '해당 조건의 문제가 아직 준비되어 있지 않습니다'라고 친절히 안내하세요.\n"
+                    "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
+                    "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
+                    "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
+                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                )
 
             effective_instruction = base_instruction + agent_persona
             gen_params = _get_model_generation_params()
@@ -1739,6 +1832,30 @@ class ChatService:
                     result = execute_exam_tool(
                         func_name, func_args, tenant_id, user_id, db_session
                     )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
+                    )
+                    raw_items = result.pop("_raw_items", [])
+                    if raw_items:
+                        try:
+                            from ..llm_tools.question_bank import generate_question_html
+                            from .question_preview_service import store_preview
+                            from ..config import settings as _cfg
+
+                            html = generate_question_html(
+                                raw_items,
+                                grade=func_args.get("grade"),
+                                area=func_args.get("area"),
+                            )
+                            token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
+                            result["preview_url"] = (
+                                f"{_base}/api/admin/question-bank/preview/{token}"
+                            )
+                        except Exception as _pe:
+                            logger.warning(f"[QuestionBank/Stream] preview generation failed: {_pe}")
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"

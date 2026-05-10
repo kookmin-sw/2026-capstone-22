@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -148,6 +148,7 @@ async def delete_session(
 
 @router.post("/message", response_model=ChatResponse)
 async def send_message(
+    request: Request,
     message: str = Form(...),
     session_id: Optional[int] = Form(None),
     model: Optional[str] = Form(None),
@@ -318,6 +319,9 @@ async def send_message(
             response_text = ai_response
         else:
             # Unified smart query: LLM decides which functions to call
+            _proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+            _host = request.headers.get("host") or request.url.hostname
+            _api_base_url = f"{_proto}://{_host}"
             smart_result = await loop.run_in_executor(
                 None,
                 partial(
@@ -336,6 +340,7 @@ async def send_message(
                     user_id=current_user.id,
                     session_id=session.id,
                     chatbot_settings=chatbot_settings,
+                    api_base_url=_api_base_url,
                 ),
             )
             response_text = smart_result.get("text", "답변을 생성할 수 없습니다.")
@@ -412,6 +417,7 @@ async def send_message(
 
 @router.post("/message-stream")
 async def send_message_stream(
+    request: Request,
     message: str = Form(...),
     session_id: Optional[int] = Form(None),
     model: Optional[str] = Form(None),
@@ -499,6 +505,9 @@ async def send_message_stream(
 
         # We need to run the sync generator in a thread pool
         loop = asyncio.get_event_loop()
+        _proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+        _host = request.headers.get("host") or request.url.hostname
+        _api_base_url = f"{_proto}://{_host}"
         gen = GeminiService.query_smart_stream(
             corpus_names=accessible_stores,
             query=message,
@@ -513,6 +522,7 @@ async def send_message_stream(
             user_id=current_user.id,
             session_id=session.id,
             chatbot_settings=chatbot_settings,
+            api_base_url=_api_base_url,
         )
 
         try:

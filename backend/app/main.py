@@ -20,6 +20,7 @@ from .routers import (
     assignments,
     exams,
     verification,
+    question_bank,
 )
 from .utils.init_data import init_database
 import logging
@@ -155,6 +156,11 @@ app.include_router(
     tags=["Exams"],
 )
 app.include_router(verification.router, prefix="/api", tags=["Verification"])
+app.include_router(
+    question_bank.router,
+    prefix="/api/admin/question-bank",
+    tags=["Question Bank"],
+)
 
 
 @app.get("/")
