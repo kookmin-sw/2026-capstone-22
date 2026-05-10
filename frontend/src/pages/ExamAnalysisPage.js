@@ -342,7 +342,6 @@ export default function ExamAnalysisPage() {
   const handleUpload = async () => {
     const errs = {};
     if (!file) setFileError('파일을 선택해주세요.');
-    if (!form.subject.trim()) errs.subject = '필수 입력 항목입니다.';
     if (!form.grade)          errs.grade   = '필수 입력 항목입니다.';
     if (!form.examName.trim()) errs.examName = '필수 입력 항목입니다.';
     if (!form.examType)       errs.examType = '필수 입력 항목입니다.';
