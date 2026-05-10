@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, TextField, Grid, Select, MenuItem,
   FormControl, InputLabel, Chip, Table, TableBody, TableCell,
   TableHead, TableRow, CircularProgress, Alert, FormHelperText,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogActions, Checkbox,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -139,6 +139,8 @@ export default function ExamAnalysisPage() {
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
   const [approveAllOpen, setApproveAllOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [approvingSelected, setApprovingSelected] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: '', id: null, label: '' });
   const [deleting, setDeleting] = useState(false);
 
@@ -199,6 +201,7 @@ export default function ExamAnalysisPage() {
   const handleViewResult = async (paper) => {
     setSelectedPaper(paper);
     setOnlyNeedsReview(false);
+    setSelectedItems(new Set());
     setItemsLoading(true);
     setItems([]);
     try {
@@ -218,6 +221,38 @@ export default function ExamAnalysisPage() {
       setItems(prev => prev.map(i => i.id === itemId ? res.data : i));
     } catch (e) {
       console.error('검수 완료 실패', e);
+    }
+  };
+
+  // ── 선택 토글 ─────────────────────────────────────────────────────────────
+  const toggleSelectItem = (itemId) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId); else next.add(itemId);
+      return next;
+    });
+  };
+
+  // ── 선택 검수 완료 ────────────────────────────────────────────────────────
+  const handleApproveSelected = async () => {
+    if (selectedItems.size === 0) return;
+    setApprovingSelected(true);
+    try {
+      const targets = items.filter(i => selectedItems.has(i.id) && i.review_status !== 'reviewed');
+      const updated = await Promise.all(
+        targets.map(item =>
+          questionBankAPI.updateItem(item.id, { review_status: 'reviewed' }).then(r => r.data)
+        )
+      );
+      setItems(prev => {
+        const map = Object.fromEntries(updated.map(u => [u.id, u]));
+        return prev.map(i => map[i.id] ?? i);
+      });
+      setSelectedItems(new Set());
+    } catch (e) {
+      console.error('선택 검수 완료 실패', e);
+    } finally {
+      setApprovingSelected(false);
     }
   };
 
@@ -588,7 +623,7 @@ ${answerSection}
       {/* 서브탭 */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         {['파일 업로드', '분석 이력', '문제 목록'].map((label, i) => (
-          <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); }} sx={subTabSx(subTab === i)}>
+          <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); setSelectedItems(new Set()); }} sx={subTabSx(subTab === i)}>
             {label}
           </Box>
         ))}
@@ -812,7 +847,7 @@ ${answerSection}
         <Box>
           {/* 브레드크럼 */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-            <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); }}
+            <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); setSelectedItems(new Set()); }}
               startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
               sx={{ color: '#71717A', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#a78bfa' } }}>
               분석 이력
@@ -836,6 +871,11 @@ ${answerSection}
               )}
               <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>검수 대기 {pendingCount}건</Typography>
               <Typography sx={{ color: '#86efac', fontSize: '0.75rem' }}>검수 완료 {reviewedCount}건</Typography>
+              {selectedItems.size > 0 && (
+                <Typography sx={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600 }}>
+                  선택 {selectedItems.size}개
+                </Typography>
+              )}
               <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                 {needsReviewCount > 0 && (
                   <Button size="small" onClick={() => setOnlyNeedsReview(v => !v)}
@@ -847,6 +887,18 @@ ${answerSection}
                       '&:hover': { bgcolor: onlyNeedsReview ? 'rgba(239,68,68,0.18)' : 'rgba(255,255,255,0.08)' },
                     }}>
                     {onlyNeedsReview ? '전체 보기' : '우선 확인만 보기'}
+                  </Button>
+                )}
+                {selectedItems.size > 0 && (
+                  <Button size="small" disabled={approvingSelected} onClick={handleApproveSelected}
+                    sx={{
+                      fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                      bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa',
+                      border: '1px solid rgba(167,139,250,0.25)',
+                      '&:hover': { bgcolor: 'rgba(167,139,250,0.18)' },
+                      '&.Mui-disabled': { opacity: 0.5 },
+                    }}>
+                    {approvingSelected ? '처리 중...' : `선택 검수 완료 (${selectedItems.size})`}
                   </Button>
                 )}
                 {items.some(i => i.review_status !== 'reviewed') && (
@@ -894,6 +946,17 @@ ${answerSection}
                     }}>
                       {/* 카드 헤더 */}
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Checkbox
+                          size="small"
+                          disabled={rs === 'reviewed'}
+                          checked={selectedItems.has(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                          sx={{
+                            p: 0, color: 'rgba(255,255,255,0.2)',
+                            '&.Mui-checked': { color: '#a78bfa' },
+                            '&.Mui-disabled': { color: 'rgba(255,255,255,0.08)' },
+                          }}
+                        />
                         <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
                           {item.question_number}번
                         </Typography>
