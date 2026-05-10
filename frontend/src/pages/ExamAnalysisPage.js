@@ -456,7 +456,7 @@ export default function ExamAnalysisPage() {
       : '';
 
     const html = `<!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>문제은행 출력지</title>
+<html lang="ko"><head><meta charset="UTF-8"><title>문제 목록 출력지</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:11pt;color:#111;background:#fff}
@@ -483,7 +483,7 @@ body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Go
 </style></head>
 <body><div class="page">
 <div class="header">
-  <h1>문제은행 출력지</h1>
+  <h1>문제 목록 출력지</h1>
   <p class="meta">${filterDesc}&nbsp;&nbsp;|&nbsp;&nbsp;총 ${filteredBank.length}문항&nbsp;&nbsp;|&nbsp;&nbsp;${new Date().toLocaleDateString('ko-KR')}</p>
 </div>
 ${questionsHTML}
@@ -573,7 +573,7 @@ ${answerSection}
 
       {/* 서브탭 */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        {['파일 업로드', '분석 이력', '문제은행'].map((label, i) => (
+        {['파일 업로드', '분석 이력', '문제 목록'].map((label, i) => (
           <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); }} sx={subTabSx(subTab === i)}>
             {label}
           </Box>
@@ -1327,7 +1327,7 @@ ${answerSection}
           </Typography>
           <Box sx={{ bgcolor: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)', borderRadius: 1.5, px: 1.5, py: 1 }}>
             <Typography sx={{ color: '#fde047', fontSize: '0.75rem', lineHeight: 1.5 }}>
-              AI가 틀릴 수 있습니다. 문제은행 확정본으로 쓰려면 중요한 문항은 개별 확인을 권장합니다.
+              AI가 틀릴 수 있습니다. 문제 목록 확정본으로 쓰려면 중요한 문항은 개별 확인을 권장합니다.
             </Typography>
           </Box>
         </DialogContent>
