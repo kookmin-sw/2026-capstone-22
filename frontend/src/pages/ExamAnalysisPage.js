@@ -427,8 +427,7 @@ export default function ExamAnalysisPage() {
 
   // 문제지 인쇄 미리보기
   const openPrintPreview = () => {
-    const CIRCLE = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
-    const filterDesc = [
+const filterDesc = [
       bankFilters.subject      && `과목: ${bankFilters.subject}`,
       bankFilters.grade        && `학년: ${bankFilters.grade}`,
       bankFilters.area         && `영역: ${bankFilters.area}`,
@@ -443,7 +442,7 @@ export default function ExamAnalysisPage() {
         ? `<div class="body">${item.question_body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`
         : '';
       const choices = Array.isArray(item.choices) && item.choices.length > 0
-        ? `<div class="choices">${item.choices.map((c,i)=>`<div class="choice"><span class="cnum">${CIRCLE[i]??i+1}</span>${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
+        ? `<div class="choices">${item.choices.map((c)=>`<div class="choice">${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
         : '';
       return `<div class="question"><p class="qnum">${num}. ${score}</p>${body}${choices}</div>`;
     }).join('');
@@ -1150,18 +1149,18 @@ ${answerSection}
                   <Box>
                     <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>선택지</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {selectedBankItem.choices.map((c, i) => (
-                        <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1,
-                          bgcolor: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(34,197,94,0.08)' : 'transparent',
-                          borderRadius: 1, px: 1, py: 0.5, border: String(selectedBankItem.answer) === String(i + 1) ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
-                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? '#86efac' : '#52525B', fontSize: '0.75rem', fontWeight: 700, minWidth: 16, flexShrink: 0 }}>
-                            {i + 1}
-                          </Typography>
-                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-                            {c}
-                          </Typography>
-                        </Box>
-                      ))}
+                      {selectedBankItem.choices.map((c, i) => {
+                        const isCorrect = String(selectedBankItem.answer) === String(i + 1);
+                        return (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start',
+                            bgcolor: isCorrect ? 'rgba(34,197,94,0.08)' : 'transparent',
+                            borderRadius: 1, px: 1, py: 0.5, border: isCorrect ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
+                            <Typography sx={{ color: isCorrect ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                              {c}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
                     </Box>
                   </Box>
                 )}
