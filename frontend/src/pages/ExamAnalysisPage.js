@@ -1180,8 +1180,6 @@ ${answerSection}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                   {[
                     { label: selectedBankItem.area, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
-                    { label: selectedBankItem.problem_type, color: '#67e8f9', bg: 'rgba(103,232,249,0.1)', border: 'rgba(103,232,249,0.2)' },
-                    { label: selectedBankItem.concept_tag, color: '#fde68a', bg: 'rgba(253,230,138,0.1)', border: 'rgba(253,230,138,0.2)' },
                   ].filter(c => c.label).map((c, i) => (
                     <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.6875rem', border: `1px solid ${c.border}`, '& .MuiChip-label': { px: 0.75 } }} />
                   ))}
