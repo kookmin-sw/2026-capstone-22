@@ -248,3 +248,21 @@ async def update_item(
     db.commit()
     db.refresh(item)
     return QuestionItemResponse.model_validate(item)
+
+
+# ── GET /preview/{token} ───────────────────────────────────────────────────
+# 챗봇이 생성한 문제지 HTML을 브라우저에 직접 렌더링한다 (인증 불필요 — 토큰이 짧게 만료됨).
+
+
+@router.get("/preview/{token}", response_class=HTMLResponse)
+async def get_question_preview(token: str):
+    """챗봇이 제공한 문제지 HTML 미리보기 (토큰 유효 시간: 2시간)"""
+    from ..services.question_preview_service import get_preview
+
+    html = get_preview(token)
+    if not html:
+        raise HTTPException(
+            status_code=404,
+            detail="문제지 링크가 만료되었거나 존재하지 않습니다. 챗봇에서 다시 요청해 주세요.",
+        )
+    return HTMLResponse(content=html)

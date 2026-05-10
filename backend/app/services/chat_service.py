@@ -663,6 +663,14 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                return {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
+
             # --- [본인확인 안내] "본인확인 어떻게 해?" 류 질문 처리 ---
             # 라우팅 결과와 무관하게, 인증된 사용자가 본인확인 방법을 물어보면
             # verification_url을 직접 생성해서 마크다운 링크로 안내한다.
