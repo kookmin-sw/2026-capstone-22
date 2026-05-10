@@ -1113,7 +1113,7 @@ ${answerSection}
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        {['번호','시험명','과목','학년','유형','난이도','배점',''].map(h => (
+                        {['번호','시험명','학년','유형','난이도','배점',''].map(h => (
                           <TableCell key={h} sx={colHSx}>{h}</TableCell>
                         ))}
                       </TableRow>
