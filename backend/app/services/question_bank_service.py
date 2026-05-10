@@ -38,6 +38,7 @@ ENGLISH_TAXONOMY: dict[str, dict[str, list[str]]] = {
     "어휘": {
         "problem_types": [
             "어휘 빈칸", "어휘 완성", "단어 쓰기", "숙어 완성",
+            "오답 고르기",
         ],
         "concept_tags": [
             "단어 의미", "숙어", "문맥 어휘",
@@ -48,7 +49,8 @@ ENGLISH_TAXONOMY: dict[str, dict[str, list[str]]] = {
         "problem_types": [
             "빈칸 추론", "문장 삽입", "순서 배열", "무관 문장",
             "내용 일치", "내용 불일치", "심경 파악",
-            "제목 선택", "주제 선택", "도표 파악", "요약",
+            "제목 선택", "주제 선택", "주장 파악", "목적 파악",
+            "도표 파악", "요약", "밑줄 추론",
         ],
         "concept_tags": [
             "주제 파악", "요지 파악", "목적 파악", "심경 파악",
@@ -60,6 +62,7 @@ ENGLISH_TAXONOMY: dict[str, dict[str, list[str]]] = {
         "problem_types": [
             "목적 파악", "내용 일치", "세부 정보 파악",
             "도표 파악", "대화 응답", "상황 이해",
+            "심경 파악", "이유 파악", "할 일 파악",
         ],
         "concept_tags": [
             "세부 정보 파악", "의견 파악", "이유 파악",
@@ -179,7 +182,7 @@ _JSON_SCHEMA = """
       "score_point": <배점 정수>,
       "question_body": "<문항 지문 또는 질문 텍스트>",
       "choices": ["①...", "②...", "③...", "④...", "⑤..."],
-      "answer": "<객관식: 정답 번호(예: '③'), 서술형: 모범 답안 1~2문장, 듣기: null>",
+      "answer": "<객관식: 정답 번호 기호만(예: '③'). 서술형/듣기: null. 반드시 10자 이하>",
       "reason": "<40자 이내 자연어 1문장. 난이도 판단 핵심 이유만. 예: 중3 기준, 빈칸에서 글 전체 흐름 추론이 필요하므로 상>"
     }}
   ]
@@ -434,8 +437,18 @@ def analyze_pdf(
         }
 
         now = datetime.now(timezone.utc)
-        items = [
-            QuestionItem(
+        items = []
+        for q in result.questions:
+            # answer는 String(10) 컬럼 — 길이 초과 시 잘라내고 경고
+            safe_answer = q.answer
+            if safe_answer and len(safe_answer) > 10:
+                logger.warning(
+                    "[QuestionBank] answer too long (q=%s, len=%d), truncating: %r",
+                    q.number, len(safe_answer), safe_answer,
+                )
+                safe_answer = safe_answer[:10]
+
+            items.append(QuestionItem(
                 paper_id=paper.id,
                 tenant_id=paper.tenant_id,
                 question_number=q.number,
@@ -447,15 +460,13 @@ def analyze_pdf(
                 score_point=q.score_point,
                 question_body=q.question_body,
                 choices=q.choices,
-                answer=q.answer,
+                answer=safe_answer,
                 classifier_reason=q.reason,
                 raw_text=raw_text_map.get(q.number),
                 review_status=ReviewStatus.pending,
                 question_format="서술형" if q.area == "서술형" else "객관식",
                 created_at=now,
-            )
-            for q in result.questions
-        ]
+            ))
         db.add_all(items)
 
         paper.status = PaperStatus.done
@@ -478,8 +489,15 @@ def analyze_pdf(
 
 
 def _fail(db: Session, paper: ExamPaper, message: str) -> None:
-    paper.status = PaperStatus.failed
-    paper.error_message = message
-    paper.updated_at = datetime.now(timezone.utc)
-    db.commit()
     logger.error("[QuestionBank] failed: %s", message)
+    try:
+        db.rollback()
+    except Exception as rb_err:
+        logger.error("[QuestionBank] rollback error: %s", rb_err)
+    try:
+        paper.status = PaperStatus.failed
+        paper.error_message = (message or "")[:2000]
+        paper.updated_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as commit_err:
+        logger.error("[QuestionBank] _fail commit error: %s", commit_err)
