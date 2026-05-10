@@ -767,6 +767,10 @@ class ChatService:
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
 
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
+
             # 2. Document search: CONSULTING 및 PERSONAL(연속 흐름이 아닌 경우)에 제공
             # 멀티턴 PERSONAL 연속 흐름(is_personal_continuation=True)에서는
             # search_documents 대신 학생 DB 조회 tool 사용을 유도하기 위해 제외한다.
