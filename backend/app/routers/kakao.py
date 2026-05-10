@@ -288,45 +288,13 @@ def _strip_markdown(text: str) -> str:
 
 
 def _build_kakao_outputs(text_chunks: list, sources: list = None) -> list:
-    """Build Kakao outputs list — multiple simpleText for long answers + textCard for sources.
-    Kakao allows max 3 outputs per response and callback URL can only be used once."""
+    """Build Kakao outputs list — multiple simpleText for long answers.
+    Kakao allows max 3 outputs per response and callback URL can only be used once.
+    Sources are tracked internally but not shown to users in the chat bubble."""
 
-    # Determine how many slots sources need
-    has_sources = bool(sources and any(s.get("uri") for s in sources[:3]))
-    max_text_outputs = 2 if has_sources else 3
-
-    # Build simpleText outputs (up to max_text_outputs)
     outputs = []
-    for chunk in text_chunks[:max_text_outputs]:
+    for chunk in text_chunks[:3]:
         outputs.append({"simpleText": {"text": chunk}})
-
-    if not has_sources:
-        return outputs
-
-    # Build source buttons
-    buttons = []
-    for src in sources[:3]:
-        uri = src.get("uri")
-        if not uri:
-            continue
-        buttons.append(
-            {
-                "action": "webLink",
-                "label": "📄 원본 문서 보기",
-                "webLinkUrl": uri,
-            }
-        )
-
-    if buttons:
-        outputs.append(
-            {
-                "textCard": {
-                    "title": "📚 참고 문서",
-                    "description": "답변에 참고된 원본 문서입니다.",
-                    "buttons": buttons,
-                }
-            }
-        )
 
     return outputs
 

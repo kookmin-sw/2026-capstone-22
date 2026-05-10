@@ -1165,8 +1165,8 @@ export default function ChatPage() {
                           </Box>
                         )}
 
-                        {/* RAG References Section - Collapsible */}
-                        {msg.cited_sources && msg.cited_sources.length > 0 && (
+                        {/* RAG References Section - hidden from users, tracked internally */}
+                        {false && msg.cited_sources && msg.cited_sources.length > 0 && (
                           <Box
                             sx={{
                               mt: 3,
@@ -1586,9 +1586,7 @@ export default function ChatPage() {
                               mt: 2,
                               mb: 2,
                               pt: 1.5,
-                              borderTop: msg.cited_sources && msg.cited_sources.length > 0
-                                ? 'none'
-                                : '1px solid rgba(100, 116, 139, 0.2)',
+                              borderTop: '1px solid rgba(100, 116, 139, 0.2)',
                             }}
                           >
                             <Tooltip title="피드백 보내기" placement="top">
