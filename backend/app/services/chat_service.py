@@ -1261,6 +1261,11 @@ class ChatService:
                         func_name, func_args, tenant_id, user_id, db_session
                     )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
 
