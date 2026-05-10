@@ -90,21 +90,26 @@ async def upload_paper(
         tmp.close()
 
     # 백그라운드에서 분석 실행 (임시 파일은 작업 완료 후 삭제)
-    background_tasks.add_task(_run_analysis, db, paper.id, tmp_path, mime_type)
+    # ⚠ def(동기)로 선언해야 FastAPI가 스레드풀에서 실행함.
+    # async def로 선언하면 이벤트 루프 안에서 직접 실행되어 블로킹 I/O가
+    # HTTP 응답 flush를 막아 클라이언트가 타임아웃 오류를 받게 됨.
+    background_tasks.add_task(_run_analysis, paper.id, tmp_path, mime_type)
 
     return ExamPaperResponse.model_validate(paper)
 
 
-async def _run_analysis(
-    db: Session, paper_id: int, file_path: str, mime_type: str
-) -> None:
-    """백그라운드 분석 태스크"""
+def _run_analysis(paper_id: int, file_path: str, mime_type: str) -> None:
+    """백그라운드 분석 태스크 — 스레드풀에서 실행됨 (def, not async def)."""
+    db = SessionLocal()
     try:
         paper = db.query(ExamPaper).filter(ExamPaper.id == paper_id).first()
         if not paper:
             return
         analyze_pdf(db=db, paper=paper, pdf_path=file_path, mime_type=mime_type)
+    except Exception:
+        logger.exception("[QuestionBank] _run_analysis failed for paper_id=%d", paper_id)
     finally:
+        db.close()
         if os.path.exists(file_path):
             os.unlink(file_path)
 
