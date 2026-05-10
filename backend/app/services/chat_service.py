@@ -1509,6 +1509,10 @@ class ChatService:
                 function_declarations.extend(ASSIGNMENT_FUNCTION_DECLARATIONS)
                 function_declarations.extend(EXAM_FUNCTION_DECLARATIONS)
 
+            # ACADEMIC Agent: 문제은행 도구
+            if agent_type == AgentType.ACADEMIC:
+                function_declarations.extend(QUESTION_BANK_FUNCTION_DECLARATIONS)
+
             if (
                 agent_type in [AgentType.CONSULTING, AgentType.PERSONAL]
                 and not is_personal_continuation
@@ -1616,6 +1620,27 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+            elif agent_type == AgentType.ACADEMIC:
+                agent_persona = (
+                    "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
+                    "- 당신은 학원 문제은행에서 학부모(또는 학생)에게 연습 문제를 제공하는 보조 교사입니다.\n"
+                    "- **반드시 아래 순서로 처리하세요:**\n"
+                    "  1. 학년(중1/중2/중3)과 문제 유형이 모두 명확하면 get_practice_questions를 호출하세요.\n"
+                    "  2. 학년이나 유형 중 하나라도 불명확하면 함수를 호출하지 말고, 먼저 친절하게 질문하세요.\n"
+                    "     예: '몇 학년 학생의 어떤 유형 문제를 드릴까요? 예를 들어 중2 빈칸 추론, 중3 순서 배열 등으로 말씀해 주시면 바로 찾아드릴게요.'\n"
+                    "  3. 표현이 모호해서 유형을 추측해야 한다면, 함수를 호출하기 전에 반드시 확인하세요.\n"
+                    "     예: '혹시 \"빈칸 추론\" 문제를 말씀하시는 건가요?'\n"
+                    "- **제공 가능한 영역과 유형:**\n"
+                    "  · 문법: 오답 고르기, 밑줄 어법, 문법 빈칸, 문장 완성, 문장 변환, 영작, 조건 영작\n"
+                    "  · 어휘: 어휘 빈칸, 어휘 완성, 단어 쓰기, 숙어 완성\n"
+                    "  · 독해: 빈칸 추론, 문장 삽입, 순서 배열, 무관 문장, 내용 일치, 내용 불일치, 심경 파악, 제목 선택, 주제 선택, 도표 파악, 요약\n"
+                    "  · 듣기: 목적 파악, 내용 일치, 세부 정보 파악, 도표 파악, 대화 응답, 상황 이해\n"
+                    "  · 서술형: 문장 완성, 문장 변환, 본문 변형, 어순 배열, 영작, 조건 영작, 요약 쓰기, 본문 기반 서술\n"
+                    "- **결과 처리 규칙:**\n"
+                    "  · found=0이면: '해당 조건의 문제가 아직 준비되어 있지 않습니다'라고 친절히 안내하세요.\n"
+                    "  · returned < requested이면: '저장된 문제가 {returned}개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
+                    "  · 문제는 받은 그대로 번호와 선택지가 보이도록 깔끔하게 정리해서 보여주세요.\n"
+                )
 
             effective_instruction = base_instruction + agent_persona
             gen_params = _get_model_generation_params()
@@ -1772,6 +1797,11 @@ class ChatService:
                 elif func_name.startswith("get_my_exam_"):
                     result = execute_exam_tool(
                         func_name, func_args, tenant_id, user_id, db_session
+                    )
+                    result_str = json.dumps(result, ensure_ascii=False, default=str)
+                elif func_name == "get_practice_questions":
+                    result = execute_question_bank_tool(
+                        func_name, func_args, tenant_id, db_session
                     )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
