@@ -123,7 +123,7 @@ export default function ExamAnalysisPage() {
   // 문제은행 탭
   const [bankItems, setBankItems]   = useState([]);
   const [bankLoading, setBankLoading] = useState(false);
-  const [bankFilters, setBankFilters] = useState({ subject:'', grade:'', area:'', difficulty:'' });
+  const [bankFilters, setBankFilters] = useState({ grade:'', area:'', difficulty:'' });
   const [selectedBankItem, setSelectedBankItem] = useState(null);
   const [revertingBankItem, setRevertingBankItem] = useState(false);
   const [printWithAnswers, setPrintWithAnswers] = useState(false);
