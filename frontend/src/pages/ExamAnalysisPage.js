@@ -413,10 +413,8 @@ export default function ExamAnalysisPage() {
   });
 
   // ── 문제은행 필터 ─────────────────────────────────────────────────────────
-  const uniqueSubjects = [...new Set(bankItems.map(i => i.paper_subject).filter(Boolean))];
   const uniqueGrades   = [...new Set(bankItems.map(i => i.paper_grade).filter(Boolean))];
   const filteredBank   = bankItems.filter(item => {
-    if (bankFilters.subject      && item.paper_subject !== bankFilters.subject)      return false;
     if (bankFilters.grade        && item.paper_grade   !== bankFilters.grade)        return false;
     if (bankFilters.area         && item.area          !== bankFilters.area)         return false;
     if (bankFilters.difficulty   && item.difficulty    !== bankFilters.difficulty)   return false;
