@@ -353,7 +353,7 @@ export default function ExamAnalysisPage() {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('title', form.examName);
-      fd.append('subject', form.subject);
+      fd.append('subject', '영어');
       if (form.grade)    fd.append('grade', form.grade);
       if (form.year)     fd.append('source_year', form.year);
       if (form.examType) fd.append('source_type', form.examType);
