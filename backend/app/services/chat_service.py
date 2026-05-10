@@ -1514,6 +1514,15 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
+            if agent_type == AgentType.ACADEMIC and not is_authenticated:
+                yield {
+                    "text": "문제 제공 서비스는 로그인한 회원만 이용할 수 있습니다. 로그인 후 다시 요청해 주세요.",
+                    "used_calendar": False,
+                    "cited_sources": [],
+                }
+                return
+
             # Build function declarations (same as query_smart)
             function_declarations = []
             if agent_type == AgentType.PERSONAL and has_calendar:
