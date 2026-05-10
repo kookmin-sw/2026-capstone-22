@@ -1,5 +1,6 @@
 """문제은행 API 라우터"""
 
+import logging
 import os
 import shutil
 import tempfile
@@ -9,7 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
-from ..database import get_db
+from ..database import SessionLocal, get_db
 from ..models.exam_paper import ExamPaper, PaperStatus, QuestionItem, ReviewStatus
 from ..models.user import User
 from ..schemas.question_bank import (
@@ -19,6 +20,8 @@ from ..schemas.question_bank import (
 )
 from ..services.question_bank_service import analyze_pdf
 from ..utils.dependencies import get_current_admin_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
