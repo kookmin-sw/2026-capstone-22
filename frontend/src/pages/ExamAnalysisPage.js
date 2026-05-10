@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, TextField, Grid, Select, MenuItem,
   FormControl, InputLabel, Chip, Table, TableBody, TableCell,
   TableHead, TableRow, CircularProgress, Alert, FormHelperText,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogActions, Checkbox,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -37,15 +37,15 @@ const ENGLISH_TAXONOMY = {
     concept_tags:  ['시제','현재완료','수동태','조동사','부정사','동명사','분사','분사구문','관계대명사','관계부사','가정법','비교','접속사','전치사','간접의문문','일치','화법'],
   },
   어휘: {
-    problem_types: ['어휘 빈칸','어휘 완성','단어 쓰기','숙어 완성'],
+    problem_types: ['어휘 빈칸','어휘 완성','단어 쓰기','숙어 완성','오답 고르기'],
     concept_tags:  ['단어 의미','숙어','문맥 어휘','동의어','반의어','다의어','연어'],
   },
   독해: {
-    problem_types: ['빈칸 추론','문장 삽입','순서 배열','무관 문장','내용 일치','내용 불일치','심경 파악','제목 선택','주제 선택','도표 파악','요약'],
+    problem_types: ['빈칸 추론','문장 삽입','순서 배열','무관 문장','내용 일치','내용 불일치','심경 파악','제목 선택','주제 선택','주장 파악','목적 파악','도표 파악','요약','밑줄 추론'],
     concept_tags:  ['주제 파악','요지 파악','목적 파악','심경 파악','세부 내용 파악','문맥 추론','글의 흐름','내용 연결','지칭 추론','요약 이해'],
   },
   듣기: {
-    problem_types: ['목적 파악','내용 일치','세부 정보 파악','도표 파악','대화 응답','상황 이해'],
+    problem_types: ['목적 파악','내용 일치','세부 정보 파악','도표 파악','대화 응답','상황 이해','심경 파악','이유 파악','할 일 파악'],
     concept_tags:  ['세부 정보 파악','의견 파악','이유 파악','목적 파악','심경 파악','상황 이해','화자 의도'],
   },
   서술형: {
@@ -139,6 +139,8 @@ export default function ExamAnalysisPage() {
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
   const [approveAllOpen, setApproveAllOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [approvingSelected, setApprovingSelected] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: '', id: null, label: '' });
   const [deleting, setDeleting] = useState(false);
 
@@ -199,6 +201,7 @@ export default function ExamAnalysisPage() {
   const handleViewResult = async (paper) => {
     setSelectedPaper(paper);
     setOnlyNeedsReview(false);
+    setSelectedItems(new Set());
     setItemsLoading(true);
     setItems([]);
     try {
@@ -218,6 +221,38 @@ export default function ExamAnalysisPage() {
       setItems(prev => prev.map(i => i.id === itemId ? res.data : i));
     } catch (e) {
       console.error('검수 완료 실패', e);
+    }
+  };
+
+  // ── 선택 토글 ─────────────────────────────────────────────────────────────
+  const toggleSelectItem = (itemId) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId); else next.add(itemId);
+      return next;
+    });
+  };
+
+  // ── 선택 검수 완료 ────────────────────────────────────────────────────────
+  const handleApproveSelected = async () => {
+    if (selectedItems.size === 0) return;
+    setApprovingSelected(true);
+    try {
+      const targets = items.filter(i => selectedItems.has(i.id) && i.review_status !== 'reviewed');
+      const updated = await Promise.all(
+        targets.map(item =>
+          questionBankAPI.updateItem(item.id, { review_status: 'reviewed' }).then(r => r.data)
+        )
+      );
+      setItems(prev => {
+        const map = Object.fromEntries(updated.map(u => [u.id, u]));
+        return prev.map(i => map[i.id] ?? i);
+      });
+      setSelectedItems(new Set());
+    } catch (e) {
+      console.error('선택 검수 완료 실패', e);
+    } finally {
+      setApprovingSelected(false);
     }
   };
 
@@ -433,8 +468,7 @@ export default function ExamAnalysisPage() {
 
   // 문제지 인쇄 미리보기
   const openPrintPreview = () => {
-    const CIRCLE = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
-    const filterDesc = [
+const filterDesc = [
       bankFilters.subject      && `과목: ${bankFilters.subject}`,
       bankFilters.grade        && `학년: ${bankFilters.grade}`,
       bankFilters.area         && `영역: ${bankFilters.area}`,
@@ -449,7 +483,7 @@ export default function ExamAnalysisPage() {
         ? `<div class="body">${item.question_body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`
         : '';
       const choices = Array.isArray(item.choices) && item.choices.length > 0
-        ? `<div class="choices">${item.choices.map((c,i)=>`<div class="choice"><span class="cnum">${CIRCLE[i]??i+1}</span>${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
+        ? `<div class="choices">${item.choices.map((c)=>`<div class="choice">${c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}</div>`
         : '';
       return `<div class="question"><p class="qnum">${num}. ${score}</p>${body}${choices}</div>`;
     }).join('');
@@ -465,26 +499,39 @@ export default function ExamAnalysisPage() {
 <html lang="ko"><head><meta charset="UTF-8"><title>문제 목록 출력지</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:11pt;color:#111;background:#fff}
-.page{max-width:190mm;margin:0 auto;padding:18mm 15mm}
-.header{border-bottom:2.5px solid #111;padding-bottom:10px;margin-bottom:22px;text-align:center}
-.header h1{font-size:17pt;font-weight:700;letter-spacing:.04em}
-.header .meta{font-size:9pt;color:#555;margin-top:5px}
-.question{margin-bottom:22px;page-break-inside:avoid}
-.qnum{font-weight:700;font-size:11pt;margin-bottom:4px}
+body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Gothic',sans-serif;font-size:10.5pt;color:#111;background:#fff}
+.page{max-width:190mm;margin:0 auto;padding:16mm 14mm}
+.header{border-bottom:2.5px solid #111;padding-bottom:8px;margin-bottom:16px;text-align:center}
+.header h1{font-size:16pt;font-weight:700;letter-spacing:.04em}
+.header .meta{font-size:8.5pt;color:#555;margin-top:4px}
+.questions-wrap{
+  column-count:2;
+  column-gap:10mm;
+  column-rule:1px solid #ccc;
+}
+.question{
+  margin-bottom:14px;
+  break-inside:avoid;
+  page-break-inside:avoid;
+  display:inline-block;
+  width:100%;
+}
+.qnum{font-weight:700;font-size:10.5pt;margin-bottom:3px}
 .score{font-size:9pt;color:#777;font-weight:400;margin-left:4px}
-.body{font-size:10.5pt;line-height:1.75;margin:5px 0 8px 14px;white-space:pre-wrap;word-break:break-word}
-.choices{margin-left:14px;display:flex;flex-direction:column;gap:3px}
-.choice{font-size:10.5pt;line-height:1.6;display:flex;align-items:baseline;gap:6px}
-.cnum{min-width:16px;font-weight:500}
-.answer-section{margin-top:28px;border-top:1.5px solid #aaa;padding-top:14px}
-.answer-section h2{font-size:11pt;font-weight:700;margin-bottom:10px}
-.ans-grid{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:10pt}
+.body{font-size:10pt;line-height:1.65;margin:4px 0 6px 12px;white-space:pre-wrap;word-break:break-word}
+.choices{margin-left:12px;display:flex;flex-direction:column;gap:2px}
+.choice{font-size:10pt;line-height:1.55}
+.answer-section{margin-top:24px;border-top:1.5px solid #aaa;padding-top:12px}
+.answer-section h2{font-size:10.5pt;font-weight:700;margin-bottom:8px}
+.ans-grid{display:flex;flex-wrap:wrap;gap:3px 16px;font-size:9.5pt}
 .ans{white-space:nowrap}
 @media print{
-  @page{size:A4;margin:15mm 12mm}
+  @page{size:A4;margin:14mm 12mm}
   body{-webkit-print-color-adjust:exact}
   .page{padding:0;max-width:100%}
+  .questions-wrap{column-count:2}
+  .question{break-inside:avoid;page-break-inside:avoid}
+  .answer-section{break-before:avoid}
 }
 </style></head>
 <body><div class="page">
@@ -492,7 +539,9 @@ body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Nanum Go
   <h1>문제 목록 출력지</h1>
   <p class="meta">${filterDesc}&nbsp;&nbsp;|&nbsp;&nbsp;총 ${filteredBank.length}문항&nbsp;&nbsp;|&nbsp;&nbsp;${new Date().toLocaleDateString('ko-KR')}</p>
 </div>
+<div class="questions-wrap">
 ${questionsHTML}
+</div>
 ${answerSection}
 </div>
 <script>window.onload=()=>window.print();</script>
@@ -580,7 +629,7 @@ ${answerSection}
       {/* 서브탭 */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         {['파일 업로드', '분석 이력', '문제 목록'].map((label, i) => (
-          <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); }} sx={subTabSx(subTab === i)}>
+          <Box key={i} onClick={() => { setSubTab(i); setSelectedPaper(null); setSelectedItems(new Set()); }} sx={subTabSx(subTab === i)}>
             {label}
           </Box>
         ))}
@@ -804,7 +853,7 @@ ${answerSection}
         <Box>
           {/* 브레드크럼 */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-            <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); }}
+            <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); setSelectedItems(new Set()); }}
               startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
               sx={{ color: '#71717A', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#a78bfa' } }}>
               분석 이력
@@ -821,6 +870,37 @@ ${answerSection}
           {/* 검수 현황 통계 + 필터 컨트롤 */}
           {!itemsLoading && items.length > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+              {(() => {
+                const selectableIds = displayItems.filter(i => i.review_status !== 'reviewed').map(i => i.id);
+                const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedItems.has(id));
+                const someSelected = !allSelected && selectableIds.some(id => selectedItems.has(id));
+                return selectableIds.length > 0 ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Checkbox
+                      size="small"
+                      checked={allSelected}
+                      indeterminate={someSelected}
+                      onChange={() => {
+                        if (allSelected) {
+                          setSelectedItems(prev => {
+                            const next = new Set(prev);
+                            selectableIds.forEach(id => next.delete(id));
+                            return next;
+                          });
+                        } else {
+                          setSelectedItems(prev => new Set([...prev, ...selectableIds]));
+                        }
+                      }}
+                      sx={{
+                        p: 0, color: 'rgba(255,255,255,0.2)',
+                        '&.Mui-checked': { color: '#a78bfa' },
+                        '&.MuiCheckbox-indeterminate': { color: '#a78bfa' },
+                      }}
+                    />
+                    <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>전체 선택</Typography>
+                  </Box>
+                ) : null;
+              })()}
               {needsReviewCount > 0 && (
                 <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600 }}>
                   ⚠ 우선 확인 {needsReviewCount}건
@@ -828,6 +908,11 @@ ${answerSection}
               )}
               <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>검수 대기 {pendingCount}건</Typography>
               <Typography sx={{ color: '#86efac', fontSize: '0.75rem' }}>검수 완료 {reviewedCount}건</Typography>
+              {selectedItems.size > 0 && (
+                <Typography sx={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600 }}>
+                  선택 {selectedItems.size}개
+                </Typography>
+              )}
               <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                 {needsReviewCount > 0 && (
                   <Button size="small" onClick={() => setOnlyNeedsReview(v => !v)}
@@ -839,6 +924,18 @@ ${answerSection}
                       '&:hover': { bgcolor: onlyNeedsReview ? 'rgba(239,68,68,0.18)' : 'rgba(255,255,255,0.08)' },
                     }}>
                     {onlyNeedsReview ? '전체 보기' : '우선 확인만 보기'}
+                  </Button>
+                )}
+                {selectedItems.size > 0 && (
+                  <Button size="small" disabled={approvingSelected} onClick={handleApproveSelected}
+                    sx={{
+                      fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
+                      bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa',
+                      border: '1px solid rgba(167,139,250,0.25)',
+                      '&:hover': { bgcolor: 'rgba(167,139,250,0.18)' },
+                      '&.Mui-disabled': { opacity: 0.5 },
+                    }}>
+                    {approvingSelected ? '처리 중...' : `선택 검수 완료 (${selectedItems.size})`}
                   </Button>
                 )}
                 {items.some(i => i.review_status !== 'reviewed') && (
@@ -886,6 +983,17 @@ ${answerSection}
                     }}>
                       {/* 카드 헤더 */}
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Checkbox
+                          size="small"
+                          disabled={rs === 'reviewed'}
+                          checked={selectedItems.has(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                          sx={{
+                            p: 0, color: 'rgba(255,255,255,0.2)',
+                            '&.Mui-checked': { color: '#a78bfa' },
+                            '&.Mui-disabled': { color: 'rgba(255,255,255,0.08)' },
+                          }}
+                        />
                         <Typography sx={{ color: '#FAFAFA', fontWeight: 700, fontSize: '0.9375rem' }}>
                           {item.question_number}번
                         </Typography>
@@ -1156,18 +1264,18 @@ ${answerSection}
                   <Box>
                     <Typography sx={{ color: '#52525B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>선택지</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {selectedBankItem.choices.map((c, i) => (
-                        <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1,
-                          bgcolor: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(34,197,94,0.08)' : 'transparent',
-                          borderRadius: 1, px: 1, py: 0.5, border: String(selectedBankItem.answer) === String(i + 1) ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
-                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? '#86efac' : '#52525B', fontSize: '0.75rem', fontWeight: 700, minWidth: 16, flexShrink: 0 }}>
-                            {i + 1}
-                          </Typography>
-                          <Typography sx={{ color: String(selectedBankItem.answer) === String(i + 1) ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-                            {c}
-                          </Typography>
-                        </Box>
-                      ))}
+                      {selectedBankItem.choices.map((c, i) => {
+                        const isCorrect = String(selectedBankItem.answer) === String(i + 1);
+                        return (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start',
+                            bgcolor: isCorrect ? 'rgba(34,197,94,0.08)' : 'transparent',
+                            borderRadius: 1, px: 1, py: 0.5, border: isCorrect ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
+                            <Typography sx={{ color: isCorrect ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                              {c}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
                     </Box>
                   </Box>
                 )}
