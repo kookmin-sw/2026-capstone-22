@@ -908,7 +908,8 @@ class ChatService:
                     "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
                     "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
                     "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
-                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                    "  · preview_url이 있으면 문제 본문을 채팅에 출력하지 마세요. 링크 아래에 'PDF에서 전체 문항을 확인해 주세요.' 한 줄만 추가하세요.\n"
+                    "  · preview_url이 없으면 문제 번호와 첫 줄 정도만 간략히 보여주세요.\n"
                 )
 
             effective_instruction = base_instruction + agent_persona
@@ -1673,7 +1674,8 @@ class ChatService:
                     "  · returned < requested이면: '저장된 문제가 X개뿐이어서 그만큼만 드립니다. 양해 부탁드립니다'라고 안내하세요.\n"
                     "  · 결과에 preview_url이 있으면 반드시 아래 형식으로 문제지 링크를 안내하세요:\n"
                     "    '📄 **[문제지 PDF 보기/인쇄]({preview_url})** ← 클릭하면 인쇄 창이 열립니다.'\n"
-                    "  · 문제 본문도 채팅창에 간략히 보여주세요 (번호와 첫 줄 정도).\n"
+                    "  · preview_url이 있으면 문제 본문을 채팅에 출력하지 마세요. 링크 아래에 'PDF에서 전체 문항을 확인해 주세요.' 한 줄만 추가하세요.\n"
+                    "  · preview_url이 없으면 문제 번호와 첫 줄 정도만 간략히 보여주세요.\n"
                 )
 
             effective_instruction = base_instruction + agent_persona
