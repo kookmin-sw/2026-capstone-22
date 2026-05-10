@@ -145,16 +145,11 @@ def _call_gemini(client, model: str, contents: list) -> dict:
 def _validate_classified(data: dict) -> AnalysisResult:
     """Gemini JSON 응답을 AnalysisResult로 검증·보정한다.
 
-    area / problem_type 검증:
-    - area가 유효하지 않으면 is_listening 기준으로 듣기/독해 추정 보정
-    - problem_type이 해당 area의 problem_types 목록 밖이면 "미분류" 저장
-    concept_tag 검증 (soft):
-    - 해당 area의 concept_tags 밖이면 경고만 기록, 값은 유지
-    is_listening:
-    - area == "듣기" 기준으로 강제 정규화
-    이슈 발생 시 classifier_reason 앞에 "[검수 필요]" 마킹
+    area: 유효하지 않으면 is_listening 기준으로 듣기/독해 추정 보정
+    is_listening: area == "듣기" 기준으로 강제 정규화
+    difficulty: 유효하지 않으면 "중"으로 보정
+    이슈 발생 시 reason 앞에 "[검수 필요]" 마킹
     """
-    valid_areas = set(ENGLISH_TAXONOMY.keys())
     questions = data.get("questions", [])
 
     for q in questions:
@@ -163,7 +158,7 @@ def _validate_classified(data: dict) -> AnalysisResult:
 
         # ① area 검증·보정
         area_val = q.get("area")
-        if area_val not in valid_areas:
+        if area_val not in VALID_AREAS:
             corrected = "듣기" if q.get("is_listening") else "독해"
             issues.append(f"area 불명확('{area_val}' → '{corrected}'으로 추정)")
             q["area"] = corrected
@@ -172,19 +167,7 @@ def _validate_classified(data: dict) -> AnalysisResult:
         # ② is_listening 정규화 (area 기준)
         q["is_listening"] = (area_val == "듣기")
 
-        # ③ problem_type: 해당 area의 목록 밖이면 "미분류"
-        valid_types = set(ENGLISH_TAXONOMY[area_val]["problem_types"])
-        pt_val = q.get("problem_type")
-        if pt_val not in valid_types:
-            issues.append(f"problem_type 불일치('{pt_val}'): {area_val} 목록에 없음")
-            q["problem_type"] = "미분류"
-
-        # ④ concept_tag soft validation (경고만, 값 유지)
-        ct_val = q.get("concept_tag")
-        if ct_val and ct_val not in ENGLISH_TAXONOMY[area_val]["concept_tags"]:
-            issues.append(f"concept_tag 비표준('{ct_val}')")
-
-        # ⑤ difficulty 보정
+        # ③ difficulty 보정
         diff_val = q.get("difficulty")
         if diff_val not in ("하", "중", "상"):
             issues.append(f"difficulty 불명확('{diff_val}')")

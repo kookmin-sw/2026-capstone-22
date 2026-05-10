@@ -78,7 +78,7 @@ class QuestionItemUpdate(BaseModel):
 class ClassifiedQuestion(BaseModel):
     number: int
     area: str
-    problem_type: str
+    problem_type: Optional[str] = None
     concept_tag: Optional[str] = None
     difficulty: str
     is_listening: bool
