@@ -864,6 +864,37 @@ ${answerSection}
           {/* 검수 현황 통계 + 필터 컨트롤 */}
           {!itemsLoading && items.length > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+              {(() => {
+                const selectableIds = displayItems.filter(i => i.review_status !== 'reviewed').map(i => i.id);
+                const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedItems.has(id));
+                const someSelected = !allSelected && selectableIds.some(id => selectedItems.has(id));
+                return selectableIds.length > 0 ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Checkbox
+                      size="small"
+                      checked={allSelected}
+                      indeterminate={someSelected}
+                      onChange={() => {
+                        if (allSelected) {
+                          setSelectedItems(prev => {
+                            const next = new Set(prev);
+                            selectableIds.forEach(id => next.delete(id));
+                            return next;
+                          });
+                        } else {
+                          setSelectedItems(prev => new Set([...prev, ...selectableIds]));
+                        }
+                      }}
+                      sx={{
+                        p: 0, color: 'rgba(255,255,255,0.2)',
+                        '&.Mui-checked': { color: '#a78bfa' },
+                        '&.MuiCheckbox-indeterminate': { color: '#a78bfa' },
+                      }}
+                    />
+                    <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>전체 선택</Typography>
+                  </Box>
+                ) : null;
+              })()}
               {needsReviewCount > 0 && (
                 <Typography sx={{ color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600 }}>
                   ⚠ 우선 확인 {needsReviewCount}건
