@@ -88,27 +88,44 @@ CONSULTING (일반 안내로 충분):
 에이전트 타입 이름 하나만 출력하세요. 예: PERSONAL
 """
 
-    # ACADEMIC 전용 키워드 사전 분류 — 단어 자체로 의도가 명확한 경우만 여기서 처리.
-    # PERSONAL은 뉘앙스 판단이 필요하므로 항상 LLM 라우터에 위임한다.
-    _ACADEMIC_KEYWORDS = {"문제", "유사문제", "기출", "유사 문제", "유형", "오답"}
+    # ACADEMIC 단독 키워드 — 이 단어 하나만으로 문제 생성/분석 의도가 확정되는 경우만 포함.
+    # "문제", "오답", "유형"처럼 일반 상담에서도 자주 나오는 단어는 제외.
+    _ACADEMIC_SOLE_KEYWORDS = {"기출", "유사문제", "유사 문제"}
+
+    # ACADEMIC 조합 패턴 — (핵심어, 의도 수식어 집합): 둘 다 있을 때만 ACADEMIC
+    _ACADEMIC_PATTERNS = [
+        ("문제", {"생성", "만들어", "출제", "뽑아", "내줘", "만들어줘", "만들다"}),
+        ("유형", {"분석", "분류", "정리", "파악"}),
+        ("오답", {"정리", "분석", "생성", "만들어"}),
+    ]
 
     @staticmethod
     def _keyword_classify(query: str) -> Optional[str]:
-        """ACADEMIC 키워드만 사전 분류. PERSONAL은 LLM 판단에 위임."""
+        """ACADEMIC 의도 사전 분류.
+
+        단독 키워드("기출", "유사문제")는 바로 ACADEMIC 확정.
+        "문제", "오답", "유형"은 단독으로는 일반 상담에서도 흔하므로
+        의도 수식어("생성", "만들어", "분석" 등)와 함께 있을 때만 ACADEMIC.
+        PERSONAL은 항상 LLM 판단에 위임.
+        """
         q = query.strip()
-        for kw in RouterAgent._ACADEMIC_KEYWORDS:
+        for kw in RouterAgent._ACADEMIC_SOLE_KEYWORDS:
             if kw in q:
+                return AgentType.ACADEMIC
+        for anchor, modifiers in RouterAgent._ACADEMIC_PATTERNS:
+            if anchor in q and any(m in q for m in modifiers):
                 return AgentType.ACADEMIC
         return None
 
     @staticmethod
     def _is_personal_context_continuation(history: list, query: str) -> bool:
         """멀티턴 대화에서 직전 assistant 메시지가 PERSONAL 학생 데이터 관련
-        후속 질문을 했고, 현재 쿼리가 기간/조건 보충 응답인지 감지한다.
+        응답이고, 현재 쿼리가 그 내용을 이어 받는 후속 질문인지 감지한다.
 
         탐지 조건:
           1. 직전 model 메시지에 출결/과제/시험/성적 등 PERSONAL 주제 키워드가 있고
-          2. 현재 쿼리가 30자 미만의 짧은 기간/날짜 보충 응답인 경우
+          2-A. 현재 쿼리에 기간/날짜/비교 관련 표현이 있거나 (길이 무관)
+          2-B. 현재 쿼리가 20자 미만의 매우 짧은 후속 질문인 경우 (지시어·보충 질문)
         """
         if not history:
             return False
@@ -137,12 +154,39 @@ CONSULTING (일반 안내로 충분):
             "결석",
             "지각",
             "조퇴",
+            "보강",
+            "분반",
+            "시간표",
+            "담당 선생",
+            "담당선생",
         }
         if not any(kw in last_assistant_text for kw in PERSONAL_DATA_KEYWORDS):
             return False
 
-        # 현재 쿼리가 기간/날짜 보충 응답인지 확인 (짧고 날짜·기간 표현 포함)
-        PERIOD_SUPPLEMENT_KEYWORDS = {
+        query_stripped = query.strip()
+
+        # 2-A: 기간·날짜·비교 관련 표현 포함 시 (길이 제한 없음)
+        PERIOD_KEYWORDS = {
+            # 이전/다음 시점 표현
+            "그 전",
+            "그전",
+            "이전",
+            "전달",
+            "전 달",
+            "전주",
+            "전 주",
+            "다음 달",
+            "다음달",
+            "다음 주",
+            "다음주",
+            "저번 주",
+            "저번주",
+            "저번 달",
+            "그때",
+            "그 때",
+            "그 기간",
+            "그기간",
+            # 기존 키워드
             "지난",
             "이번",
             "최근",
@@ -153,8 +197,11 @@ CONSULTING (일반 안내로 충분):
             "한달",
             "이번 달",
             "이번달",
+            "이번 주",
+            "이번주",
             "지난달",
             "저번달",
+            "지난 달",
             "전체",
             "모두",
             "전부",
@@ -174,10 +221,189 @@ CONSULTING (일반 안내로 충분):
             "11월",
             "12월",
         }
+        if any(kw in query_stripped for kw in PERIOD_KEYWORDS):
+            return True
+
+        # 2-B: 매우 짧은 후속 질문 (지시어·보충) — 20자 미만
+        # 예: "그건?", "더 보여줘", "자세히", "그 전 달은?"
+        return len(query_stripped) < 20
+
+    @staticmethod
+    def _is_hitl_follow_up_query(history: list, query: str) -> bool:
+        """직전 assistant 응답에서 HITL 전달/상담 연결 안내가 있었고,
+        현재 쿼리가 그 전달 방식을 묻는 후속 질문인지 감지한다.
+
+        탐지 조건:
+          1. 직전 model 메시지에 HITL 전달 안내 문구가 있고
+          2. 현재 쿼리가 전달 방식/경로/담당자를 묻는 질문인 경우
+        """
+        if not history:
+            return False
+
+        last_assistant_text = ""
+        for msg in reversed(history):
+            if msg.get("role") == "model":
+                for part in msg.get("parts", []):
+                    if isinstance(part, dict):
+                        last_assistant_text += part.get("text", "")
+                    elif hasattr(part, "text") and part.text:
+                        last_assistant_text += part.text
+                break
+
+        if not last_assistant_text:
+            return False
+
+        # 직전 응답에 HITL 전달/상담 연결 안내 문구가 있는지 확인
+        HITL_PHRASES = {
+            "원장님께 전달",
+            "선생님께 전달",
+            "전달드린 뒤",
+            "문의 남겨드릴게요",
+            "안내해 드리겠습니다",
+            "안내드리겠습니다",
+            "상담 연결",
+            "원장님께 문의",
+            "운영자",
+        }
+        if not any(phrase in last_assistant_text for phrase in HITL_PHRASES):
+            return False
+
+        # 현재 쿼리가 전달 방식/경로/담당자를 묻는 후속 질문인지 확인
         query_stripped = query.strip()
-        return len(query_stripped) < 30 and any(
-            kw in query_stripped for kw in PERIOD_SUPPLEMENT_KEYWORDS
-        )
+        FOLLOW_UP_PATTERNS = {
+            "어떻게 전달",
+            "어디로 전달",
+            "어떻게 연결",
+            "누가 전달",
+            "언제 전달",
+            "어떻게 해",
+            "어떻게 하면",
+            "어떻게 되",
+            "어디로 가",
+            "누가 보",
+            "언제 연락",
+            "어떤 방식",
+            "어떻게 돼",
+            "어디로 돼",
+        }
+        if any(kw in query_stripped for kw in FOLLOW_UP_PATTERNS):
+            return True
+
+        # 짧은 후속 질문 + 전달/연결 관련 단어 조합
+        DELIVERY_WORDS = {
+            "전달",
+            "연결",
+            "연락",
+            "방식",
+            "방법",
+            "어떻게",
+            "어디로",
+            "누가",
+            "언제",
+        }
+        if len(query_stripped) < 15 and any(
+            w in query_stripped for w in DELIVERY_WORDS
+        ):
+            return True
+
+        return False
+
+    @staticmethod
+    def _augment_personal_query(history: list, query: str) -> str:
+        """PERSONAL 멀티턴에서 현재 쿼리가 학생 이름만인 경우,
+        이전 대화 문맥(주제·기간)을 합쳐 보강된 쿼리를 반환한다.
+
+        보강 조건:
+          1. 현재 쿼리가 10자 미만이고 날짜/주제 키워드가 없음 (이름 보충으로 추정)
+          2. 직전 assistant 메시지에 학생 이름 요청 표현이 있음
+          3. 대화 history에서 주제(성적/출결/과제)와 기간을 추출할 수 있음
+        """
+        query_stripped = query.strip()
+
+        # 이미 충분한 컨텍스트가 있으면 보강 불필요
+        CONTEXT_KEYWORDS = {
+            "성적",
+            "시험",
+            "출결",
+            "과제",
+            "분반",
+            "최근",
+            "이번",
+            "지난",
+            "한달",
+            "한 달",
+            "기간",
+            "날짜",
+        }
+        if len(query_stripped) >= 10 or any(
+            kw in query_stripped for kw in CONTEXT_KEYWORDS
+        ):
+            return query
+
+        # 직전 assistant 메시지 추출
+        last_assistant_text = ""
+        for msg in reversed(history):
+            if msg.get("role") == "model":
+                for part in msg.get("parts", []):
+                    if isinstance(part, dict):
+                        last_assistant_text += part.get("text", "")
+                    elif hasattr(part, "text") and part.text:
+                        last_assistant_text += part.text
+                break
+
+        # 직전 응답이 학생 이름 요청 표현인지 확인
+        NAME_REQUEST_PHRASES = {
+            "어떤 자녀",
+            "자녀의 이름",
+            "이름을 지정",
+            "이름을 알려",
+            "어느 자녀",
+            "학생 이름",
+            "누구의",
+            "어떤 학생",
+        }
+        if not any(phrase in last_assistant_text for phrase in NAME_REQUEST_PHRASES):
+            return query
+
+        # 전체 대화에서 주제와 기간 추출
+        full_text = ""
+        for msg in history:
+            for part in msg.get("parts", []):
+                t = ""
+                if isinstance(part, dict):
+                    t = part.get("text", "")
+                elif hasattr(part, "text") and part.text:
+                    t = part.text
+                full_text += t + " "
+
+        # 주제 감지
+        topic = ""
+        if any(kw in full_text for kw in {"성적", "시험", "점수"}):
+            topic = "성적"
+        elif any(kw in full_text for kw in {"출결", "출석", "결석", "지각"}):
+            topic = "출결"
+        elif any(kw in full_text for kw in {"과제", "숙제"}):
+            topic = "과제"
+
+        # 기간 감지
+        period = ""
+        PERIOD_MAP = [
+            ({"최근 한달", "최근 한 달", "지난 한달", "지난 한 달"}, "최근 한 달간"),
+            ({"이번 달", "이번달"}, "이번 달"),
+            ({"지난달", "지난 달"}, "지난달"),
+            ({"이번 주", "이번주"}, "이번 주"),
+            ({"지난 주", "지난주", "저번 주", "저번주"}, "지난주"),
+        ]
+        for keywords, label in PERIOD_MAP:
+            if any(kw in full_text for kw in keywords):
+                period = label
+                break
+
+        if topic and period:
+            return f"{query_stripped} 학생의 {period} {topic}을 조회해줘"
+        if topic:
+            return f"{query_stripped} 학생의 {topic}을 조회해줘"
+        return query
 
     @staticmethod
     def determine_agent(
@@ -245,6 +471,76 @@ CONSULTING (일반 안내로 충분):
         except Exception as e:
             logger.error(f"Error in RouterAgent: {e}")
             return AgentType.CONSULTING
+
+    # 빠른 사전 필터 — 이 단어가 없으면 LLM 호출 없이 바로 통과
+    _VERIFY_HINT_KEYWORDS = {"본인", "인증", "확인", "verify"}
+
+    @staticmethod
+    def _classify_verify_intent(
+        query: str, model_name: str = "gemini-1.5-flash"
+    ) -> str:
+        """본인인증 관련 의도를 분류한다.
+
+        Returns:
+            "STATUS"  — 인증 완료 여부를 묻는 질문
+            "HOWTO"   — 인증 방법/절차를 묻는 질문
+            "OTHER"   — 인증과 무관
+        """
+        # 힌트 키워드 없으면 LLM 비용 없이 즉시 반환
+        if not any(kw in query for kw in RouterAgent._VERIFY_HINT_KEYWORDS):
+            return "OTHER"
+
+        _INSTRUCTION = """당신은 의도 분류기입니다.
+사용자 메시지를 읽고 아래 세 가지 중 하나만 출력하세요.
+
+STATUS  — 본인인증(본인확인/OTP)이 이미 완료됐는지 현재 상태를 확인하려는 질문
+예:
+- "나 본인인증 됐나?"
+- "내가 본인확인이 완료됐어?"
+- "아니 본인확인 됐냐고"
+- "인증 완료된 거 맞아?"
+- "본인인증 됐는지 알려주고 안됐으면 인증할래"
+- "나 인증 여부 확인해줘"
+- "인증이 됐는지 모르겠어"
+
+HOWTO   — 본인인증을 어떻게 하는지 방법/절차를 묻는 질문
+예:
+- "본인인증 어떻게 해?"
+- "인증 방법 알려줘"
+- "본인확인 어떻게 하나요?"
+- "인증은 어떻게 진행되나요?"
+
+OTHER   — 인증 상태/방법과 무관한 질문
+예:
+- "성적 알려줘"
+- "학원 위치 어떻게 돼요?"
+- "출결 확인해줘"
+
+STATUS, HOWTO, OTHER 중 하나만 출력하세요."""
+
+        try:
+            gen_params = _get_model_generation_params()
+            response = _get_genai_client().models.generate_content(
+                model=model_name,
+                contents=f'사용자 메시지: "{query}"',
+                config=types.GenerateContentConfig(
+                    system_instruction=_INSTRUCTION,
+                    temperature=0.0,
+                    **{
+                        k: v
+                        for k, v in gen_params.items()
+                        if k not in ["temperature", "thinking_config"]
+                    },
+                ),
+            )
+            result = response.text.strip().upper()
+            logger.info(f"[VerifyIntentCheck] '{query[:60]}' -> {result}")
+            if result in ("STATUS", "HOWTO"):
+                return result
+            return "OTHER"
+        except Exception as e:
+            logger.error(f"[VerifyIntentCheck] LLM call failed: {e}")
+            return "OTHER"
 
 
 class ChatService:
@@ -404,8 +700,13 @@ class ChatService:
             function_rules = """
 ## 함수 호출 규칙 (매우 중요)
 - **현재 사용자 메시지의 의도만** 분석하여 필요한 함수를 결정하세요. 이전 대화에서 호출했던 함수를 자동으로 다시 호출하지 마세요.
+- **자녀의 개인 정보(분반, 담당 선생님, 출결, 성적, 과제 등)에 대한 질문은 정보가 실시간으로 변경될 수 있으므로, 대화 기록에 기존 답변이 있더라도 반드시 관련 함수(get_my_student_profile 등)를 다시 호출하여 최신 데이터를 확인하세요.**
 - 사용자가 특정 주제, 정보, 지식에 대해 질문하면 **반드시 search_documents 함수를 호출**하세요. 일반 지식으로 답변하지 말고 문서를 먼저 검색하세요.
+- search_documents 호출 시 사용자 원문을 그대로 query에 넣지 말고, 문서 용어로 변환하세요. 예: '시작시간/여는 시간' → '운영시간', '영업시간' → '운영시간', '가격/비용' → '수강료'.
 - 인사, 감사, 작별 등 단순한 대화에만 함수를 호출하지 마세요.
+- **사용자의 질문이 짧거나 모호한 경우, 반드시 이전 대화 맥락을 참고하세요.**
+  - 직전 질문이 출결/성적/과제 조회(PERSONAL)였다면, 후속 짧은 질문도 같은 주제로 처리하세요.
+  - 예: "그 전 달은 어때?" → 직전이 출결 조회였다면 출결 조회 함수(get_my_attendance_summary 등) 호출
 """
 
         # Build core rules based on web_search_enabled
@@ -449,6 +750,128 @@ class ChatService:
 {custom_section}"""
 
         return instruction
+
+    @staticmethod
+    def _find_document_by_source(
+        db_session: Session, corpus_id: int, source_name: str, source_uri: str = ""
+    ):
+        """Robustly find a Document in the database based on RAG chunk source info.
+
+        RAG Engine 청크의 source_uri 구조:
+        - 원본 파일 URI (e.g. gs://bucket/tenants/.../uuid.pdf) → gcs_path 직접 매칭
+        - 내부 chunk URI (e.g. gs://rag-internal/...ragFiles/123/chunk.txt) → document_name 매칭
+        - 같은 버킷 .txt 변환 (e.g. gs://bucket/tenants/.../uuid.txt) → UUID stem 매칭
+        """
+        import re as _re
+        from ..models.corpus import Document
+
+        logger.info(
+            f"[Citation._find] corpus_id={corpus_id} source_name={source_name!r} source_uri={source_uri!r}"
+        )
+
+        # 1. source_uri → gcs_path 직접 매칭 (gs://bucket/path → path)
+        if source_uri:
+            parts = source_uri.split("/")  # ["gs:", "", "bucket", "path", ...]
+            if len(parts) >= 4:
+                candidate_path = "/".join(parts[3:])
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.gcs_path == candidate_path,
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ gcs_path direct: {candidate_path}")
+                    return doc
+
+            # 1b. source_uri에서 ragFiles/{id} 추출 → document_name 매칭
+            # e.g. "gs://internal/.../ragFiles/12345/..." → document_name LIKE "%ragFiles/12345%"
+            rag_file_match = _re.search(r"ragFiles/(\w+)", source_uri)
+            if rag_file_match:
+                rag_file_id = rag_file_match.group(1)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.document_name.like(f"%ragFiles/{rag_file_id}%"),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(
+                        f"[Citation._find] ✓ ragFiles ID from URI: {rag_file_id}"
+                    )
+                    return doc
+
+        # 2. source_name 기반 다중 전략 매칭
+        if source_name:
+            base_name = (
+                source_name.rsplit(".", 1)[0] if "." in source_name else source_name
+            )
+
+            # 2a. source_name에서 ragFiles/{id} 추출
+            rag_file_match_name = _re.search(r"ragFiles/(\w+)", source_name)
+            if rag_file_match_name:
+                rag_file_id = rag_file_match_name.group(1)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        Document.document_name.like(f"%ragFiles/{rag_file_id}%"),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(
+                        f"[Citation._find] ✓ ragFiles ID from name: {rag_file_id}"
+                    )
+                    return doc
+
+            # 패턴 목록: 전체이름, stem, .txt→.pdf 변환
+            search_patterns = [source_name, base_name]
+            if source_name.lower().endswith(".txt"):
+                search_patterns.append(base_name + ".pdf")
+                search_patterns.append(base_name + ".PDF")
+
+            for pattern in search_patterns:
+                if not pattern:
+                    continue
+                # 2b. 완전 일치
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        (Document.document_name == pattern)
+                        | (Document.display_name == pattern)
+                        | (Document.gcs_path == pattern),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ exact match pattern={pattern!r}")
+                    return doc
+
+                # 2c. LIKE 매칭 (UUID stem이 gcs_path 일부로 포함)
+                doc = (
+                    db_session.query(Document)
+                    .filter(
+                        Document.corpus_id == corpus_id,
+                        (Document.document_name.like(f"%{pattern}%"))
+                        | (Document.gcs_path.like(f"%{pattern}%"))
+                        | (Document.display_name.like(f"%{pattern}%")),
+                    )
+                    .first()
+                )
+                if doc:
+                    logger.info(f"[Citation._find] ✓ LIKE match pattern={pattern!r}")
+                    return doc
+
+        logger.warning(
+            f"[Citation._find] ✗ NOT FOUND corpus_id={corpus_id} source={source_name!r} uri={source_uri!r}"
+        )
+        return None
 
     @staticmethod
     def upload_file_for_chat(file_path: str, display_name: str, mime_type: str) -> dict:
@@ -516,7 +939,7 @@ class ChatService:
                             ],
                             rag_retrieval_config=rag.RagRetrievalConfig(
                                 top_k=10,
-                                filter=rag.Filter(vector_distance_threshold=0.75),
+                                filter=rag.Filter(vector_distance_threshold=0.85),
                             ),
                         ),
                     )
@@ -659,10 +1082,37 @@ class ChatService:
                         f"[Routing] Multi-turn context correction: {original_agent_type} -> PERSONAL "
                         f"(prior assistant msg referenced student data, current query is period supplement)"
                     )
+            # ACADEMIC fallback: 전용 도구가 없는 경로에서는 CONSULTING으로 처리
+            if agent_type == AgentType.ACADEMIC:
+                agent_type = AgentType.CONSULTING
+                logger.info(
+                    "[Routing] ACADEMIC -> CONSULTING fallback "
+                    "(no dedicated ACADEMIC tools in query_smart path)"
+                )
+
             logger.info(
                 f"[Routing] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
+
+            # --- [PERSONAL 이름 보충 쿼리 보강] ---
+            # is_personal_continuation이고 현재 쿼리가 이름만인 경우, history에서 주제/기간을 합쳐 보강
+            if is_personal_continuation and history:
+                _aug = RouterAgent._augment_personal_query(history, query)
+                if _aug != query:
+                    contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
+                    logger.info(
+                        f"[Routing] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'"
+                    )
+
+            # --- [CONSULTING HITL 후속 질문 감지] ---
+            is_hitl_follow_up = False
+            if agent_type == AgentType.CONSULTING and history:
+                if RouterAgent._is_hitl_follow_up_query(history, query):
+                    is_hitl_follow_up = True
+                    logger.info(
+                        "[Routing] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template"
+                    )
 
             # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
             if agent_type == AgentType.ACADEMIC and not is_authenticated:
@@ -687,8 +1137,43 @@ class ChatService:
                 "인증은 어떻게",
             }
             if is_authenticated and user_id and tenant_id and db_session:
-                if any(kw in query for kw in _VERIFY_QUERY_KEYWORDS):
-                    logger.info(f"Verify-query detected for user_id={user_id}")
+                _verify_intent = RouterAgent._classify_verify_intent(
+                    query, model_name=model_name
+                )
+                if _verify_intent == "STATUS":
+                    logger.info(f"Verify-status-query detected for user_id={user_id}")
+                    from ..models.user import User as _User
+                    from .policy_service import check_personal_access
+
+                    _user = db_session.query(_User).filter(_User.id == user_id).first()
+                    if _user:
+                        _policy = check_personal_access(
+                            db_session, _user, tenant_id, tenant_slug or ""
+                        )
+                        if _policy.allowed:
+                            return {
+                                "text": "네, 본인인증이 완료되어 있습니다. 성적, 출결, 과제 등 개인 정보를 조회하실 수 있습니다.",
+                                "used_calendar": False,
+                                "cited_sources": [],
+                                "verification_required": False,
+                                "verification_url": None,
+                            }
+                        else:
+                            denied = _policy.denied_response
+                            ver_url = getattr(denied, "verification_url", None)
+                            text = "아직 본인인증이 완료되지 않았습니다. 성적, 출결, 과제 정보를 조회하려면 본인 확인이 필요합니다."
+                            if ver_url:
+                                text += f"<!-- verify:{ver_url} -->"
+                            return {
+                                "text": text,
+                                "used_calendar": False,
+                                "cited_sources": [],
+                                "verification_required": bool(ver_url),
+                                "verification_url": ver_url,
+                            }
+
+                elif _verify_intent == "HOWTO":
+                    logger.info(f"Verify-howto-query detected for user_id={user_id}")
                     try:
                         from .verification_service import create_verification_token
                         from ..config import settings as _settings
@@ -696,14 +1181,14 @@ class ChatService:
                         _vtoken = create_verification_token(user_id, tenant_id)
                         _vurl = f"{_settings.APP_BASE_URL}/{tenant_slug or ''}/verify?token={_vtoken}"
                         return {
-                            "text": f"본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
+                            "text": "본인 확인은 아래 버튼을 통해 하실 수 있습니다.",
                             "used_calendar": False,
                             "cited_sources": [],
                             "verification_required": True,
                             "verification_url": _vurl,
                         }
                     except Exception as _ve:
-                        logger.error(f"Verify-query URL generation failed: {_ve}")
+                        logger.error(f"Verify-howto URL generation failed: {_ve}")
                         return {
                             "text": "본인 확인은 채팅 화면의 '본인 확인하기' 버튼을 통해 하실 수 있습니다. 먼저 개인 정보가 필요한 질문(예: '내 분반 알려줘')을 입력하시면 버튼이 표시됩니다.",
                             "used_calendar": False,
@@ -796,7 +1281,7 @@ class ChatService:
                             "properties": {
                                 "query": {
                                     "type": "string",
-                                    "description": "문서에서 검색할 질문",
+                                    "description": "문서에서 찾을 구체적인 내용이나 주제. 사용자의 원문 표현을 그대로 쓰지 말고 문서에서 사용하는 용어로 변환하세요. 동의어 변환 규칙: '시작시간/몇 시 시작/여는 시간/오픈' → '운영시간' 또는 '수업시간', '영업시간/닫는 시간/마감시간' → '운영시간', '가격/비용/얼마' → '수강료', '신청 방법/등록 방법' → '입학 절차'. 예: '운영시간', '수업 시간표', '입학 절차', '강사 소개', '수강료'.",
                                 }
                             },
                             "required": ["query"],
@@ -891,6 +1376,18 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+
+                if is_hitl_follow_up:
+                    agent_persona += (
+                        "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
+                        "현재 질문은 그 전달 방식을 묻는 후속 질문입니다.**\n"
+                        "- HITL 태그(<HITL>)를 추가하지 마세요.\n"
+                        "- '원장님께 전달드린 뒤 안내드리겠습니다' 같은 문구를 반복하지 마세요.\n"
+                        "- 대신 전달 방식을 자연스럽게 설명하세요: 채팅 대화 내용이 상담 요청으로 "
+                        "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
+                        "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
+                    )
+
             elif agent_type == AgentType.ACADEMIC:
                 agent_persona = (
                     "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
@@ -965,6 +1462,7 @@ class ChatService:
             function_responses = []
             used_calendar = False
             cited_sources = []
+            all_retrieved_chunks_for_citation = []
 
             for fc in function_calls:
                 func_name = fc.name
@@ -1068,7 +1566,7 @@ class ChatService:
                                                 rag_retrieval_config=rag.RagRetrievalConfig(
                                                     top_k=10,
                                                     filter=rag.Filter(
-                                                        vector_distance_threshold=0.75
+                                                        vector_distance_threshold=0.85
                                                     ),
                                                     hybrid_search=rag.HybridSearch(
                                                         alpha=0.5
@@ -1093,26 +1591,41 @@ class ChatService:
                                                 rag_retrieval_config=rag.RagRetrievalConfig(
                                                     top_k=10,
                                                     filter=rag.Filter(
-                                                        vector_distance_threshold=0.75
+                                                        vector_distance_threshold=0.85
                                                     ),
                                                 ),
                                             )
                                         for ctx in response.contexts.contexts:
                                             chunk_text = getattr(ctx, "text", "")
                                             if chunk_text:
-                                                source_name = getattr(
-                                                    ctx, "source_display_name", ""
+                                                ctx_source_uri = (
+                                                    getattr(ctx, "source_uri", "") or ""
+                                                )
+                                                source_name = (
+                                                    getattr(
+                                                        ctx, "source_display_name", ""
+                                                    )
+                                                    or ""
+                                                )
+                                                if not source_name and ctx_source_uri:
+                                                    # GCS URI → filename (gs://bucket/path/file.pdf → file.pdf)
+                                                    source_name = ctx_source_uri.rstrip(
+                                                        "/"
+                                                    ).split("/")[-1]
+                                                logger.debug(
+                                                    f"[Citation] ctx source_display_name={getattr(ctx, 'source_display_name', 'N/A')!r} "
+                                                    f"source_uri={ctx_source_uri!r} resolved_source={source_name!r} "
+                                                    f"score={getattr(ctx, 'score', 'N/A')}"
                                                 )
                                                 all_chunks.append(
                                                     {
                                                         "text": chunk_text,
                                                         "source": source_name,
-                                                        "source_uri": getattr(
-                                                            ctx, "source_uri", ""
-                                                        ),
+                                                        "source_uri": ctx_source_uri,
                                                         "score": getattr(
                                                             ctx, "score", 0
-                                                        ),
+                                                        )
+                                                        or 0,
                                                         "corpus": corpus_name_item,
                                                     }
                                                 )
@@ -1124,88 +1637,93 @@ class ChatService:
                             # Sort by relevance score (lower = better)
                             all_chunks.sort(key=lambda c: c["score"])
 
-                            # Build context string from top chunks
-                            if all_chunks:
-                                context_parts = []
-                                for chunk in all_chunks[:10]:
-                                    context_parts.append(
-                                        f"[출처: {chunk['source']}]\n{chunk['text']}"
-                                    )
-                                result_str = "\n\n---\n\n".join(context_parts)
-                            else:
-                                result_str = ""
-
                             logger.info(
-                                f"RAG retrieval across {len(corpus_names)} corpora: {len(all_chunks)} chunks found"
+                                f"[Citation] RAG retrieval: {len(all_chunks)} chunks across {len(corpus_names)} corpora"
                             )
-                            for i, chunk in enumerate(all_chunks[:5]):
+                            for i, chunk in enumerate(all_chunks[:10]):
                                 logger.info(
-                                    f"  Chunk[{i}] score={chunk['score']:.4f} source={chunk['source']} text={chunk['text'][:150]}..."
+                                    f"[Citation]   Chunk[{i}] score={chunk['score']:.4f} "
+                                    f"source={chunk['source']!r} uri={chunk.get('source_uri','')!r} "
+                                    f"text={chunk['text'][:80]}..."
                                 )
 
-                            # Build citation from retrieved chunks
+                            # --- Pre-resolve chunk → Document display_name ---
+                            # UUID 기반 chunk source를 display_name으로 변환하여
+                            # LLM에게 의미 있는 출처명을 제공한다.
                             if db_session and all_chunks:
                                 from ..models.corpus import (
                                     Corpus as CorpusModel,
-                                    Document,
+                                    Document as _DocModel,
                                 )
 
-                                # Use the best chunk's source for citation
-                                best_chunk = all_chunks[0]
-                                best_corpus = (
-                                    db_session.query(CorpusModel)
-                                    .filter(
-                                        CorpusModel.corpus_name == best_chunk["corpus"]
-                                    )
-                                    .first()
-                                )
-                                if best_corpus:
-                                    is_public = (
-                                        best_corpus.is_public
-                                        if best_corpus.is_public is not None
-                                        else True
-                                    )
-                                    if is_public:
-                                        # Find document by source display name
-                                        source_name = best_chunk["source"]
-                                        doc = (
-                                            db_session.query(Document)
-                                            .filter(
-                                                Document.corpus_id == best_corpus.id,
-                                                Document.gcs_path.like(
-                                                    f"%{source_name}"
-                                                ),
-                                            )
+                                _corpus_cache: dict = (
+                                    {}
+                                )  # corpus_name → (CorpusModel | None)
+                                for _ch in all_chunks:
+                                    _cname = _ch["corpus"]
+                                    if _cname not in _corpus_cache:
+                                        _corpus_cache[_cname] = (
+                                            db_session.query(CorpusModel)
+                                            .filter(CorpusModel.corpus_name == _cname)
                                             .first()
                                         )
-                                        if not doc:
-                                            doc = (
-                                                db_session.query(Document)
-                                                .filter(
-                                                    Document.corpus_id
-                                                    == best_corpus.id,
-                                                    Document.display_name
-                                                    == source_name,
-                                                )
-                                                .first()
+                                    _corp = _corpus_cache[_cname]
+                                    if _corp:
+                                        _resolved_doc = (
+                                            ChatService._find_document_by_source(
+                                                db_session=db_session,
+                                                corpus_id=_corp.id,
+                                                source_name=_ch["source"],
+                                                source_uri=_ch.get("source_uri", ""),
                                             )
-                                        if doc:
-                                            cited_sources.append(
-                                                {
-                                                    "title": doc.display_name,
-                                                    "uri": None,
-                                                    "_corpus_id": best_corpus.id,
-                                                    "_corpus_is_public": True,
-                                                    "_corpus_name": best_corpus.display_name,
-                                                }
-                                            )
-                                            logger.info(
-                                                f"Citation from retrieval: {doc.display_name} ({best_corpus.display_name})"
-                                            )
-                                    else:
-                                        logger.info(
-                                            "Best corpus is private, no citation link provided"
                                         )
+                                        _ch["display_name"] = (
+                                            _resolved_doc.display_name
+                                            if _resolved_doc
+                                            else _ch["source"]
+                                        )
+                                        _ch["_doc"] = _resolved_doc
+                                        _ch["_corpus_id"] = _corp.id
+                                        _ch["_corpus_is_public"] = (
+                                            _corp.is_public
+                                            if _corp.is_public is not None
+                                            else True
+                                        )
+                                        _ch["_corpus_display_name"] = _corp.display_name
+                                    else:
+                                        _ch["display_name"] = _ch["source"]
+                                        _ch["_doc"] = None
+
+                            # Build context with resolved display_name; append ##SOURCE directive
+                            if all_chunks:
+                                context_parts = []
+                                for chunk in all_chunks[:10]:
+                                    label = chunk.get("display_name") or chunk["source"]
+                                    context_parts.append(
+                                        f"[출처: {label}]\n{chunk['text']}"
+                                    )
+                                unique_labels = list(
+                                    dict.fromkeys(
+                                        c.get("display_name") or c["source"]
+                                        for c in all_chunks[:10]
+                                    )
+                                )
+                                source_list_str = ", ".join(unique_labels)
+                                result_str = (
+                                    "\n\n---\n\n".join(context_parts)
+                                    + f"\n\n[시스템 지시] 위 검색 결과를 참고하여 답변하세요. "
+                                    f"답변 마지막 줄에 반드시 정확히 다음 형식으로 주요 참고 파일명을 하나 표기하세요: "
+                                    f"##SOURCE:파일명\n"
+                                    f"사용 가능한 파일명 목록: {source_list_str}\n"
+                                    f"(이 지시와 ##SOURCE: 표기는 시스템이 자동 처리하므로 사용자 답변에 포함하지 마세요.)"
+                                )
+                            else:
+                                result_str = ""
+
+                            # Save chunks for post-hoc citation correction after synthesis
+                            all_retrieved_chunks_for_citation = list(all_chunks)
+
+                            # citation determined post-synthesis (see ##SOURCE correction block below)
 
                             # Record retrieval usage
                             if db_session and tenant_id:
@@ -1290,7 +1808,9 @@ class ChatService:
                                 f"{_base}/api/admin/question-bank/preview/{token}"
                             )
                         except Exception as _pe:
-                            logger.warning(f"[QuestionBank] preview generation failed: {_pe}")
+                            logger.warning(
+                                f"[QuestionBank] preview generation failed: {_pe}"
+                            )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"알 수 없는 함수: {func_name}"
@@ -1351,48 +1871,7 @@ class ChatService:
                     session_id,
                 )
 
-            # Resolve the single cited source - generate signed URL
-            if cited_sources:
-                source = cited_sources[0]
-                corpus_id = source.pop("_corpus_id", None)
-                source.pop("_corpus_is_public", None)
-                source.pop("_corpus_name", None)
-
-                if db_session and corpus_id:
-                    try:
-                        from ..models.corpus import Document
-                        from ..services import gcs_service
-
-                        doc = (
-                            db_session.query(Document)
-                            .filter(
-                                Document.display_name == source["title"],
-                                Document.corpus_id == corpus_id,
-                                Document.gcs_path.isnot(None),
-                            )
-                            .first()
-                        )
-                        if (
-                            doc
-                            and doc.gcs_path
-                            and gcs_service.is_configured(
-                                tenant_id=doc.tenant_id, db=db_session
-                            )
-                        ):
-                            signed_url = gcs_service.generate_signed_url(
-                                doc.gcs_path,
-                                expiration_minutes=60,
-                                tenant_id=doc.tenant_id,
-                                db=db_session,
-                            )
-                            if signed_url:
-                                source["uri"] = signed_url
-                    except Exception as e:
-                        logger.warning(f"Error resolving source link: {e}")
-
-                logger.info(
-                    f"Final cited sources: {len(cited_sources)} (top: {cited_sources[0]['title'] if cited_sources else 'none'})"
-                )
+            # (Signed URL resolution moved to after citation correction below)
 
             logger.info("Smart query completed successfully")
             logger.info(
@@ -1453,6 +1932,155 @@ class ChatService:
                     if retry_response.text
                     else "답변을 생성할 수 없습니다. 다시 시도해 주세요."
                 )
+
+            # Determine citation from synthesized answer (post-hoc)
+            import re as _re
+
+            # Always strip ##SOURCE tag from user-visible text
+            _source_match = _re.search(r"##SOURCE:(.+?)(?:\n|$)", final_text)
+            final_text = _re.sub(r"\n?##SOURCE:.+?(?:\n|$)", "", final_text).strip()
+            _llm_source = _source_match.group(1).strip() if _source_match else None
+
+            logger.info(
+                f"[Citation] ##SOURCE={_llm_source!r} | chunks={len(all_retrieved_chunks_for_citation)}"
+            )
+
+            # Reset — citation determined entirely here, not from initial pre-synthesis guess
+            cited_sources = []
+
+            if all_retrieved_chunks_for_citation:
+                _resolved_chunk = None
+
+                if _llm_source:
+                    # Case 1: LLM explicitly named a source via ##SOURCE:
+                    # LLM sees display_name in context, so match against display_name first
+                    for _ch in all_retrieved_chunks_for_citation:
+                        _ch_display = _ch.get("display_name") or ""
+                        _ch_source = _ch.get("source") or ""
+                        if (
+                            (_ch_display and _ch_display == _llm_source)
+                            or (_ch_source and _ch_source == _llm_source)
+                            or (_ch_display and _llm_source in _ch_display)
+                            or (_ch_source and _llm_source in _ch_source)
+                        ):
+                            _resolved_chunk = _ch
+                            break
+                    if _resolved_chunk:
+                        logger.info(
+                            f"[Citation] ##SOURCE matched → {_resolved_chunk.get('display_name')!r}"
+                        )
+                    else:
+                        logger.warning(
+                            f"[Citation] ##SOURCE '{_llm_source}' — no matching chunk; reference cleared"
+                        )
+                else:
+                    # Case 2: No ##SOURCE — word-level overlap between answer and each chunk
+                    # Exact phrase matching fails when LLM paraphrases; word overlap is more robust
+                    _answer_words = set(
+                        w
+                        for w in _re.split(
+                            r"[\s\.,。!\?\(\)\[\]\{\}:;\"\'·\-]+", final_text
+                        )
+                        if len(w) >= 2 and not w.isdigit()
+                    )
+                    _best_word_overlap = 0
+                    for _ch in all_retrieved_chunks_for_citation:
+                        _chunk_text = _ch.get("text", "")
+                        # count how many answer words (or their substrings) appear in the chunk
+                        _word_overlap = sum(
+                            1 for w in _answer_words if w in _chunk_text
+                        )
+                        if _word_overlap > _best_word_overlap:
+                            _best_word_overlap = _word_overlap
+                            _resolved_chunk = _ch
+                    # Require at least 2 matching words to prevent random false matches
+                    _min_words = 2
+                    if _resolved_chunk and _best_word_overlap >= _min_words:
+                        logger.info(
+                            f"[Citation] Content-matched → {_resolved_chunk.get('display_name')!r} "
+                            f"(word_overlap={_best_word_overlap})"
+                        )
+                    else:
+                        logger.info(
+                            f"[Citation] No content-matching chunk (best={_best_word_overlap} words < {_min_words}); reference cleared"
+                        )
+                        _resolved_chunk = None
+
+                # Build citation entry from pre-resolved doc on the winning chunk
+                if _resolved_chunk:
+                    _pre_doc = _resolved_chunk.get("_doc")
+                    _pre_corpus_id = _resolved_chunk.get("_corpus_id")
+                    _pre_corpus_is_public = _resolved_chunk.get(
+                        "_corpus_is_public", True
+                    )
+                    _pre_corpus_display = _resolved_chunk.get(
+                        "_corpus_display_name", ""
+                    )
+                    if _pre_doc and _pre_corpus_id and _pre_corpus_is_public:
+                        cited_sources.append(
+                            {
+                                "title": _pre_doc.display_name,
+                                "uri": None,
+                                "_corpus_id": _pre_corpus_id,
+                                "_corpus_is_public": True,
+                                "_corpus_name": _pre_corpus_display,
+                            }
+                        )
+                        logger.info(
+                            f"[Citation] Final citation: {_pre_doc.display_name}"
+                        )
+                    else:
+                        logger.info(
+                            "[Citation] Chunk resolved but _doc missing or private; reference cleared"
+                        )
+
+            # Resolve signed URL for the (possibly corrected) citation
+            if cited_sources and db_session:
+                _src = cited_sources[0]
+                _cid = _src.pop("_corpus_id", None)
+                _src.pop("_corpus_is_public", None)
+                _src.pop("_corpus_name", None)
+                if _cid and not _src.get("uri"):
+                    try:
+                        from ..models.corpus import Document as _Doc2
+                        from ..services import gcs_service
+
+                        _doc2 = (
+                            db_session.query(_Doc2)
+                            .filter(
+                                _Doc2.corpus_id == _cid,
+                                _Doc2.gcs_path.isnot(None),
+                                _Doc2.display_name == _src["title"],
+                            )
+                            .first()
+                        )
+                        if not _doc2:
+                            _doc2 = (
+                                db_session.query(_Doc2)
+                                .filter(
+                                    _Doc2.corpus_id == _cid,
+                                    _Doc2.gcs_path.isnot(None),
+                                    _Doc2.gcs_path.like(f"%{_src['title']}"),
+                                )
+                                .first()
+                            )
+                        if _doc2 and gcs_service.is_configured(
+                            tenant_id=_doc2.tenant_id, db=db_session
+                        ):
+                            _surl = gcs_service.generate_signed_url(
+                                _doc2.gcs_path,
+                                expiration_minutes=60,
+                                tenant_id=_doc2.tenant_id,
+                                db=db_session,
+                            )
+                            if _surl:
+                                _src["uri"] = _surl
+                    except Exception as _e:
+                        logger.warning(f"[Citation] Signed URL generation failed: {_e}")
+
+            logger.info(
+                f"[Citation] Final cited_sources: {[s.get('title') for s in cited_sources]}"
+            )
 
             return {
                 "text": filter_pii(final_text),
@@ -1519,6 +2147,23 @@ class ChatService:
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
             )
 
+            # --- [PERSONAL 이름 보충 쿼리 보강] ---
+            if is_personal_continuation and history:
+                _aug = RouterAgent._augment_personal_query(history, query)
+                if _aug != query:
+                    contents = history + [{"role": "user", "parts": [{"text": _aug}]}]
+                    logger.info(
+                        f"[Routing/Stream] Personal query augmented: '{query[:30]}' -> '{_aug[:80]}'"
+                    )
+
+            # --- [CONSULTING HITL 후속 질문 감지] ---
+            is_hitl_follow_up = False
+            if agent_type == AgentType.CONSULTING and history:
+                if RouterAgent._is_hitl_follow_up_query(history, query):
+                    is_hitl_follow_up = True
+                    logger.info(
+                        "[Routing/Stream] HITL follow-up detected: will explain delivery mechanism instead of repeating HITL template"
+                    )
             # --- [ACADEMIC 인증 가드] 로그인 사용자만 문제 제공 서비스 이용 가능 ---
             if agent_type == AgentType.ACADEMIC and not is_authenticated:
                 yield {
@@ -1562,7 +2207,7 @@ class ChatService:
                             "properties": {
                                 "query": {
                                     "type": "string",
-                                    "description": "문서에서 검색할 질문",
+                                    "description": "문서에서 찾을 구체적인 내용이나 주제. 사용자의 원문 표현을 그대로 쓰지 말고 문서에서 사용하는 용어로 변환하세요. 동의어 변환 규칙: '시작시간/몇 시 시작/여는 시간/오픈' → '운영시간' 또는 '수업시간', '영업시간/닫는 시간/마감시간' → '운영시간', '가격/비용/얼마' → '수강료', '신청 방법/등록 방법' → '입학 절차'. 예: '운영시간', '수업 시간표', '입학 절차', '강사 소개', '수강료'.",
                                 }
                             },
                             "required": ["query"],
@@ -1656,6 +2301,18 @@ class ChatService:
                     )
             elif agent_type == AgentType.CONSULTING:
                 agent_persona = f"\n## 배정된 역할: 입학 상담 에이전트\n- 당신은 학원 입학 및 일반 안내를 담당하는 상담 실장입니다.\n- 학원 매뉴얼을 기반으로 전문적이고 설득력 있게 답변하세요.\n- 상담이 무르익으면 '레벨 테스트'를 권유하세요."
+
+                if is_hitl_follow_up:
+                    agent_persona += (
+                        "\n\n**[HITL 후속 질문 처리] 이전 응답에서 운영자/원장님께 전달 안내를 했고, "
+                        "현재 질문은 그 전달 방식을 묻는 후속 질문입니다.**\n"
+                        "- HITL 태그(<HITL>)를 추가하지 마세요.\n"
+                        "- '원장님께 전달드린 뒤 안내드리겠습니다' 같은 문구를 반복하지 마세요.\n"
+                        "- 대신 전달 방식을 자연스럽게 설명하세요: 채팅 대화 내용이 상담 요청으로 "
+                        "학원 운영자에게 전달되며, 원장님 또는 담당 선생님이 확인 후 안내드리는 방식임을 설명하세요.\n"
+                        "- 문서 검색 결과가 없어도 이 설명만으로 충분합니다."
+                    )
+
             elif agent_type == AgentType.ACADEMIC:
                 agent_persona = (
                     "\n## 배정된 역할: 학습 문제 제공 에이전트\n"
@@ -1764,17 +2421,24 @@ class ChatService:
                                     rag_retrieval_config=rag.RagRetrievalConfig(
                                         top_k=10,
                                         filter=rag.Filter(
-                                            vector_distance_threshold=0.75
+                                            vector_distance_threshold=0.85
                                         ),
                                     ),
                                 )
                                 for ctx in rag_response.contexts.contexts:
+                                    _s_uri = getattr(ctx, "source_uri", "") or ""
+                                    _s_name = (
+                                        getattr(ctx, "source_display_name", "") or ""
+                                    )
+                                    if not _s_name and _s_uri:
+                                        _s_name = _s_uri.rstrip("/").split("/")[-1]
                                     all_chunks.append(
                                         {
                                             "text": ctx.text,
-                                            "source": ctx.source_display_name,
+                                            "source": _s_name,
+                                            "source_uri": _s_uri,
                                             "corpus": corpus_name_item,
-                                            "score": ctx.score,
+                                            "score": getattr(ctx, "score", 0) or 0,
                                         }
                                     )
                             except:
@@ -1787,20 +2451,46 @@ class ChatService:
                             ]
                         )
 
-                        # Handle citations (simplified)
+                        # Handle citations: use source with lowest average score (most relevant)
                         if all_chunks and db_session:
                             from ..models.corpus import Corpus as CorpusModel, Document
+                            from collections import defaultdict
 
-                            best_chunk = all_chunks[0]
+                            _src_scores: dict = defaultdict(list)
+                            _src_corpus: dict = {}
+                            for _ch in all_chunks:
+                                _src_scores[_ch["source"]].append(_ch["score"])
+                                _src_corpus[_ch["source"]] = _ch["corpus"]
+
+                            _best_src = min(
+                                _src_scores.items(),
+                                key=lambda x: sum(x[1]) / len(x[1]),
+                            )[0]
+                            best_chunk = next(
+                                c for c in all_chunks if c["source"] == _best_src
+                            )
                             best_corpus = (
                                 db_session.query(CorpusModel)
                                 .filter(CorpusModel.corpus_name == best_chunk["corpus"])
                                 .first()
                             )
                             if best_corpus and best_corpus.is_public:
-                                cited_sources.append(
-                                    {"title": best_chunk["source"], "uri": None}
+                                # Use robust lookup for citation display name
+                                _doc = ChatService._find_document_by_source(
+                                    db_session=db_session,
+                                    corpus_id=best_corpus.id,
+                                    source_name=best_chunk["source"],
+                                    source_uri=best_chunk.get("source_uri", ""),
                                 )
+                                if _doc:
+                                    cited_sources.append(
+                                        {"title": _doc.display_name, "uri": None}
+                                    )
+                                else:
+                                    # Fallback to source name if DB lookup fails, but at least we tried
+                                    cited_sources.append(
+                                        {"title": best_chunk["source"], "uri": None}
+                                    )
                     # [RAG Logic Copy-End]
 
                 elif func_name == "search_web":
@@ -1855,7 +2545,9 @@ class ChatService:
                                 f"{_base}/api/admin/question-bank/preview/{token}"
                             )
                         except Exception as _pe:
-                            logger.warning(f"[QuestionBank/Stream] preview generation failed: {_pe}")
+                            logger.warning(
+                                f"[QuestionBank/Stream] preview generation failed: {_pe}"
+                            )
                     result_str = json.dumps(result, ensure_ascii=False, default=str)
                 else:
                     result_str = f"Unknown function: {func_name}"

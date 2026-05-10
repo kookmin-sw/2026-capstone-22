@@ -109,6 +109,8 @@ class Student(Base):
         "AttendanceRecord", back_populates="student", cascade="all, delete-orphan"
     )
     assignment_submissions = relationship(
-        "AssignmentSubmission", back_populates="student"
+        "AssignmentSubmission", back_populates="student", cascade="all, delete-orphan"
     )
-    exam_results = relationship("ExamResult", back_populates="student")
+    exam_results = relationship(
+        "ExamResult", back_populates="student", cascade="all, delete-orphan"
+    )

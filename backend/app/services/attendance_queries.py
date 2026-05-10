@@ -16,6 +16,37 @@ class MultipleStudentsError(Exception):
     pass
 
 
+def get_students_by_user(db: Session, tenant_id: int, user_id: int) -> list:
+    """학부모 user_id로 연결된 활성 학생 목록을 반환한다 (0~N명).
+
+    MultipleStudentsError를 발생시키지 않으며 항상 list를 반환한다.
+    """
+    links = (
+        db.query(StudentAccessLink)
+        .filter(
+            StudentAccessLink.tenant_id == tenant_id,
+            StudentAccessLink.user_id == user_id,
+            StudentAccessLink.status == AccessLinkStatus.active,
+        )
+        .all()
+    )
+    if not links:
+        return []
+
+    student_ids = [link.student_id for link in links]
+    return (
+        db.query(Student)
+        .options(joinedload(Student.student_class))
+        .filter(
+            Student.id.in_(student_ids),
+            Student.tenant_id == tenant_id,
+            Student.status == StudentStatus.active,
+        )
+        .populate_existing()
+        .all()
+    )
+
+
 def get_student_by_user(db: Session, tenant_id: int, user_id: int) -> Optional[Student]:
     """학부모 user_id로 연결된 학생 1명을 반환한다.
 
@@ -24,24 +55,39 @@ def get_student_by_user(db: Session, tenant_id: int, user_id: int) -> Optional[S
     Raises:
         MultipleStudentsError: if two or more active links exist.
     """
+    # student_id 목록만 먼저 조회 — JOIN으로 Student를 identity map에 올리지 않는다
     links = (
         db.query(StudentAccessLink)
-        .join(Student, StudentAccessLink.student_id == Student.id)
         .filter(
             StudentAccessLink.tenant_id == tenant_id,
             StudentAccessLink.user_id == user_id,
             StudentAccessLink.status == AccessLinkStatus.active,
-            Student.status == StudentStatus.active,
         )
         .all()
     )
 
     if len(links) == 0:
         return None
-    if len(links) == 1:
-        return links[0].student
+
+    # active student_id 필터링
+    student_ids = [link.student_id for link in links]
+    active_students = (
+        db.query(Student)
+        .options(joinedload(Student.student_class))
+        .filter(
+            Student.id.in_(student_ids),
+            Student.status == StudentStatus.active,
+        )
+        .populate_existing()
+        .all()
+    )
+
+    if len(active_students) == 0:
+        return None
+    if len(active_students) == 1:
+        return active_students[0]
     raise MultipleStudentsError(
-        f"user_id={user_id} has {len(links)} active student links"
+        f"user_id={user_id} has {len(active_students)} active student links"
     )
 
 
