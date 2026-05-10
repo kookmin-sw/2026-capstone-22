@@ -146,6 +146,33 @@ export default function ExamAnalysisPage() {
     return () => clearInterval(id);
   }, [subTab, selectedPaper, fetchHistory]);
 
+  // ── 검수 카운트 로딩 (이력 탭 진입 또는 결과 뷰에서 복귀 시) ────────────────
+  useEffect(() => {
+    if (subTab !== 1 || selectedPaper !== null) return;
+    const donePapers = history.filter(p => p.status === 'done');
+    if (donePapers.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const counts = {};
+      await Promise.all(
+        donePapers.map(async (p) => {
+          try {
+            const res = await questionBankAPI.listItems(p.id);
+            if (!cancelled) {
+              counts[p.id] = {
+                reviewed: res.data.filter(i => i.review_status === 'reviewed').length,
+                pending:  res.data.filter(i => i.review_status !== 'reviewed').length,
+              };
+            }
+          } catch { /* ignore */ }
+        })
+      );
+      if (!cancelled) setReviewCounts(counts);
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subTab, selectedPaper]);
+
   // ── 문제은행 fetch ────────────────────────────────────────────────────────
   const loadBankItems = useCallback(async () => {
     setBankLoading(true);
