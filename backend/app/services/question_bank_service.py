@@ -72,15 +72,13 @@ _JSON_SCHEMA = """
     {{
       "number": <문항 번호 정수>,
       "area": "<문법 | 어휘 | 독해 | 듣기 | 서술형>",
-      "problem_type": "<STEP 2에서 선택>",
-      "concept_tag": "<STEP 3에서 선택, 없으면 null>",
       "difficulty": "<하 | 중 | 상>",
       "is_listening": <area가 "듣기"이면 true, 아니면 false>,
-      "score_point": <배점 정수>,
+      "score_point": <배점 정수 또는 null>,
       "question_body": "<문항 지문 또는 질문 텍스트>",
       "choices": ["①...", "②...", "③...", "④...", "⑤..."],
-      "answer": "<객관식: 정답 번호 기호만(예: '③'). 서술형/듣기: null. 반드시 10자 이하>",
-      "reason": "<40자 이내 자연어 1문장. 난이도 판단 핵심 이유만. 예: 중3 기준, 빈칸에서 글 전체 흐름 추론이 필요하므로 상>"
+      "answer": "<객관식: 정답 번호 기호만(예: '③'), 10자 이하. 서술형/듣기: null>",
+      "reason": "<40자 이내 자연어 1문장. 난이도 판단 핵심 이유만>"
     }}
   ]
 }}
@@ -105,17 +103,6 @@ _PDF_FALLBACK_PROMPT_TEMPLATE = (
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
 
-def _taxonomy_args() -> dict:
-    pt_lines, ct_lines = [], []
-    for area, defn in ENGLISH_TAXONOMY.items():
-        pt_lines.append(f"■ {area}: {', '.join(defn['problem_types'])}")
-        ct_lines.append(f"■ {area}: {', '.join(defn['concept_tags'])}")
-    return {
-        "problem_type_taxonomy": "\n".join(pt_lines),
-        "concept_tag_taxonomy": "\n".join(ct_lines),
-    }
-
-
 def _grade_context(grade: str | None) -> str:
     return f"대상 학년: {grade}" if grade else "대상 학년 정보 없음 (중등 평균 기준 적용)"
 
@@ -133,14 +120,12 @@ def _build_blocks_prompt(blocks: list[dict], grade: str | None = None) -> str:
     return _BLOCK_PROMPT_TEMPLATE.format(
         blocks_text=blocks_text,
         grade_context=_grade_context(grade),
-        **_taxonomy_args(),
     )
 
 
 def _build_pdf_fallback_prompt(grade: str | None = None) -> str:
     return _PDF_FALLBACK_PROMPT_TEMPLATE.format(
         grade_context=_grade_context(grade),
-        **_taxonomy_args(),
     )
 
 
