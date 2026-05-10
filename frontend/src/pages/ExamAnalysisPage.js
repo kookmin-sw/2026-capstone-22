@@ -800,22 +800,6 @@ ${answerSection}
                         <TableCell sx={{ ...cellSx, color: '#52525B', fontSize: '0.75rem' }}>{uploadedAt}</TableCell>
                         <TableCell sx={{ ...cellSx, whiteSpace: 'nowrap' }}>
                           <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
-                            {reviewCounts[paper.id] && (
-                              <>
-                                <Chip
-                                  label={`완료 ${reviewCounts[paper.id].reviewed}`}
-                                  size="small"
-                                  sx={{ height: 18, bgcolor: 'rgba(34,197,94,0.12)', color: '#86efac', fontSize: '0.6rem', border: '1px solid rgba(34,197,94,0.2)', '& .MuiChip-label': { px: 0.75 } }}
-                                />
-                                {reviewCounts[paper.id].pending > 0 && (
-                                  <Chip
-                                    label={`대기 ${reviewCounts[paper.id].pending}`}
-                                    size="small"
-                                    sx={{ height: 18, bgcolor: 'rgba(234,179,8,0.12)', color: '#fde047', fontSize: '0.6rem', border: '1px solid rgba(234,179,8,0.2)', '& .MuiChip-label': { px: 0.75 } }}
-                                  />
-                                )}
-                              </>
-                            )}
                             <Button size="small" disabled={!canView} onClick={() => handleViewResult(paper)}
                               sx={{
                                 fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
@@ -837,6 +821,22 @@ ${answerSection}
                               }}>
                               삭제
                             </Button>
+                            {reviewCounts[paper.id] && (
+                              <>
+                                <Chip
+                                  label={`완료 ${reviewCounts[paper.id].reviewed}`}
+                                  size="small"
+                                  sx={{ height: 18, bgcolor: 'rgba(34,197,94,0.12)', color: '#86efac', fontSize: '0.6rem', border: '1px solid rgba(34,197,94,0.2)', '& .MuiChip-label': { px: 0.75 } }}
+                                />
+                                {reviewCounts[paper.id].pending > 0 && (
+                                  <Chip
+                                    label={`대기 ${reviewCounts[paper.id].pending}`}
+                                    size="small"
+                                    sx={{ height: 18, bgcolor: 'rgba(234,179,8,0.12)', color: '#fde047', fontSize: '0.6rem', border: '1px solid rgba(234,179,8,0.2)', '& .MuiChip-label': { px: 0.75 } }}
+                                  />
+                                )}
+                              </>
+                            )}
                           </Box>
                         </TableCell>
                       </TableRow>
