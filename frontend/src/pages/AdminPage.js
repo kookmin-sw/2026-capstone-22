@@ -1002,7 +1002,6 @@ function HITLPanel() {
   const [resolving, setResolving] = useState({}); // { id: true/false }
   const [expandedHitl, setExpandedHitl] = useState({}); // { [id]: bool }
   const [replyDraft, setReplyDraft] = useState({}); // { [id]: string }
-  const [replyOpen, setReplyOpen] = useState({}); // { [id]: bool }
   const [replying, setReplying] = useState({}); // { [id]: bool }
 
   const toggleExpand = (id) =>
@@ -1043,7 +1042,6 @@ function HITLPanel() {
     try {
       await hitlAPI.reply(id, { message: text });
       setReplyDraft((prev) => { const n = { ...prev }; delete n[id]; return n; });
-      setReplyOpen((prev) => { const n = { ...prev }; delete n[id]; return n; });
       loadHITL();
     } catch (err) {
       const detail = err.response?.data?.detail || err.message;
@@ -1186,85 +1184,109 @@ function HITLPanel() {
                 {/* 완료 처리 / 답변 후 완료 버튼 영역 */}
                 {item.status === 'pending' && (
                   <Box>
-                    {replyOpen[item.id] && (
-                      <Box sx={{ mb: 1.5 }}>
-                        <TextField
-                          multiline
-                          minRows={3}
-                          fullWidth
-                          placeholder="사용자에게 전달할 답변을 입력하세요..."
-                          value={replyDraft[item.id] || ''}
-                          onChange={(e) =>
-                            setReplyDraft((prev) => ({ ...prev, [item.id]: e.target.value }))
-                          }
-                          disabled={replying[item.id]}
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              bgcolor: '#09090B',
-                              borderRadius: '10px',
-                              fontSize: '0.875rem',
-                              color: 'rgba(255,255,255,0.85)',
-                              '& fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
-                              '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
-                              '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
-                            },
-                          }}
-                        />
-                      </Box>
-                    )}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                      {/* 답변 후 완료 토글 버튼 */}
-                      <Button
-                        variant="outlined"
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        flexWrap: { xs: 'wrap', md: 'nowrap' },
+                        gap: 1,
+                      }}
+                    >
+                      <TextField
                         size="small"
-                        disabled={!item.session_id}
-                        title={!item.session_id ? '연결된 채팅 세션이 없습니다' : ''}
-                        onClick={() =>
-                          setReplyOpen((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
+                        placeholder={
+                          item.session_id
+                            ? '사용자에게 전달할 답변을 입력하세요...'
+                            : '연결된 채팅 세션이 없어 답변을 보낼 수 없습니다.'
                         }
+                        value={replyDraft[item.id] || ''}
+                        onChange={(e) =>
+                          setReplyDraft((prev) => ({ ...prev, [item.id]: e.target.value }))
+                        }
+                        disabled={replying[item.id] || !item.session_id}
                         sx={{
-                          borderColor: 'rgba(167,139,250,0.3)', color: '#a78bfa',
-                          borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
-                          '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
-                          '&.Mui-disabled': { opacity: 0.3 },
+                          flex: '1 1 0',
+                          minWidth: { xs: '100%', md: 0 },
+                          '& .MuiOutlinedInput-root': {
+                            bgcolor: '#09090B',
+                            borderRadius: '10px',
+                            fontSize: '0.875rem',
+                            color: 'rgba(255,255,255,0.85)',
+                            minHeight: 40,
+                            '& fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
+                            '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
+                            '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                            '&.Mui-disabled': {
+                              color: 'rgba(255,255,255,0.35)',
+                            },
+                            '&.Mui-disabled fieldset': {
+                              borderColor: 'rgba(255,255,255,0.08)',
+                            },
+                          },
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
                         }}
                       >
-                        {replyOpen[item.id] ? '취소' : '답변 후 완료'}
-                      </Button>
-
-                      {/* 전송 버튼 (textarea 열렸을 때만) */}
-                      {replyOpen[item.id] && (
+                        {/* 답변 후 완료 버튼 */}
                         <Button
                           variant="outlined"
                           size="small"
-                          disabled={replying[item.id] || !(replyDraft[item.id] || '').trim()}
+                          disabled={
+                            !item.session_id ||
+                            replying[item.id] ||
+                            !(replyDraft[item.id] || '').trim()
+                          }
+                          title={!item.session_id ? '연결된 채팅 세션이 없습니다' : ''}
                           onClick={() => handleReply(item.id)}
                           sx={{
-                            borderColor: 'rgba(167,139,250,0.5)', color: '#a78bfa',
-                            borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
-                            '&:hover': { borderColor: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' },
+                            minWidth: 118,
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            fontSize: '0.8rem',
+                            borderColor: 'rgba(167,139,250,0.3)',
+                            color: '#a78bfa',
+                            '&:hover': {
+                              borderColor: '#a78bfa',
+                              bgcolor: 'rgba(167,139,250,0.05)',
+                            },
+                            '&.Mui-disabled': {
+                              borderColor: 'rgba(255,255,255,0.08)',
+                              color: 'rgba(255,255,255,0.28)',
+                              bgcolor: 'rgba(255,255,255,0.02)',
+                            },
+                          }}
+                        >
+                          {replying[item.id] ? <CircularProgress size={16} color="inherit" /> : '답변 전송'}
+                        </Button>
+
+                        {/* 기존 완료 처리 버튼 (유지) */}
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled={resolving[item.id]}
+                          onClick={() => handleResolve(item.id)}
+                          sx={{
+                            minWidth: 118,
+                            borderColor: 'rgba(134,239,172,0.3)',
+                            color: '#86efac',
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            fontSize: '0.8rem',
+                            '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
                             '&.Mui-disabled': { opacity: 0.3 },
                           }}
                         >
-                          {replying[item.id] ? <CircularProgress size={16} color="inherit" /> : '전송 및 완료'}
+                          {resolving[item.id] ? <CircularProgress size={16} color="inherit" /> : '✓ 완료 처리'}
                         </Button>
-                      )}
-
-                      {/* 기존 완료 처리 버튼 (유지) */}
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        disabled={resolving[item.id]}
-                        onClick={() => handleResolve(item.id)}
-                        sx={{
-                          borderColor: 'rgba(134,239,172,0.3)', color: '#86efac',
-                          borderRadius: '10px', fontWeight: 700, textTransform: 'none', fontSize: '0.8rem',
-                          '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
-                          '&.Mui-disabled': { opacity: 0.3 },
-                        }}
-                      >
-                        {resolving[item.id] ? <CircularProgress size={16} color="inherit" /> : '✓ 완료 처리'}
-                      </Button>
+                      </Box>
                     </Box>
                   </Box>
                 )}
@@ -1279,14 +1301,14 @@ function HITLPanel() {
 
 
 const STUDENT_STATUS_MAP = {
-  active:    { label: '재원',   bgcolor: 'rgba(34,197,94,0.15)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
-  inactive:  { label: '휴원',   bgcolor: 'rgba(239,68,68,0.15)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
-  graduated: { label: '졸업',   bgcolor: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: 'rgba(251,191,36,0.3)' },
+  active: { label: '재원', bgcolor: 'rgba(34,197,94,0.15)', color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  inactive: { label: '휴원', bgcolor: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
+  graduated: { label: '졸업', bgcolor: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: 'rgba(251,191,36,0.3)' },
 };
 
 const CLASS_STATUS_MAP = {
-  active: { label: '운영중', bgcolor: 'rgba(34,197,94,0.15)',  color: '#86efac' },
-  closed: { label: '종료',   bgcolor: 'rgba(239,68,68,0.15)',  color: '#fca5a5' },
+  active: { label: '운영중', bgcolor: 'rgba(34,197,94,0.15)', color: '#86efac' },
+  closed: { label: '종료', bgcolor: 'rgba(239,68,68,0.15)', color: '#fca5a5' },
 };
 
 const EMPTY_CLASS_FORM = { name: '', code: '', grade_level: '', subject: '', teacher_name: '', day_of_week: '', start_time: '', end_time: '', capacity: '', status: 'active', memo: '' };
@@ -1310,7 +1332,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
   const navigate = useNavigate();
   const { currentSlug } = useTenant();
   const basePath = `/${currentSlug}/admin/students`;
-  
+
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [studentSubTab, setStudentSubTab] = useState(initialSubTab);
@@ -1463,9 +1485,9 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
   const filteredStudents = students.filter(s => {
     const searchLower = studentSearch.toLowerCase();
     const searchDigits = studentSearch.replace(/[^0-9]/g, '');
-    
-    const matchSearch = !studentSearch || 
-      s.name.toLowerCase().includes(searchLower) || 
+
+    const matchSearch = !studentSearch ||
+      s.name.toLowerCase().includes(searchLower) ||
       (s.school_name && s.school_name.toLowerCase().includes(searchLower)) ||
       (searchDigits && s.phone && s.phone.replace(/[^0-9]/g, '').includes(searchDigits));
 
@@ -2813,7 +2835,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                       <BarChart data={(() => {
                         const map = {}; (dashAnalytics.daily_messages || []).forEach(d => { map[d.date] = d.count; });
                         const result = []; const now = new Date();
-                        for (let i = 13; i >= 0; i--) { const date = new Date(now); date.setDate(date.getDate() - i); const key = date.toISOString().split('T')[0]; result.push({ label: `${date.getMonth()+1}/${date.getDate()}`, count: map[key] || 0 }); }
+                        for (let i = 13; i >= 0; i--) { const date = new Date(now); date.setDate(date.getDate() - i); const key = date.toISOString().split('T')[0]; result.push({ label: `${date.getMonth() + 1}/${date.getDate()}`, count: map[key] || 0 }); }
                         return result;
                       })()} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
                         <defs>
@@ -2909,7 +2931,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         (dashAnalytics.daily_sessions || []).forEach(d => { sessMap[d.date] = d.count; });
                         (dashAnalytics.daily_users || []).forEach(d => { userMap[d.date] = d.count; });
                         const result = []; const now = new Date();
-                        for (let i = 13; i >= 0; i--) { const date = new Date(now); date.setDate(date.getDate() - i); const key = date.toISOString().split('T')[0]; result.push({ label: `${date.getMonth()+1}/${date.getDate()}`, sessions: sessMap[key] || 0, users: userMap[key] || 0 }); }
+                        for (let i = 13; i >= 0; i--) { const date = new Date(now); date.setDate(date.getDate() - i); const key = date.toISOString().split('T')[0]; result.push({ label: `${date.getMonth() + 1}/${date.getDate()}`, sessions: sessMap[key] || 0, users: userMap[key] || 0 }); }
                         return result;
                       })()} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
                         <defs>
@@ -2998,542 +3020,542 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
               gap: 1.5,
             }}>
-            {corpora.length === 0 ? (
-              <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8, bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <Folder sx={{ fontSize: 48, color: '#3F3F46', mb: 1.5 }} />
-                <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>생성된 저장소가 없습니다</Typography>
-              </Box>
-            ) : (
-              corpora.map((corpus, index) => {
-                const isSelected = selectedCorpus?.corpus_name === corpus.corpus_name;
-                const docCount = corpus.document_count || 0;
-                const isPrivate = corpus.is_public === false;
-                return (
-                <Box
-                  key={corpus.corpus_name}
-                  onClick={() => loadCorpusDocuments(corpus.corpus_name)}
-                  sx={{
-                    position: 'relative', overflow: 'hidden',
-                    bgcolor: isSelected ? 'rgba(167,139,250,0.05)' : '#18181B',
-                    border: isSelected ? '1px solid rgba(167,139,250,0.35)' : '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '14px', cursor: 'pointer',
-                    transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
-                    animation: `fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) ${0.04 + index * 0.025}s both`,
-                    '&:hover': {
-                      borderColor: 'rgba(167,139,250,0.3)',
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
-                    },
-                    // Top accent bar
-                    '&::before': {
-                      content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
-                      background: isSelected
-                        ? 'linear-gradient(90deg, #a78bfa, #c4b5fd)'
-                        : 'linear-gradient(90deg, rgba(167,139,250,0.3), transparent)',
-                      opacity: isSelected ? 1 : 0,
-                      transition: 'opacity 0.3s',
-                    },
-                    '&:hover::before': { opacity: 1 },
-                  }}
-                >
-                  {/* Card Content */}
-                  <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {/* Top row: icon + name + actions */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box sx={{
-                        width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
-                        background: isSelected
-                          ? 'linear-gradient(135deg, rgba(167,139,250,0.2), rgba(124,58,237,0.15))'
-                          : 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(124,58,237,0.04))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid rgba(167,139,250,0.12)',
-                      }}>
-                        <Folder sx={{ color: isSelected ? '#c4b5fd' : '#a78bfa', fontSize: 18 }} />
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{
-                          color: '#FAFAFA', fontSize: '0.95rem', fontWeight: 700,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          lineHeight: 1.3,
-                        }}>
-                          {corpus.display_name}
-                        </Typography>
-                        <Typography sx={{
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: '0.75rem', color: '#52525B', mt: 0.25,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {corpus.corpus_name.split('/')[1]?.substring(0, 12) || 'store'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Stats row */}
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      pt: 1, borderTop: '1px solid rgba(255,255,255,0.04)',
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Description sx={{ fontSize: 14, color: '#52525B' }} />
-                          <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem', color: '#71717A', fontWeight: 500 }}>
-                            {docCount}
-                          </Typography>
-                        </Box>
-                        <Box sx={{
-                          width: 3, height: 3, borderRadius: '50%', bgcolor: '#3F3F46',
-                        }} />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                          <Box sx={{
-                            width: 7, height: 7, borderRadius: '50%',
-                            bgcolor: docCount > 0 ? '#22c55e' : '#52525B',
-                            boxShadow: docCount > 0 ? '0 0 6px rgba(34,197,94,0.4)' : 'none',
-                          }} />
-                          <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.75rem', color: '#52525B' }}>
-                            {docCount > 0 ? 'active' : 'empty'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Tooltip title={isPrivate ? '비공개: 문서 링크 미제공' : '공개: 문서 링크 제공'} arrow>
-                        <Box
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setVisibilityTarget({ corpusName: corpus.corpus_name, displayName: corpus.display_name, newValue: !isPrivate ? false : true });
-                            setVisibilityDialogOpen(true);
-                          }}
-                          sx={{
-                            display: 'flex', alignItems: 'center', gap: 0.75,
-                            px: 1, py: 0.4, borderRadius: '20px', cursor: 'pointer',
-                            bgcolor: isPrivate ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)',
-                            border: isPrivate ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(34,197,94,0.15)',
-                            transition: 'all 0.2s',
-                            '&:hover': {
-                              bgcolor: isPrivate ? 'rgba(245,158,11,0.12)' : 'rgba(34,197,94,0.12)',
-                            },
-                          }}
-                        >
-                          {/* Mini toggle track */}
-                          <Box sx={{
-                            width: 24, height: 14, borderRadius: '7px', position: 'relative',
-                            bgcolor: isPrivate ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.3)',
-                            transition: 'background 0.2s',
-                          }}>
-                            <Box sx={{
-                              width: 10, height: 10, borderRadius: '50%',
-                              bgcolor: isPrivate ? '#fbbf24' : '#22c55e',
-                              position: 'absolute', top: 2,
-                              left: isPrivate ? 2 : 12,
-                              transition: 'left 0.2s cubic-bezier(0.16,1,0.3,1)',
-                              boxShadow: isPrivate ? '0 0 6px rgba(251,191,36,0.4)' : '0 0 6px rgba(34,197,94,0.4)',
-                            }} />
-                          </Box>
-                          <Typography sx={{
-                            fontSize: '0.75rem', fontWeight: 600,
-                            color: isPrivate ? '#fbbf24' : '#86efac',
-                            lineHeight: 1,
-                          }}>
-                            {isPrivate ? '비공개' : '공개'}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </Box>
-
-                    {/* Action buttons - always visible */}
-                    <Box sx={{
-                      display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.04)',
-                    }}>
-                      <Box
-                        onClick={(e) => { e.stopPropagation(); setSelectedCorpusForPermission(corpus); setPermissionDialogOpen(true); }}
-                        sx={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5,
-                          py: 0.75, borderRadius: '8px', cursor: 'pointer',
-                          bgcolor: 'rgba(167,139,250,0.04)',
-                          border: '1px solid rgba(167,139,250,0.1)',
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: 'rgba(167,139,250,0.1)', borderColor: 'rgba(167,139,250,0.25)' },
-                        }}
-                      >
-                        <Security sx={{ fontSize: 13, color: '#71717A' }} />
-                        <Typography sx={{ fontSize: '0.7rem', color: '#71717A', fontWeight: 600 }}>권한</Typography>
-                      </Box>
-                      <Box
-                        onClick={(e) => { e.stopPropagation(); deleteCorpus(corpus.corpus_name); }}
-                        sx={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5,
-                          py: 0.75, borderRadius: '8px', cursor: 'pointer',
-                          bgcolor: 'rgba(239,68,68,0.03)',
-                          border: '1px solid rgba(239,68,68,0.08)',
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)', '& .MuiTypography-root': { color: '#fca5a5' }, '& .MuiSvgIcon-root': { color: '#fca5a5' } },
-                        }}
-                      >
-                        <DeleteOutline sx={{ fontSize: 13, color: '#71717A' }} />
-                        <Typography sx={{ fontSize: '0.7rem', color: '#71717A', fontWeight: 600 }}>삭제</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
+              {corpora.length === 0 ? (
+                <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8, bgcolor: '#18181B', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Folder sx={{ fontSize: 48, color: '#3F3F46', mb: 1.5 }} />
+                  <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>생성된 저장소가 없습니다</Typography>
                 </Box>
-                );
-              })
-            )}
+              ) : (
+                corpora.map((corpus, index) => {
+                  const isSelected = selectedCorpus?.corpus_name === corpus.corpus_name;
+                  const docCount = corpus.document_count || 0;
+                  const isPrivate = corpus.is_public === false;
+                  return (
+                    <Box
+                      key={corpus.corpus_name}
+                      onClick={() => loadCorpusDocuments(corpus.corpus_name)}
+                      sx={{
+                        position: 'relative', overflow: 'hidden',
+                        bgcolor: isSelected ? 'rgba(167,139,250,0.05)' : '#18181B',
+                        border: isSelected ? '1px solid rgba(167,139,250,0.35)' : '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '14px', cursor: 'pointer',
+                        transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
+                        animation: `fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) ${0.04 + index * 0.025}s both`,
+                        '&:hover': {
+                          borderColor: 'rgba(167,139,250,0.3)',
+                          transform: 'translateY(-1px)',
+                          boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                        },
+                        // Top accent bar
+                        '&::before': {
+                          content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
+                          background: isSelected
+                            ? 'linear-gradient(90deg, #a78bfa, #c4b5fd)'
+                            : 'linear-gradient(90deg, rgba(167,139,250,0.3), transparent)',
+                          opacity: isSelected ? 1 : 0,
+                          transition: 'opacity 0.3s',
+                        },
+                        '&:hover::before': { opacity: 1 },
+                      }}
+                    >
+                      {/* Card Content */}
+                      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {/* Top row: icon + name + actions */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{
+                            width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
+                            background: isSelected
+                              ? 'linear-gradient(135deg, rgba(167,139,250,0.2), rgba(124,58,237,0.15))'
+                              : 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(124,58,237,0.04))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '1px solid rgba(167,139,250,0.12)',
+                          }}>
+                            <Folder sx={{ color: isSelected ? '#c4b5fd' : '#a78bfa', fontSize: 18 }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography sx={{
+                              color: '#FAFAFA', fontSize: '0.95rem', fontWeight: 700,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              lineHeight: 1.3,
+                            }}>
+                              {corpus.display_name}
+                            </Typography>
+                            <Typography sx={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: '0.75rem', color: '#52525B', mt: 0.25,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {corpus.corpus_name.split('/')[1]?.substring(0, 12) || 'store'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Stats row */}
+                        <Box sx={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          pt: 1, borderTop: '1px solid rgba(255,255,255,0.04)',
+                        }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Description sx={{ fontSize: 14, color: '#52525B' }} />
+                              <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem', color: '#71717A', fontWeight: 500 }}>
+                                {docCount}
+                              </Typography>
+                            </Box>
+                            <Box sx={{
+                              width: 3, height: 3, borderRadius: '50%', bgcolor: '#3F3F46',
+                            }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                              <Box sx={{
+                                width: 7, height: 7, borderRadius: '50%',
+                                bgcolor: docCount > 0 ? '#22c55e' : '#52525B',
+                                boxShadow: docCount > 0 ? '0 0 6px rgba(34,197,94,0.4)' : 'none',
+                              }} />
+                              <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.75rem', color: '#52525B' }}>
+                                {docCount > 0 ? 'active' : 'empty'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Tooltip title={isPrivate ? '비공개: 문서 링크 미제공' : '공개: 문서 링크 제공'} arrow>
+                            <Box
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVisibilityTarget({ corpusName: corpus.corpus_name, displayName: corpus.display_name, newValue: !isPrivate ? false : true });
+                                setVisibilityDialogOpen(true);
+                              }}
+                              sx={{
+                                display: 'flex', alignItems: 'center', gap: 0.75,
+                                px: 1, py: 0.4, borderRadius: '20px', cursor: 'pointer',
+                                bgcolor: isPrivate ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)',
+                                border: isPrivate ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(34,197,94,0.15)',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                  bgcolor: isPrivate ? 'rgba(245,158,11,0.12)' : 'rgba(34,197,94,0.12)',
+                                },
+                              }}
+                            >
+                              {/* Mini toggle track */}
+                              <Box sx={{
+                                width: 24, height: 14, borderRadius: '7px', position: 'relative',
+                                bgcolor: isPrivate ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.3)',
+                                transition: 'background 0.2s',
+                              }}>
+                                <Box sx={{
+                                  width: 10, height: 10, borderRadius: '50%',
+                                  bgcolor: isPrivate ? '#fbbf24' : '#22c55e',
+                                  position: 'absolute', top: 2,
+                                  left: isPrivate ? 2 : 12,
+                                  transition: 'left 0.2s cubic-bezier(0.16,1,0.3,1)',
+                                  boxShadow: isPrivate ? '0 0 6px rgba(251,191,36,0.4)' : '0 0 6px rgba(34,197,94,0.4)',
+                                }} />
+                              </Box>
+                              <Typography sx={{
+                                fontSize: '0.75rem', fontWeight: 600,
+                                color: isPrivate ? '#fbbf24' : '#86efac',
+                                lineHeight: 1,
+                              }}>
+                                {isPrivate ? '비공개' : '공개'}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        </Box>
+
+                        {/* Action buttons - always visible */}
+                        <Box sx={{
+                          display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.04)',
+                        }}>
+                          <Box
+                            onClick={(e) => { e.stopPropagation(); setSelectedCorpusForPermission(corpus); setPermissionDialogOpen(true); }}
+                            sx={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5,
+                              py: 0.75, borderRadius: '8px', cursor: 'pointer',
+                              bgcolor: 'rgba(167,139,250,0.04)',
+                              border: '1px solid rgba(167,139,250,0.1)',
+                              transition: 'all 0.2s',
+                              '&:hover': { bgcolor: 'rgba(167,139,250,0.1)', borderColor: 'rgba(167,139,250,0.25)' },
+                            }}
+                          >
+                            <Security sx={{ fontSize: 13, color: '#71717A' }} />
+                            <Typography sx={{ fontSize: '0.7rem', color: '#71717A', fontWeight: 600 }}>권한</Typography>
+                          </Box>
+                          <Box
+                            onClick={(e) => { e.stopPropagation(); deleteCorpus(corpus.corpus_name); }}
+                            sx={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5,
+                              py: 0.75, borderRadius: '8px', cursor: 'pointer',
+                              bgcolor: 'rgba(239,68,68,0.03)',
+                              border: '1px solid rgba(239,68,68,0.08)',
+                              transition: 'all 0.2s',
+                              '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)', '& .MuiTypography-root': { color: '#fca5a5' }, '& .MuiSvgIcon-root': { color: '#fca5a5' } },
+                            }}
+                          >
+                            <DeleteOutline sx={{ fontSize: 13, color: '#71717A' }} />
+                            <Typography sx={{ fontSize: '0.7rem', color: '#71717A', fontWeight: 600 }}>삭제</Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  );
+                })
+              )}
             </Box>
           </Box>
 
           {/* Selected Store Details (Full Width) */}
-            {selectedCorpus ? (
-              <Box sx={{
-                bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
-                overflow: 'hidden', animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
-              }}>
-                {/* Detail Header */}
-                <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Description sx={{ color: '#a78bfa', fontSize: 22 }} />
-                    <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
-                      {selectedCorpus.display_name}
-                    </Typography>
-                    <Box sx={{
-                      px: 1, py: 0.2, borderRadius: '6px',
-                      bgcolor: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)',
-                    }}>
-                      <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6rem', fontWeight: 600, color: '#a78bfa' }}>
-                        {selectedCorpus.corpus_name.split('/')[1] || 'store'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography sx={{ color: '#52525B', fontSize: '0.75rem', mt: 0.5 }}>문서 목록 임베드 관리</Typography>
-                </Box>
-
-                {/* Content */}
-                <Box sx={{ p: 3 }}>
-                  {/* Upload Section */}
-                  <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#52525B', mb: 1.5 }}>
-                    UPLOAD
+          {selectedCorpus ? (
+            <Box sx={{
+              bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
+              overflow: 'hidden', animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
+            }}>
+              {/* Detail Header */}
+              <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Description sx={{ color: '#a78bfa', fontSize: 22 }} />
+                  <Typography sx={{ color: '#FAFAFA', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
+                    {selectedCorpus.display_name}
                   </Typography>
-
-                  <Box
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    sx={{
-                      mb: 3, p: 2.5,
-                      bgcolor: isDragging ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.015)',
-                      border: isDragging ? '2px dashed rgba(167,139,250,0.5)' : '2px dashed rgba(255,255,255,0.06)',
-                      borderRadius: '12px', transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-                      '&:hover': { borderColor: 'rgba(167,139,250,0.3)', bgcolor: 'rgba(167,139,250,0.04)' },
-                    }}
-                  >
-                    {isDragging ? (
-                      <Box sx={{ textAlign: 'center', py: 3 }}>
-                        <CloudUpload sx={{ fontSize: 48, color: '#a78bfa', mb: 1 }} />
-                        <Typography sx={{ color: '#a78bfa', fontWeight: 700, fontSize: '0.875rem' }}>여기에 파일을 드롭하세요</Typography>
-                      </Box>
-                    ) : selectedFiles.length === 0 && (
-                      <Box sx={{ textAlign: 'center', py: 2 }}>
-                        <CloudUpload sx={{ fontSize: 36, color: '#3F3F46', mb: 1 }} />
-                        <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>파일을 드래그하거나 버튼을 클릭하세요</Typography>
-                        <Typography sx={{ color: '#3F3F46', fontSize: '0.65rem', mt: 0.5 }}>PDF, TXT, DOCX (최대 50MB)</Typography>
-                      </Box>
-                    )}
-
-                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', mt: selectedFiles.length === 0 ? 1 : 0 }}>
-                      <input type="file" id="file-upload" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.txt,.md" multiple style={{ display: 'none' }} />
-                      <input type="file" id="folder-upload" onChange={handleFolderSelect} webkitdirectory="" directory="" multiple style={{ display: 'none' }} />
-
-                      <label htmlFor="file-upload">
-                        <Button component="span" startIcon={<UploadFile sx={{ fontSize: 16 }} />}
-                          sx={{
-                            border: '1px solid rgba(255,255,255,0.08)', color: '#71717A', fontWeight: 600, fontSize: '0.75rem',
-                            borderRadius: '10px', textTransform: 'none',
-                            '&:hover': { borderColor: '#a78bfa', color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
-                          }}
-                        >파일 선택</Button>
-                      </label>
-                      <label htmlFor="folder-upload">
-                        <Button component="span" startIcon={<Folder sx={{ fontSize: 16 }} />}
-                          sx={{
-                            border: '1px solid rgba(255,255,255,0.08)', color: '#71717A', fontWeight: 600, fontSize: '0.75rem',
-                            borderRadius: '10px', textTransform: 'none',
-                            '&:hover': { borderColor: '#a78bfa', color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
-                          }}
-                        >폴더 선택</Button>
-                      </label>
-                      <Button
-                        onClick={uploadDocuments}
-                        startIcon={uploading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <CloudUpload sx={{ fontSize: 16 }} />}
-                        disabled={selectedFiles.length === 0 || uploading}
-                        sx={{
-                          background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
-                          boxShadow: '0 0 20px rgba(167,139,250,0.25)',
-                          color: 'white', fontWeight: 700, fontSize: '0.75rem',
-                          px: 2.5, borderRadius: '10px', textTransform: 'none',
-                          '&:hover': { background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)' },
-                          '&:disabled': { background: 'rgba(167,139,250,0.2)', color: 'rgba(255,255,255,0.3)' },
-                        }}
-                      >
-                        {uploading ? `업로드 중 (${uploadProgress.current}/${uploadProgress.total})` : '업로드'}
-                      </Button>
-                    </Box>
-
-                    {/* Selected Files List */}
-                    {selectedFiles.length > 0 && (
-                      <Box sx={{
-                        mt: 2, maxHeight: 180, overflowY: 'auto',
-                        bgcolor: '#111113', borderRadius: '10px', p: 1.5, border: '1px solid rgba(255,255,255,0.04)',
-                        '&::-webkit-scrollbar': { width: 6 },
-                        '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(167,139,250,0.3)', borderRadius: 3 },
-                      }}>
-                        <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa', mb: 1, fontWeight: 600, fontSize: '0.7rem' }}>
-                          {selectedFiles.length} files selected
-                        </Typography>
-                        {selectedFiles.map((file, index) => (
-                          <Box key={index} sx={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            py: 0.5, px: 1, mb: 0.5, borderRadius: '6px',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
-                          }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
-                              <Description sx={{ fontSize: 14, color: '#52525B', flexShrink: 0 }} />
-                              <Typography sx={{ color: '#FAFAFA', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {file.name}
-                              </Typography>
-                              <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.65rem', flexShrink: 0 }}>
-                                {formatFileSize(file.size)}
-                              </Typography>
-                            </Box>
-                            <Box onClick={() => !uploading && removeFile(index)}
-                              sx={{
-                                p: 0.5, borderRadius: '4px', cursor: uploading ? 'not-allowed' : 'pointer',
-                                opacity: uploading ? 0.3 : 1, display: 'inline-flex', transition: 'all 0.2s',
-                                '&:hover': !uploading ? { bgcolor: 'rgba(239,68,68,0.1)', '& .MuiSvgIcon-root': { color: '#ef4444' } } : {},
-                              }}
-                            >
-                              <DeleteOutline sx={{ fontSize: 14, color: '#52525B' }} />
-                            </Box>
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-
-                  {/* Documents Section */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#52525B' }}>
-                      DOCUMENTS
+                  <Box sx={{
+                    px: 1, py: 0.2, borderRadius: '6px',
+                    bgcolor: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)',
+                  }}>
+                    <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6rem', fontWeight: 600, color: '#a78bfa' }}>
+                      {selectedCorpus.corpus_name.split('/')[1] || 'store'}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <TextField
-                        size="small" placeholder="파일명 검색..."
-                        value={documentSearchQuery}
-                        onChange={(e) => setDocumentSearchQuery(e.target.value)}
-                        onKeyPress={(e) => { if (e.key === 'Enter') handleDocumentSearch(); }}
-                        InputProps={{
-                          startAdornment: <Search sx={{ fontSize: 16, color: '#52525B', mr: 0.5 }} />,
-                          endAdornment: documentSearchQuery && (
-                            <IconButton size="small" onClick={clearDocumentSearch} sx={{ p: 0.25, color: '#52525B', '&:hover': { color: '#71717A' } }}>
-                              <Clear sx={{ fontSize: 14 }} />
-                            </IconButton>
-                          ),
-                        }}
-                        sx={{
-                          width: 200,
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: '#111113', borderRadius: '10px', fontSize: '0.75rem', color: '#FAFAFA',
-                            '& fieldset': { borderColor: 'rgba(255,255,255,0.06)' },
-                            '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
-                            '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
-                          },
-                          '& .MuiOutlinedInput-input': { py: 0.75, '&::placeholder': { color: '#52525B', opacity: 1 } },
-                        }}
-                      />
-                      <Button size="small" onClick={handleDocumentSearch}
-                        sx={{
-                          bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.7rem', py: 0.6, minWidth: 'auto',
-                          borderRadius: '8px', textTransform: 'none', fontWeight: 600,
-                          '&:hover': { bgcolor: 'rgba(167,139,250,0.2)' },
-                        }}
-                      >검색</Button>
-                    </Box>
                   </Box>
-
-                  {/* Bulk Delete Bar */}
-                  {selectedDocuments.length > 0 && (
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      mb: 1.5, px: 2, py: 1.2,
-                      bgcolor: 'rgba(239,68,68,0.06)', borderRadius: '10px',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      animation: 'fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) both',
-                    }}>
-                      <Typography sx={{ color: '#FAFAFA', fontSize: '0.8125rem' }}>
-                        <strong style={{ color: '#ef4444' }}>{selectedDocuments.length}</strong> selected
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button size="small" onClick={() => setSelectedDocuments([])}
-                          sx={{ color: '#71717A', fontSize: '0.7rem', textTransform: 'none', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
-                        >해제</Button>
-                        <Button size="small" onClick={openBulkDeleteDialog}
-                          sx={{
-                            background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-                            color: 'white', fontSize: '0.7rem', fontWeight: 700, textTransform: 'none',
-                            borderRadius: '8px', px: 1.5,
-                          }}
-                        >삭제</Button>
-                      </Box>
-                    </Box>
-                  )}
-
-                  {/* Documents Grid Table */}
-                  <Box sx={{ bgcolor: '#111113', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    {/* Header Row */}
-                    <Box sx={{
-                      display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
-                      px: 2.5, py: 1.2, borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Checkbox size="small"
-                          checked={selectedDocuments.length === documents.length && documents.length > 0}
-                          indeterminate={selectedDocuments.length > 0 && selectedDocuments.length < documents.length}
-                          onChange={toggleAllDocuments}
-                          sx={{ p: 0, color: '#3F3F46', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: '#a78bfa' } }}
-                        />
-                      </Box>
-                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B' }}>File</Typography>
-                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B', textAlign: 'right' }}>Size</Typography>
-                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B', textAlign: 'right' }}>Uploaded</Typography>
-                    </Box>
-
-                    {/* Body */}
-                    {loadingDocuments ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                        <CircularProgress size={22} sx={{ color: '#52525B' }} />
-                      </Box>
-                    ) : documents.length === 0 ? (
-                      <Box sx={{ textAlign: 'center', py: 8 }}>
-                        <Description sx={{ fontSize: 40, color: '#3F3F46', mb: 1 }} />
-                        <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>문서가 없습니다</Typography>
-                      </Box>
-                    ) : (
-                      documents.map((doc, index) => (
-                        <Box key={doc.document_name} sx={{
-                          display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
-                          px: 2.5, py: 1.6, alignItems: 'center',
-                          borderBottom: index < documents.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
-                          transition: 'all 0.2s', cursor: 'pointer',
-                          '&:hover': { bgcolor: 'rgba(255,255,255,0.02)', borderLeft: '3px solid #a78bfa' },
-                        }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Checkbox size="small"
-                              checked={selectedDocuments.includes(doc.document_name)}
-                              onChange={() => toggleDocumentSelection(doc.document_name)}
-                              sx={{ p: 0, color: '#3F3F46', '&.Mui-checked': { color: '#a78bfa' } }}
-                            />
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-                            <Box sx={{
-                              width: 30, height: 30, borderRadius: '8px',
-                              bgcolor: 'rgba(167,139,250,0.08)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                            }}>
-                              <Description sx={{ fontSize: 14, color: '#a78bfa' }} />
-                            </Box>
-                            <Typography sx={{ color: '#FAFAFA', fontSize: '0.8125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {doc.display_name}
-                            </Typography>
-                          </Box>
-                          <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#71717A', fontSize: '0.7rem', textAlign: 'right' }}>
-                            {formatFileSize(doc.file_size)}
-                          </Typography>
-                          <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.7rem', textAlign: 'right' }}>
-                            {doc.uploaded_at ? (() => { const d = new Date(doc.uploaded_at); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; })() : '-'}
-                          </Typography>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDocMenuAnchor(e.currentTarget);
-                              setDocMenuTarget(doc);
-                            }}
-                            sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' }, p: 0.5 }}
-                          >
-                            <MoreVert sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </Box>
-                      ))
-                    )}
-                  </Box>
-
-                  {/* Pagination */}
-                  {documents.length > 0 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, px: 0.5 }}>
-                      <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.7rem' }}>
-                        {currentPage * 10 + 1}-{Math.min((currentPage + 1) * 10, totalDocumentCount || 0)} / {totalDocumentCount || 0}
-                      </Typography>
-                      <Pagination
-                        count={Math.ceil(totalDocumentCount / 10)} page={currentPage + 1}
-                        onChange={handlePageChange} size="small" showFirstButton showLastButton
-                        sx={{
-                          '& .MuiPaginationItem-root': {
-                            color: '#52525B', borderColor: 'rgba(255,255,255,0.06)',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
-                            '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', '&:hover': { bgcolor: 'rgba(167,139,250,0.2)' } },
-                            '&.Mui-disabled': { color: '#3F3F46' },
-                          },
-                        }}
-                      />
-                    </Box>
-                  )}
                 </Box>
+                <Typography sx={{ color: '#52525B', fontSize: '0.75rem', mt: 0.5 }}>문서 목록 임베드 관리</Typography>
+              </Box>
 
-                {/* Document More Menu */}
-                <Menu
-                  anchorEl={docMenuAnchor}
-                  open={Boolean(docMenuAnchor)}
-                  onClose={() => { setDocMenuAnchor(null); setDocMenuTarget(null); }}
-                  PaperProps={{
-                    sx: {
-                      bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '10px', minWidth: 160, mt: 0.5,
-                      '& .MuiMenuItem-root': {
-                        fontSize: '0.8rem', color: '#E4E4E7', py: 1, px: 2, gap: 1.5,
-                        '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
-                      },
-                    },
+              {/* Content */}
+              <Box sx={{ p: 3 }}>
+                {/* Upload Section */}
+                <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#52525B', mb: 1.5 }}>
+                  UPLOAD
+                </Typography>
+
+                <Box
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  sx={{
+                    mb: 3, p: 2.5,
+                    bgcolor: isDragging ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.015)',
+                    border: isDragging ? '2px dashed rgba(167,139,250,0.5)' : '2px dashed rgba(255,255,255,0.06)',
+                    borderRadius: '12px', transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                    '&:hover': { borderColor: 'rgba(167,139,250,0.3)', bgcolor: 'rgba(167,139,250,0.04)' },
                   }}
                 >
-                  <MenuItem onClick={async () => {
-                    setDocMenuAnchor(null);
-                    try {
-                      const res = await corpusAPI.downloadDocument(docMenuTarget.id);
-                      window.open(res.data.view_url, '_blank');
-                    } catch { alert('링크 생성에 실패했습니다.'); }
-                    setDocMenuTarget(null);
+                  {isDragging ? (
+                    <Box sx={{ textAlign: 'center', py: 3 }}>
+                      <CloudUpload sx={{ fontSize: 48, color: '#a78bfa', mb: 1 }} />
+                      <Typography sx={{ color: '#a78bfa', fontWeight: 700, fontSize: '0.875rem' }}>여기에 파일을 드롭하세요</Typography>
+                    </Box>
+                  ) : selectedFiles.length === 0 && (
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                      <CloudUpload sx={{ fontSize: 36, color: '#3F3F46', mb: 1 }} />
+                      <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>파일을 드래그하거나 버튼을 클릭하세요</Typography>
+                      <Typography sx={{ color: '#3F3F46', fontSize: '0.65rem', mt: 0.5 }}>PDF, TXT, DOCX (최대 50MB)</Typography>
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', mt: selectedFiles.length === 0 ? 1 : 0 }}>
+                    <input type="file" id="file-upload" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.txt,.md" multiple style={{ display: 'none' }} />
+                    <input type="file" id="folder-upload" onChange={handleFolderSelect} webkitdirectory="" directory="" multiple style={{ display: 'none' }} />
+
+                    <label htmlFor="file-upload">
+                      <Button component="span" startIcon={<UploadFile sx={{ fontSize: 16 }} />}
+                        sx={{
+                          border: '1px solid rgba(255,255,255,0.08)', color: '#71717A', fontWeight: 600, fontSize: '0.75rem',
+                          borderRadius: '10px', textTransform: 'none',
+                          '&:hover': { borderColor: '#a78bfa', color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
+                        }}
+                      >파일 선택</Button>
+                    </label>
+                    <label htmlFor="folder-upload">
+                      <Button component="span" startIcon={<Folder sx={{ fontSize: 16 }} />}
+                        sx={{
+                          border: '1px solid rgba(255,255,255,0.08)', color: '#71717A', fontWeight: 600, fontSize: '0.75rem',
+                          borderRadius: '10px', textTransform: 'none',
+                          '&:hover': { borderColor: '#a78bfa', color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.05)' },
+                        }}
+                      >폴더 선택</Button>
+                    </label>
+                    <Button
+                      onClick={uploadDocuments}
+                      startIcon={uploading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <CloudUpload sx={{ fontSize: 16 }} />}
+                      disabled={selectedFiles.length === 0 || uploading}
+                      sx={{
+                        background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
+                        boxShadow: '0 0 20px rgba(167,139,250,0.25)',
+                        color: 'white', fontWeight: 700, fontSize: '0.75rem',
+                        px: 2.5, borderRadius: '10px', textTransform: 'none',
+                        '&:hover': { background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)' },
+                        '&:disabled': { background: 'rgba(167,139,250,0.2)', color: 'rgba(255,255,255,0.3)' },
+                      }}
+                    >
+                      {uploading ? `업로드 중 (${uploadProgress.current}/${uploadProgress.total})` : '업로드'}
+                    </Button>
+                  </Box>
+
+                  {/* Selected Files List */}
+                  {selectedFiles.length > 0 && (
+                    <Box sx={{
+                      mt: 2, maxHeight: 180, overflowY: 'auto',
+                      bgcolor: '#111113', borderRadius: '10px', p: 1.5, border: '1px solid rgba(255,255,255,0.04)',
+                      '&::-webkit-scrollbar': { width: 6 },
+                      '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(167,139,250,0.3)', borderRadius: 3 },
+                    }}>
+                      <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa', mb: 1, fontWeight: 600, fontSize: '0.7rem' }}>
+                        {selectedFiles.length} files selected
+                      </Typography>
+                      {selectedFiles.map((file, index) => (
+                        <Box key={index} sx={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          py: 0.5, px: 1, mb: 0.5, borderRadius: '6px',
+                          '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
+                        }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+                            <Description sx={{ fontSize: 14, color: '#52525B', flexShrink: 0 }} />
+                            <Typography sx={{ color: '#FAFAFA', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {file.name}
+                            </Typography>
+                            <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.65rem', flexShrink: 0 }}>
+                              {formatFileSize(file.size)}
+                            </Typography>
+                          </Box>
+                          <Box onClick={() => !uploading && removeFile(index)}
+                            sx={{
+                              p: 0.5, borderRadius: '4px', cursor: uploading ? 'not-allowed' : 'pointer',
+                              opacity: uploading ? 0.3 : 1, display: 'inline-flex', transition: 'all 0.2s',
+                              '&:hover': !uploading ? { bgcolor: 'rgba(239,68,68,0.1)', '& .MuiSvgIcon-root': { color: '#ef4444' } } : {},
+                            }}
+                          >
+                            <DeleteOutline sx={{ fontSize: 14, color: '#52525B' }} />
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Documents Section */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#52525B' }}>
+                    DOCUMENTS
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      size="small" placeholder="파일명 검색..."
+                      value={documentSearchQuery}
+                      onChange={(e) => setDocumentSearchQuery(e.target.value)}
+                      onKeyPress={(e) => { if (e.key === 'Enter') handleDocumentSearch(); }}
+                      InputProps={{
+                        startAdornment: <Search sx={{ fontSize: 16, color: '#52525B', mr: 0.5 }} />,
+                        endAdornment: documentSearchQuery && (
+                          <IconButton size="small" onClick={clearDocumentSearch} sx={{ p: 0.25, color: '#52525B', '&:hover': { color: '#71717A' } }}>
+                            <Clear sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        ),
+                      }}
+                      sx={{
+                        width: 200,
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: '#111113', borderRadius: '10px', fontSize: '0.75rem', color: '#FAFAFA',
+                          '& fieldset': { borderColor: 'rgba(255,255,255,0.06)' },
+                          '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
+                          '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                        },
+                        '& .MuiOutlinedInput-input': { py: 0.75, '&::placeholder': { color: '#52525B', opacity: 1 } },
+                      }}
+                    />
+                    <Button size="small" onClick={handleDocumentSearch}
+                      sx={{
+                        bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.7rem', py: 0.6, minWidth: 'auto',
+                        borderRadius: '8px', textTransform: 'none', fontWeight: 600,
+                        '&:hover': { bgcolor: 'rgba(167,139,250,0.2)' },
+                      }}
+                    >검색</Button>
+                  </Box>
+                </Box>
+
+                {/* Bulk Delete Bar */}
+                {selectedDocuments.length > 0 && (
+                  <Box sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    mb: 1.5, px: 2, py: 1.2,
+                    bgcolor: 'rgba(239,68,68,0.06)', borderRadius: '10px',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    animation: 'fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) both',
                   }}>
-                    <Visibility sx={{ fontSize: 16, color: '#14B8A6' }} /> 원본 파일 보기
-                  </MenuItem>
-                  <MenuItem onClick={async () => {
-                    setDocMenuAnchor(null);
-                    try {
-                      const res = await corpusAPI.downloadDocument(docMenuTarget.id);
-                      window.open(res.data.download_url, '_blank');
-                    } catch { alert('다운로드에 실패했습니다.'); }
-                    setDocMenuTarget(null);
+                    <Typography sx={{ color: '#FAFAFA', fontSize: '0.8125rem' }}>
+                      <strong style={{ color: '#ef4444' }}>{selectedDocuments.length}</strong> selected
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button size="small" onClick={() => setSelectedDocuments([])}
+                        sx={{ color: '#71717A', fontSize: '0.7rem', textTransform: 'none', '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
+                      >해제</Button>
+                      <Button size="small" onClick={openBulkDeleteDialog}
+                        sx={{
+                          background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                          color: 'white', fontSize: '0.7rem', fontWeight: 700, textTransform: 'none',
+                          borderRadius: '8px', px: 1.5,
+                        }}
+                      >삭제</Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Documents Grid Table */}
+                <Box sx={{ bgcolor: '#111113', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  {/* Header Row */}
+                  <Box sx={{
+                    display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
+                    px: 2.5, py: 1.2, borderBottom: '1px solid rgba(255,255,255,0.04)',
                   }}>
-                    <Download sx={{ fontSize: 16, color: '#a78bfa' }} /> 원본 파일 다운로드
-                  </MenuItem>
-                </Menu>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Checkbox size="small"
+                        checked={selectedDocuments.length === documents.length && documents.length > 0}
+                        indeterminate={selectedDocuments.length > 0 && selectedDocuments.length < documents.length}
+                        onChange={toggleAllDocuments}
+                        sx={{ p: 0, color: '#3F3F46', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: '#a78bfa' } }}
+                      />
+                    </Box>
+                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B' }}>File</Typography>
+                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B', textAlign: 'right' }}>Size</Typography>
+                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B', textAlign: 'right' }}>Uploaded</Typography>
+                  </Box>
+
+                  {/* Body */}
+                  {loadingDocuments ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                      <CircularProgress size={22} sx={{ color: '#52525B' }} />
+                    </Box>
+                  ) : documents.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                      <Description sx={{ fontSize: 40, color: '#3F3F46', mb: 1 }} />
+                      <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>문서가 없습니다</Typography>
+                    </Box>
+                  ) : (
+                    documents.map((doc, index) => (
+                      <Box key={doc.document_name} sx={{
+                        display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
+                        px: 2.5, py: 1.6, alignItems: 'center',
+                        borderBottom: index < documents.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                        transition: 'all 0.2s', cursor: 'pointer',
+                        '&:hover': { bgcolor: 'rgba(255,255,255,0.02)', borderLeft: '3px solid #a78bfa' },
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Checkbox size="small"
+                            checked={selectedDocuments.includes(doc.document_name)}
+                            onChange={() => toggleDocumentSelection(doc.document_name)}
+                            sx={{ p: 0, color: '#3F3F46', '&.Mui-checked': { color: '#a78bfa' } }}
+                          />
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                          <Box sx={{
+                            width: 30, height: 30, borderRadius: '8px',
+                            bgcolor: 'rgba(167,139,250,0.08)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
+                            <Description sx={{ fontSize: 14, color: '#a78bfa' }} />
+                          </Box>
+                          <Typography sx={{ color: '#FAFAFA', fontSize: '0.8125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.display_name}
+                          </Typography>
+                        </Box>
+                        <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#71717A', fontSize: '0.7rem', textAlign: 'right' }}>
+                          {formatFileSize(doc.file_size)}
+                        </Typography>
+                        <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.7rem', textAlign: 'right' }}>
+                          {doc.uploaded_at ? (() => { const d = new Date(doc.uploaded_at); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; })() : '-'}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDocMenuAnchor(e.currentTarget);
+                            setDocMenuTarget(doc);
+                          }}
+                          sx={{ color: '#52525B', '&:hover': { color: '#a78bfa' }, p: 0.5 }}
+                        >
+                          <MoreVert sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Box>
+                    ))
+                  )}
+                </Box>
+
+                {/* Pagination */}
+                {documents.length > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, px: 0.5 }}>
+                    <Typography sx={{ fontFamily: "'JetBrains Mono', monospace", color: '#52525B', fontSize: '0.7rem' }}>
+                      {currentPage * 10 + 1}-{Math.min((currentPage + 1) * 10, totalDocumentCount || 0)} / {totalDocumentCount || 0}
+                    </Typography>
+                    <Pagination
+                      count={Math.ceil(totalDocumentCount / 10)} page={currentPage + 1}
+                      onChange={handlePageChange} size="small" showFirstButton showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          color: '#52525B', borderColor: 'rgba(255,255,255,0.06)',
+                          '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
+                          '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', '&:hover': { bgcolor: 'rgba(167,139,250,0.2)' } },
+                          '&.Mui-disabled': { color: '#3F3F46' },
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
               </Box>
-            ) : (
-              <Box sx={{
-                bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                py: 12, animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
-              }}>
-                <Storage sx={{ fontSize: 56, color: '#3F3F46', mb: 2 }} />
-                <Typography sx={{ color: '#52525B', fontSize: '0.875rem', fontWeight: 600 }}>저장소를 선택하세요</Typography>
-                <Typography sx={{ color: '#3F3F46', fontSize: '0.75rem', mt: 0.5 }}>위 목록에서 저장소를 클릭하면 문서 목록이 표시됩니다</Typography>
-              </Box>
-            )}
+
+              {/* Document More Menu */}
+              <Menu
+                anchorEl={docMenuAnchor}
+                open={Boolean(docMenuAnchor)}
+                onClose={() => { setDocMenuAnchor(null); setDocMenuTarget(null); }}
+                PaperProps={{
+                  sx: {
+                    bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px', minWidth: 160, mt: 0.5,
+                    '& .MuiMenuItem-root': {
+                      fontSize: '0.8rem', color: '#E4E4E7', py: 1, px: 2, gap: 1.5,
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
+                    },
+                  },
+                }}
+              >
+                <MenuItem onClick={async () => {
+                  setDocMenuAnchor(null);
+                  try {
+                    const res = await corpusAPI.downloadDocument(docMenuTarget.id);
+                    window.open(res.data.view_url, '_blank');
+                  } catch { alert('링크 생성에 실패했습니다.'); }
+                  setDocMenuTarget(null);
+                }}>
+                  <Visibility sx={{ fontSize: 16, color: '#14B8A6' }} /> 원본 파일 보기
+                </MenuItem>
+                <MenuItem onClick={async () => {
+                  setDocMenuAnchor(null);
+                  try {
+                    const res = await corpusAPI.downloadDocument(docMenuTarget.id);
+                    window.open(res.data.download_url, '_blank');
+                  } catch { alert('다운로드에 실패했습니다.'); }
+                  setDocMenuTarget(null);
+                }}>
+                  <Download sx={{ fontSize: 16, color: '#a78bfa' }} /> 원본 파일 다운로드
+                </MenuItem>
+              </Menu>
+            </Box>
+          ) : (
+            <Box sx={{
+              bgcolor: '#18181B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              py: 12, animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
+            }}>
+              <Storage sx={{ fontSize: 56, color: '#3F3F46', mb: 2 }} />
+              <Typography sx={{ color: '#52525B', fontSize: '0.875rem', fontWeight: 600 }}>저장소를 선택하세요</Typography>
+              <Typography sx={{ color: '#3F3F46', fontSize: '0.75rem', mt: 0.5 }}>위 목록에서 저장소를 클릭하면 문서 목록이 표시됩니다</Typography>
+            </Box>
+          )}
         </Box>
       )}
 
@@ -4092,7 +4114,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                       cursor: 'pointer',
                       '&:hover': { bgcolor: 'rgba(167,139,250,0.03)' },
                     }}
-                    onClick={() => viewSessionMessages(sess.id)}
+                      onClick={() => viewSessionMessages(sess.id)}
                     >
                       <Box>
                         <Typography sx={{ color: '#FAFAFA', fontSize: '0.875rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
