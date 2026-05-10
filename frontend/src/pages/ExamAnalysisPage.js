@@ -524,11 +524,6 @@ ${answerSection}
     window.open(url, '_blank');
   };
 
-  // 선택된 영역에 해당하는 problem_type 목록 (영역 미선택 시 전 영역 합집합)
-  const availableTypes = bankFilters.area
-    ? (ENGLISH_TAXONOMY[bankFilters.area]?.problem_types ?? [])
-    : [...new Set(Object.values(ENGLISH_TAXONOMY).flatMap(v => v.problem_types))];
-
   const menuItemSx = { bgcolor: '#18181B', color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' } };
 
   // ── 검수 상태 헬퍼 ────────────────────────────────────────────────────────
@@ -998,12 +993,6 @@ ${answerSection}
                         </Box>
                       )}
 
-                      {item.problem_type && (
-                        <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
-                          유형: <span style={{ color: '#a78bfa' }}>{item.problem_type}</span>
-                        </Typography>
-                      )}
-
                       {item.question_body && (
                         <Box sx={{ bgcolor: '#111115', borderRadius: 1.5, p: 1.5 }}>
                           <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
@@ -1018,12 +1007,6 @@ ${answerSection}
                             <Typography key={ci} sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8125rem' }}>{c}</Typography>
                           ))}
                         </Box>
-                      )}
-
-                      {item.concept_tag && (
-                        <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
-                          개념 태그: <span style={{ color: '#a78bfa' }}>{item.concept_tag}</span>
-                        </Typography>
                       )}
 
                       <Box sx={{ display: 'flex', gap: 1 }}>
