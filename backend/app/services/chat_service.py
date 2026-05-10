@@ -1082,14 +1082,6 @@ class ChatService:
                         f"[Routing] Multi-turn context correction: {original_agent_type} -> PERSONAL "
                         f"(prior assistant msg referenced student data, current query is period supplement)"
                     )
-            # ACADEMIC fallback: 전용 도구가 없는 경로에서는 CONSULTING으로 처리
-            if agent_type == AgentType.ACADEMIC:
-                agent_type = AgentType.CONSULTING
-                logger.info(
-                    "[Routing] ACADEMIC -> CONSULTING fallback "
-                    "(no dedicated ACADEMIC tools in query_smart path)"
-                )
-
             logger.info(
                 f"[Routing] Final agent_type={agent_type} "
                 f"(original={original_agent_type}, multi_turn_correction={is_personal_continuation})"
