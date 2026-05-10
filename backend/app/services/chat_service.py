@@ -613,6 +613,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ) -> dict:
         """Unified smart query with function calling
 
@@ -1284,8 +1285,9 @@ class ChatService:
                                 area=func_args.get("area"),
                             )
                             token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
                             result["preview_url"] = (
-                                f"{_cfg.APP_BASE_URL}/api/admin/question-bank/preview/{token}"
+                                f"{_base}/api/admin/question-bank/preview/{token}"
                             )
                         except Exception as _pe:
                             logger.warning(f"[QuestionBank] preview generation failed: {_pe}")
@@ -1480,6 +1482,7 @@ class ChatService:
         user_id: int = None,
         session_id: int = None,
         chatbot_settings=None,
+        api_base_url: str = None,
     ):
         """Unified smart query with streaming support.
         Identical routing and tool logic as query_smart, but yields tokens.
@@ -1847,8 +1850,9 @@ class ChatService:
                                 area=func_args.get("area"),
                             )
                             token = store_preview(html)
+                            _base = api_base_url or _cfg.APP_BASE_URL
                             result["preview_url"] = (
-                                f"{_cfg.APP_BASE_URL}/api/admin/question-bank/preview/{token}"
+                                f"{_base}/api/admin/question-bank/preview/{token}"
                             )
                         except Exception as _pe:
                             logger.warning(f"[QuestionBank/Stream] preview generation failed: {_pe}")
