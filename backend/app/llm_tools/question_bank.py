@@ -14,9 +14,9 @@ QUESTION_BANK_FUNCTION_DECLARATIONS = [
     {
         "name": "get_practice_questions",
         "description": (
-            "문제은행에서 특정 학년·영역·유형에 맞는 연습 문제를 가져옵니다. "
+            "문제은행에서 특정 학년·영역에 맞는 연습 문제를 가져옵니다. "
             "학부모가 문제를 요청할 때 사용하세요. "
-            "grade, area, problem_type이 모두 확인된 경우에만 호출하고, "
+            "grade와 area가 모두 확인된 경우에만 호출하고, "
             "불명확한 항목이 있으면 먼저 학부모에게 물어보세요."
         ),
         "parameters": {
@@ -29,10 +29,6 @@ QUESTION_BANK_FUNCTION_DECLARATIONS = [
                 "area": {
                     "type": "string",
                     "description": "문제 영역: 문법, 어휘, 독해, 듣기, 서술형 중 하나. 불명확하면 null.",
-                },
-                "problem_type": {
-                    "type": "string",
-                    "description": "세부 유형 (예: 빈칸 추론, 문장 삽입, 순서 배열 등). 불명확하면 null.",
                 },
                 "count": {
                     "type": "integer",
