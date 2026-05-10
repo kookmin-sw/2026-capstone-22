@@ -57,7 +57,6 @@ def _get_practice_questions(
     db: Session,
     grade: Optional[str] = None,
     area: Optional[str] = None,
-    problem_type: Optional[str] = None,
     count: int = 3,
 ) -> dict:
     """검수 완료된 문항에서 조건에 맞는 문제를 랜덤으로 조회한다."""
@@ -79,8 +78,6 @@ def _get_practice_questions(
             q = q.filter(ExamPaper.grade == grade)
         if area:
             q = q.filter(QuestionItem.area == area)
-        if problem_type:
-            q = q.filter(QuestionItem.problem_type == problem_type)
 
         items = q.all()
         total_found = len(items)
@@ -98,7 +95,7 @@ def _get_practice_questions(
         formatted = []
         for i, item in enumerate(sampled, 1):
             header = f"[문항 {i}]"
-            meta = " · ".join(filter(None, [item.problem_type or item.area, item.difficulty]))
+            meta = " · ".join(filter(None, [item.area, item.difficulty]))
             if meta:
                 header += f" ({meta})"
             parts = [header]
@@ -114,7 +111,6 @@ def _get_practice_questions(
             "requested": count,
             "grade": grade,
             "area": area,
-            "problem_type": problem_type,
             "questions": formatted,
         }
     except Exception as e:
