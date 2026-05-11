@@ -54,7 +54,7 @@ export const SUBMISSION_STATUS = {
   submitted: { label: '제출완료', color: '#15803D', bg: '#DCFCE7',  border: '#86EFAC'  },
   late:      { label: '지각제출', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
   missing:   { label: '미제출',   color: '#DC2626', bg: '#FEE2E2',   border: '#FCA5A5'   },
-  excused:   { label: '면제',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
+  excused:   { label: '면제',     color: '#6D28D9', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
 };
 
 // 편집 Select에 노출할 저장 가능 상태 3종
@@ -120,7 +120,7 @@ function StatusChip({ status }) {
     <Box sx={{
       display: 'inline-flex', px: 1.25, py: 0.35,
       borderRadius: '6px',
-      fontSize: '0.75rem', fontWeight: 700,
+      fontSize: '0.75rem', fontWeight: 500,
       bgcolor: opt.bg, color: opt.color,
       border: `1px solid ${opt.border}`,
     }}>
@@ -682,12 +682,12 @@ export default function AssignmentTab() {
                           size="small"
                           sx={{
                             ...selectSx, minWidth: 100,
-                            '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.75rem', fontWeight: 700 }
+                            '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.75rem', fontWeight: 500 }
                           }}
                           MenuProps={menuProps}
                         >
                           {EDITABLE_STATUSES.map(key => (
-                            <MenuItem key={key} value={key} sx={{ fontSize: '0.75rem', fontWeight: 700, color: SUBMISSION_STATUS[key].color }}>
+                            <MenuItem key={key} value={key} sx={{ fontSize: '0.75rem', fontWeight: 500, color: SUBMISSION_STATUS[key].color }}>
                               {SUBMISSION_STATUS[key].label}
                             </MenuItem>
                           ))}
