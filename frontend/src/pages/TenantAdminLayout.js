@@ -309,10 +309,10 @@ export default function TenantAdminLayout() {
                 gap: 0.5,
               }}
             >
-              <HistoryIcon sx={{ fontSize: 12, color: '#52525B' }} />
+              <HistoryIcon sx={{ fontSize: 12, color: '#94A3B8' }} />
               <Typography
                 sx={{
-                  color: '#52525B',
+                  color: '#94A3B8',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -354,7 +354,7 @@ export default function TenantAdminLayout() {
                         fontSize: '0.75rem',
                         fontWeight: active ? 600 : 500,
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        color: active ? '#a78bfa' : '#A1A1AA',
+                        color: active ? '#a78bfa' : '#475569',
                         noWrap: true,
                       }}
                       sx={{ pr: hoveredSessionId === session.id ? 4 : 0 }}
@@ -390,7 +390,7 @@ export default function TenantAdminLayout() {
           <>
             <Typography
               sx={{
-                color: '#52525B',
+                color: '#94A3B8',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -434,7 +434,7 @@ export default function TenantAdminLayout() {
                         fontSize: '0.75rem',
                         fontWeight: active ? 600 : 500,
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        color: active ? '#a78bfa' : '#A1A1AA',
+                        color: active ? '#a78bfa' : '#475569',
                         noWrap: true,
                       }}
                       sx={{ pr: hoveredSessionId === session.id ? 4 : 0 }}
@@ -503,7 +503,7 @@ export default function TenantAdminLayout() {
             title="로그아웃"
             size="small"
             sx={{
-              color: '#52525B',
+              color: '#94A3B8',
               '&:hover': { color: '#EF4444', bgcolor: 'rgba(239,68,68,0.1)' },
             }}
           >
@@ -615,7 +615,7 @@ export default function TenantAdminLayout() {
             <Box key={section.label}>
               <Typography
                 sx={{
-                  color: '#52525B',
+                  color: '#94A3B8',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -652,13 +652,13 @@ export default function TenantAdminLayout() {
                           bgcolor: active
                             ? 'rgba(167,139,250,0.12)'
                             : 'rgba(0,0,0,0.04)',
-                          color: active ? '#a78bfa' : '#A1A1AA',
+                          color: active ? '#a78bfa' : '#475569',
                           '& .MuiListItemIcon-root': {
-                            color: active ? '#a78bfa' : '#A1A1AA',
+                            color: active ? '#a78bfa' : '#475569',
                           },
                         },
                         '& .MuiListItemIcon-root': {
-                          color: active ? '#a78bfa' : '#52525B',
+                          color: active ? '#a78bfa' : '#94A3B8',
                         },
                       }}
                     >
@@ -717,7 +717,7 @@ export default function TenantAdminLayout() {
             title="로그아웃"
             size="small"
             sx={{
-              color: '#52525B',
+              color: '#94A3B8',
               '&:hover': { color: '#EF4444', bgcolor: 'rgba(239,68,68,0.1)' },
             }}
           >
