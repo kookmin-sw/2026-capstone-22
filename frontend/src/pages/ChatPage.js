@@ -1054,8 +1054,8 @@ export default function ChatPage() {
                                   style={{
                                     margin: '16px 0',
                                     borderRadius: '10px',
-                                    border: '1px solid rgba(148, 163, 184, 0.15)',
-                                    background: '#0f172a',
+                                    border: '1px solid rgba(71, 85, 105, 0.15)',
+                                    background: '#ffffff',
                                     overflow: 'hidden',
                                     fontSize: '13px',
                                     ...style,
@@ -1070,8 +1070,8 @@ export default function ChatPage() {
                               return (
                                 <div
                                   style={{
-                                    background: '#1e293b',
-                                    borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
+                                    background: '#f1f5f9',
+                                    borderBottom: '1px solid rgba(71, 85, 105, 0.1)',
                                     ...style,
                                   }}
                                   {...restProps}
@@ -1081,7 +1081,7 @@ export default function ChatPage() {
                               );
                             },
                             tbody({ node, children, style, ...restProps }) {
-                              return <div style={{ background: '#0f172a', ...style }} {...restProps}>{children}</div>;
+                              return <div style={{ background: '#ffffff', ...style }} {...restProps}>{children}</div>;
                             },
                             tr({ node, children, style, ...restProps }) {
                               const childArray = React.Children.toArray(children);
@@ -1105,7 +1105,7 @@ export default function ChatPage() {
                                 <div
                                   style={{
                                     padding: '12px 16px',
-                                    color: '#94a3b8',
+                                    color: '#475569',
                                     fontWeight: 600,
                                     fontSize: '11px',
                                     textTransform: 'uppercase',
@@ -1123,7 +1123,7 @@ export default function ChatPage() {
                                 <div
                                   style={{
                                     padding: '14px 16px',
-                                    color: '#e2e8f0',
+                                    color: '#334155',
                                     fontSize: '13px',
                                     lineHeight: 1.6,
                                     ...style,
