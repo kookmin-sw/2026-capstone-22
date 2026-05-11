@@ -9,7 +9,7 @@
 .animated-border-input {
   position: relative;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.02);
   overflow: visible; /* 테두리가 박스 바깥으로 나갈 수 있게 */
 }
 
