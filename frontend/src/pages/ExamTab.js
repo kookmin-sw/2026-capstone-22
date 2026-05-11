@@ -392,12 +392,12 @@ export default function ExamTab() {
                 <Table stickyHeader size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험명</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>유형</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>시험일</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">평균/만점</TableCell>
-                      <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="right">액션</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>시험명</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>유형</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>시험일</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>대상 분반</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="center">평균/만점</TableCell>
+                      <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="right">액션</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -444,12 +444,12 @@ export default function ExamTab() {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>학생명</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>분반</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>점수 / {selectedExam?.max_score}</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>등급</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>코멘트</TableCell>
-                        <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>수정일</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>학생명</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>분반</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>점수 / {selectedExam?.max_score}</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>등급</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>코멘트</TableCell>
+                        <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>수정일</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
