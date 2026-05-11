@@ -1792,7 +1792,7 @@ export default function ChatPage() {
               transition: 'background-image 0.3s ease', // box-shadow 제외하여 글로우 즉시 적용
               // 항상 1.5px 테두리 공간 유지 (활성화 시에는 투명하게)
               border: '1.5px solid transparent',
-              backgroundImage: !isInputFocused ? 'linear-gradient(#0d1117, #0d1117), linear-gradient(135deg, rgba(167, 139, 250, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)' : 'none',
+              backgroundImage: !isInputFocused ? 'linear-gradient(#F8FAFC, #F8FAFC), linear-gradient(135deg, rgba(167, 139, 250, 0.4) 0%, rgba(99, 102, 241, 0.4) 100%)' : 'none',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               boxShadow: isInputFocused
@@ -1840,19 +1840,19 @@ export default function ChatPage() {
               }}
               sx={{
                 '& .MuiInputBase-input': {
-                  color: 'white',
+                  color: '#1E293B',
                   fontSize: '0.95rem',
                   fontWeight: 400,
                   padding: 0,
                   lineHeight: 1.6,
                   '&::placeholder': {
-                    color: 'rgba(255,255,255,0.35)',
+                    color: '#94A3B8',
                     opacity: 1,
                   },
                 },
                 '& .MuiInputBase-input.Mui-disabled': {
-                  WebkitTextFillColor: 'rgba(255,255,255,0.35)',
-                  color: 'rgba(255,255,255,0.35)',
+                  WebkitTextFillColor: 'rgba(0,0,0,0.3)',
+                  color: 'rgba(0,0,0,0.3)',
                 },
               }}
             />
