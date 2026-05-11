@@ -1551,7 +1551,7 @@ export default function ChatPage() {
                                       sx={{
                                         fontSize: '11px',
                                         fontWeight: 500,
-                                        color: item.type === 'folder' ? '#fbbf24' : '#e2e8f0',
+                                        color: item.type === 'folder' ? '#f59e0b' : '#475569',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
