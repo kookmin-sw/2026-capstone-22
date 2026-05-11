@@ -194,10 +194,10 @@ export default function TenantAdminLayout() {
               '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
             }}
           >
-            <ArrowBackIcon sx={{ fontSize: 16, color: '#71717A' }} />
+            <ArrowBackIcon sx={{ fontSize: 16, color: '#64748B' }} />
             <Typography
               sx={{
-                color: '#71717A',
+                color: '#64748B',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -487,7 +487,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#71717A',
+                color: '#64748B',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',
@@ -547,7 +547,7 @@ export default function TenantAdminLayout() {
         <Typography
           sx={{
             fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: '#FAFAFA',
+            color: '#1E293B',
             fontWeight: 800,
             fontSize: '1.1rem',
             letterSpacing: '-0.02em',
@@ -647,7 +647,7 @@ export default function TenantAdminLayout() {
                         bgcolor: active
                           ? 'rgba(167,139,250,0.08)'
                           : 'transparent',
-                        color: active ? '#a78bfa' : '#71717A',
+                        color: active ? '#a78bfa' : '#64748B',
                         '&:hover': {
                           bgcolor: active
                             ? 'rgba(167,139,250,0.12)'
@@ -701,7 +701,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#71717A',
+                color: '#64748B',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',
@@ -752,7 +752,7 @@ export default function TenantAdminLayout() {
         >
           <IconButton
             onClick={() => setMobileOpen(true)}
-            sx={{ color: '#FAFAFA' }}
+            sx={{ color: '#1E293B' }}
           >
             <MenuIcon />
           </IconButton>
@@ -767,7 +767,7 @@ export default function TenantAdminLayout() {
           />
           <Typography
             sx={{
-              color: '#FAFAFA',
+              color: '#1E293B',
               fontWeight: 700,
               fontSize: '1rem',
               fontFamily: "'Plus Jakarta Sans', sans-serif",
