@@ -363,7 +363,7 @@ function ChatbotSettingsPanel() {
                   p: 2,
                   borderRadius: 2.5,
                   cursor: 'pointer',
-                  bgcolor: isSelected ? 'rgba(167, 139, 250, 0.08)' : '#18181B',
+                  bgcolor: isSelected ? 'rgba(167, 139, 250, 0.08)' : '#FFFFFF',
                   border: isSelected
                     ? '1.5px solid #a78bfa'
                     : '1px solid rgba(0,0,0,0.08)',
@@ -2848,7 +2848,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
-                          return (<Box sx={{ bgcolor: 'rgba(12,12,13,0.95)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                          return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                             <Typography sx={{ color: '#71717A', fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", mb: 0.3 }}>{label}</Typography>
                             <Typography sx={{ color: '#1E293B', fontSize: '1rem', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{payload[0].value.toLocaleString()}건</Typography>
                           </Box>);
@@ -2889,12 +2889,12 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
-                          return (<Box sx={{ bgcolor: 'rgba(12,12,13,0.95)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                          return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                             <Typography sx={{ color: '#71717A', fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", mb: 0.3 }}>{label}</Typography>
                             <Typography sx={{ color: '#1E293B', fontSize: '1rem', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{payload[0].value.toLocaleString()}건</Typography>
                           </Box>);
                         }} cursor={{ stroke: 'rgba(139,92,246,0.3)' }} />
-                        <Area type="monotone" dataKey="count" stroke="#8B5CF6" strokeWidth={2} fill="url(#adminHourlyGrad)" dot={false} activeDot={{ r: 4, fill: '#8B5CF6', stroke: '#18181B', strokeWidth: 2 }} />
+                        <Area type="monotone" dataKey="count" stroke="#8B5CF6" strokeWidth={2} fill="url(#adminHourlyGrad)" dot={false} activeDot={{ r: 4, fill: '#8B5CF6', stroke: '#FFFFFF', strokeWidth: 2 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </Box>
@@ -2948,7 +2948,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
-                          return (<Box sx={{ bgcolor: 'rgba(12,12,13,0.95)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                          return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                             <Typography sx={{ color: '#71717A', fontSize: '0.68rem', fontFamily: "'JetBrains Mono', monospace", mb: 0.5 }}>{label}</Typography>
                             {payload.map((p) => (<Box key={p.dataKey} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Box sx={{ width: 8, height: 8, borderRadius: '3px', bgcolor: p.color }} />
@@ -2956,8 +2956,8 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                             </Box>))}
                           </Box>);
                         }} cursor={{ stroke: 'rgba(0,0,0,0.08)' }} />
-                        <Area type="monotone" dataKey="sessions" stroke="#10B981" strokeWidth={2} fill="url(#adminSessGrad)" dot={false} activeDot={{ r: 4, fill: '#10B981', stroke: '#18181B', strokeWidth: 2 }} />
-                        <Area type="monotone" dataKey="users" stroke="#F59E0B" strokeWidth={2} fill="url(#adminUserGrad)" dot={false} activeDot={{ r: 4, fill: '#F59E0B', stroke: '#18181B', strokeWidth: 2 }} />
+                        <Area type="monotone" dataKey="sessions" stroke="#10B981" strokeWidth={2} fill="url(#adminSessGrad)" dot={false} activeDot={{ r: 4, fill: '#10B981', stroke: '#FFFFFF', strokeWidth: 2 }} />
+                        <Area type="monotone" dataKey="users" stroke="#F59E0B" strokeWidth={2} fill="url(#adminUserGrad)" dot={false} activeDot={{ r: 4, fill: '#F59E0B', stroke: '#FFFFFF', strokeWidth: 2 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </Box>
@@ -3036,7 +3036,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                       onClick={() => loadCorpusDocuments(corpus.corpus_name)}
                       sx={{
                         position: 'relative', overflow: 'hidden',
-                        bgcolor: isSelected ? 'rgba(167,139,250,0.05)' : '#18181B',
+                        bgcolor: isSelected ? 'rgba(167,139,250,0.05)' : '#FFFFFF',
                         border: isSelected ? '1px solid rgba(167,139,250,0.35)' : '1px solid rgba(0,0,0,0.08)',
                         borderRadius: '14px', cursor: 'pointer',
                         transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
@@ -3766,8 +3766,8 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         position: 'relative', zIndex: 2,
                       }}
                     >
-                      <option value="GENERAL" style={{ backgroundColor: '#18181B', color: '#1E293B' }}>일반</option>
-                      <option value="ADMIN" style={{ backgroundColor: '#18181B', color: '#c4b5fd' }}>관리자</option>
+                      <option value="GENERAL" style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}>일반</option>
+                      <option value="ADMIN" style={{ backgroundColor: '#FFFFFF', color: '#c4b5fd' }}>관리자</option>
                     </select>
                     <KeyboardArrowDown sx={{
                       position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)',
@@ -3796,9 +3796,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         position: 'relative', zIndex: 2,
                       }}
                     >
-                      <option value="" style={{ backgroundColor: '#18181B', color: '#1E293B' }}>미배정</option>
+                      <option value="" style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}>미배정</option>
                       {groups.map((group) => (
-                        <option key={group.id} value={group.id} style={{ backgroundColor: '#18181B', color: '#1E293B' }}>{group.name}</option>
+                        <option key={group.id} value={group.id} style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}>{group.name}</option>
                       ))}
                     </select>
                     <KeyboardArrowDown sx={{
@@ -4048,9 +4048,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                     }}
                   >
-                    <option value="all" style={{ background: '#18181B' }}>전체 사용자</option>
+                    <option value="all" style={{ background: '#FFFFFF' }}>전체 사용자</option>
                     {users.map(u => (
-                      <option key={u.id} value={u.id} style={{ background: '#18181B' }}>
+                      <option key={u.id} value={u.id} style={{ background: '#FFFFFF' }}>
                         {u.username} ({u.email})
                       </option>
                     ))}
