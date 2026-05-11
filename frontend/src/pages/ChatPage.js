@@ -547,7 +547,7 @@ export default function ChatPage() {
                 textAlign: 'center',
                 color: 'white',
                 p: 4,
-                bgcolor: 'rgba(26, 31, 46, 0.9)',
+                bgcolor: 'rgba(255, 255, 255, 0.97)',
                 borderRadius: 3,
                 border: '2px solid rgba(167, 139, 250, 0.3)',
                 boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
@@ -1190,7 +1190,7 @@ export default function ChatPage() {
                                 borderRadius: '6px',
                                 transition: 'all 0.2s',
                                 '&:hover': {
-                                  bgcolor: 'rgba(30, 41, 59, 0.3)',
+                                  bgcolor: 'rgba(226, 232, 240, 0.7)',
                                 },
                               }}
                             >
@@ -1262,13 +1262,13 @@ export default function ChatPage() {
                                   gap: 1.5,
                                   p: 1.25,
                                   borderRadius: '8px',
-                                  bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                  bgcolor: 'rgba(226, 232, 240, 0.8)',
                                   border: '1px solid rgba(100, 116, 139, 0.3)',
                                   textDecoration: 'none',
                                   cursor: msg.cited_sources[0].uri ? 'pointer' : 'default',
                                   transition: 'all 0.2s',
                                   '&:hover': msg.cited_sources[0].uri ? {
-                                    bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                    bgcolor: 'rgba(209, 218, 230, 0.9)',
                                     borderColor: 'rgba(167, 139, 250, 0.4)',
                                   } : {},
                                 }}
@@ -1277,7 +1277,7 @@ export default function ChatPage() {
                                   sx={{
                                     p: 1,
                                     borderRadius: '6px',
-                                    bgcolor: 'rgba(15, 23, 42, 1)',
+                                    bgcolor: 'rgba(226, 232, 240, 1)',
                                     color: msg.cited_sources[0].uri ? 'rgba(167, 139, 250, 0.8)' : 'rgba(148, 163, 184, 0.8)',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1332,16 +1332,16 @@ export default function ChatPage() {
                                       gap: 1.5,
                                       p: 1.25,
                                       borderRadius: '8px',
-                                      bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                      bgcolor: 'rgba(226, 232, 240, 0.8)',
                                       border: '1px solid rgba(100, 116, 139, 0.3)',
                                       textDecoration: 'none',
                                       cursor: source.uri ? 'pointer' : 'default',
                                       transition: 'all 0.2s',
                                       '&:hover': source.uri ? {
-                                        bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                        bgcolor: 'rgba(209, 218, 230, 0.9)',
                                         borderColor: 'rgba(167, 139, 250, 0.4)',
                                       } : {
-                                        bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                        bgcolor: 'rgba(209, 218, 230, 0.9)',
                                         borderColor: 'rgba(167, 139, 250, 0.3)',
                                       },
                                     }}
@@ -1350,7 +1350,7 @@ export default function ChatPage() {
                                       sx={{
                                         p: 1,
                                         borderRadius: '6px',
-                                        bgcolor: 'rgba(15, 23, 42, 1)',
+                                        bgcolor: 'rgba(226, 232, 240, 1)',
                                         color: source.uri ? 'rgba(167, 139, 250, 0.8)' : 'rgba(148, 163, 184, 0.8)',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -1380,7 +1380,7 @@ export default function ChatPage() {
                                       sx={{
                                         fontSize: '10px',
                                         color: 'rgba(148, 163, 184, 0.5)',
-                                        bgcolor: 'rgba(15, 23, 42, 0.5)',
+                                        bgcolor: 'rgba(226, 232, 240, 0.7)',
                                         px: 1,
                                         py: 0.25,
                                         borderRadius: '4px',
@@ -1496,7 +1496,7 @@ export default function ChatPage() {
                                 overflowY: 'auto',
                                 p: 1,
                                 borderRadius: '8px',
-                                bgcolor: 'rgba(15, 23, 42, 0.5)',
+                                bgcolor: 'rgba(226, 232, 240, 0.7)',
                                 border: '1px solid rgba(100, 116, 139, 0.2)',
                                 '&::-webkit-scrollbar': {
                                   width: '6px',
@@ -1526,7 +1526,7 @@ export default function ChatPage() {
                                     gap: 1,
                                     p: 1,
                                     borderRadius: '6px',
-                                    bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                    bgcolor: 'rgba(226, 232, 240, 0.8)',
                                     border: '1px solid rgba(100, 116, 139, 0.2)',
                                     textDecoration: 'none',
                                     transition: 'all 0.2s',
