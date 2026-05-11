@@ -354,7 +354,7 @@ export default function TenantAdminLayout() {
                         fontSize: '0.75rem',
                         fontWeight: active ? 600 : 500,
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        color: active ? '#a78bfa' : '#475569',
+                        color: active ? '#a78bfa' : '#334155',
                         noWrap: true,
                       }}
                       sx={{ pr: hoveredSessionId === session.id ? 4 : 0 }}
@@ -390,7 +390,7 @@ export default function TenantAdminLayout() {
           <>
             <Typography
               sx={{
-                color: '#94A3B8',
+                color: '#64748B',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -434,7 +434,7 @@ export default function TenantAdminLayout() {
                         fontSize: '0.75rem',
                         fontWeight: active ? 600 : 500,
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        color: active ? '#a78bfa' : '#475569',
+                        color: active ? '#a78bfa' : '#334155',
                         noWrap: true,
                       }}
                       sx={{ pr: hoveredSessionId === session.id ? 4 : 0 }}
@@ -615,7 +615,7 @@ export default function TenantAdminLayout() {
             <Box key={section.label}>
               <Typography
                 sx={{
-                  color: '#94A3B8',
+                  color: '#64748B',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -647,18 +647,18 @@ export default function TenantAdminLayout() {
                         bgcolor: active
                           ? 'rgba(167,139,250,0.08)'
                           : 'transparent',
-                        color: active ? '#a78bfa' : '#64748B',
+                        color: active ? '#a78bfa' : '#334155',
                         '&:hover': {
                           bgcolor: active
                             ? 'rgba(167,139,250,0.12)'
                             : 'rgba(0,0,0,0.04)',
-                          color: active ? '#a78bfa' : '#475569',
+                          color: active ? '#a78bfa' : '#1E293B',
                           '& .MuiListItemIcon-root': {
-                            color: active ? '#a78bfa' : '#475569',
+                            color: active ? '#a78bfa' : '#1E293B',
                           },
                         },
                         '& .MuiListItemIcon-root': {
-                          color: active ? '#a78bfa' : '#94A3B8',
+                          color: active ? '#a78bfa' : '#64748B',
                         },
                       }}
                     >

@@ -669,7 +669,7 @@ function ChatbotSettingsPanel() {
             flexDirection: 'column',
             gap: 1.5,
             minHeight: 320,
-            bgcolor: '#0C0C0D',
+            bgcolor: '#F8FAFC',
           }}>
             {/* Bot greeting */}
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
@@ -2828,7 +2828,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, position: 'relative', zIndex: 1 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: '1rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>일별 응답 수</Typography>
-                    <Typography sx={{ color: '#3F3F46', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>LAST 14 DAYS</Typography>
+                    <Typography sx={{ color: '#94A3B8', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>LAST 14 DAYS</Typography>
                   </Box>
                   <Box sx={{ width: '100%', height: 240, position: 'relative', zIndex: 1 }}>
                     <ResponsiveContainer>
@@ -2844,8 +2844,8 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                             <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.4} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} interval={1} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} interval={1} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
@@ -2871,7 +2871,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, position: 'relative', zIndex: 1 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: '1rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>시간대별 활동</Typography>
-                    <Typography sx={{ color: '#3F3F46', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>30 DAYS</Typography>
+                    <Typography sx={{ color: '#94A3B8', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>30 DAYS</Typography>
                   </Box>
                   <Box sx={{ width: '100%', height: 240, position: 'relative', zIndex: 1 }}>
                     <ResponsiveContainer>
@@ -2885,8 +2885,8 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                             <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }} interval={5} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }} interval={5} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
@@ -2922,7 +2922,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         </Box>
                       </Box>
                     </Box>
-                    <Typography sx={{ color: '#3F3F46', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>LAST 14 DAYS</Typography>
+                    <Typography sx={{ color: '#94A3B8', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>LAST 14 DAYS</Typography>
                   </Box>
                   <Box sx={{ width: '100%', height: 200, position: 'relative', zIndex: 1 }}>
                     <ResponsiveContainer>
@@ -2944,8 +2944,8 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                             <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} interval={1} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#3F3F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} interval={1} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} allowDecimals={false} />
                         <RechartsTooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           return (<Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', px: 1.8, py: 1.2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
@@ -3022,7 +3022,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
             }}>
               {corpora.length === 0 ? (
                 <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8, bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)' }}>
-                  <Folder sx={{ fontSize: 48, color: '#3F3F46', mb: 1.5 }} />
+                  <Folder sx={{ fontSize: 48, color: '#94A3B8', mb: 1.5 }} />
                   <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>생성된 저장소가 없습니다</Typography>
                 </Box>
               ) : (
@@ -3103,7 +3103,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                               </Typography>
                             </Box>
                             <Box sx={{
-                              width: 3, height: 3, borderRadius: '50%', bgcolor: '#3F3F46',
+                              width: 3, height: 3, borderRadius: '50%', bgcolor: '#94A3B8',
                             }} />
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
                               <Box sx={{
@@ -3252,9 +3252,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     </Box>
                   ) : selectedFiles.length === 0 && (
                     <Box sx={{ textAlign: 'center', py: 2 }}>
-                      <CloudUpload sx={{ fontSize: 36, color: '#3F3F46', mb: 1 }} />
+                      <CloudUpload sx={{ fontSize: 36, color: '#94A3B8', mb: 1 }} />
                       <Typography sx={{ color: '#52525B', fontSize: '0.75rem' }}>파일을 드래그하거나 버튼을 클릭하세요</Typography>
-                      <Typography sx={{ color: '#3F3F46', fontSize: '0.65rem', mt: 0.5 }}>PDF, TXT, DOCX (최대 50MB)</Typography>
+                      <Typography sx={{ color: '#94A3B8', fontSize: '0.65rem', mt: 0.5 }}>PDF, TXT, DOCX (최대 50MB)</Typography>
                     </Box>
                   )}
 
@@ -3417,7 +3417,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         checked={selectedDocuments.length === documents.length && documents.length > 0}
                         indeterminate={selectedDocuments.length > 0 && selectedDocuments.length < documents.length}
                         onChange={toggleAllDocuments}
-                        sx={{ p: 0, color: '#3F3F46', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: '#a78bfa' } }}
+                        sx={{ p: 0, color: '#94A3B8', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: '#a78bfa' } }}
                       />
                     </Box>
                     <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#52525B' }}>File</Typography>
@@ -3432,7 +3432,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     </Box>
                   ) : documents.length === 0 ? (
                     <Box sx={{ textAlign: 'center', py: 8 }}>
-                      <Description sx={{ fontSize: 40, color: '#3F3F46', mb: 1 }} />
+                      <Description sx={{ fontSize: 40, color: '#94A3B8', mb: 1 }} />
                       <Typography sx={{ color: '#52525B', fontSize: '0.8125rem' }}>문서가 없습니다</Typography>
                     </Box>
                   ) : (
@@ -3448,7 +3448,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                           <Checkbox size="small"
                             checked={selectedDocuments.includes(doc.document_name)}
                             onChange={() => toggleDocumentSelection(doc.document_name)}
-                            sx={{ p: 0, color: '#3F3F46', '&.Mui-checked': { color: '#a78bfa' } }}
+                            sx={{ p: 0, color: '#94A3B8', '&.Mui-checked': { color: '#a78bfa' } }}
                           />
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
@@ -3499,7 +3499,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                           color: '#52525B', borderColor: 'rgba(0,0,0,0.12)',
                           '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
                           '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', '&:hover': { bgcolor: 'rgba(167,139,250,0.2)' } },
-                          '&.Mui-disabled': { color: '#3F3F46' },
+                          '&.Mui-disabled': { color: '#94A3B8' },
                         },
                       }}
                     />
@@ -3551,9 +3551,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               py: 12, animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
             }}>
-              <Storage sx={{ fontSize: 56, color: '#3F3F46', mb: 2 }} />
+              <Storage sx={{ fontSize: 56, color: '#94A3B8', mb: 2 }} />
               <Typography sx={{ color: '#52525B', fontSize: '0.875rem', fontWeight: 600 }}>저장소를 선택하세요</Typography>
-              <Typography sx={{ color: '#3F3F46', fontSize: '0.75rem', mt: 0.5 }}>위 목록에서 저장소를 클릭하면 문서 목록이 표시됩니다</Typography>
+              <Typography sx={{ color: '#94A3B8', fontSize: '0.75rem', mt: 0.5 }}>위 목록에서 저장소를 클릭하면 문서 목록이 표시됩니다</Typography>
             </Box>
           )}
         </Box>
@@ -3568,7 +3568,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               <Typography sx={{ fontWeight: 800, color: '#1E293B', fontSize: '1.5rem', letterSpacing: '-0.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 그룹 & 유저
               </Typography>
-              <Typography sx={{ color: '#3F3F46', fontSize: '0.8rem', fontFamily: "'JetBrains Mono', monospace" }}>
+              <Typography sx={{ color: '#94A3B8', fontSize: '0.8rem', fontFamily: "'JetBrains Mono', monospace" }}>
                 {users.length} users
               </Typography>
             </Box>
@@ -3705,7 +3705,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
             {/* User Rows */}
             {filteredUsers.length === 0 ? (
               <Box sx={{ py: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-                <People sx={{ fontSize: 40, color: '#3F3F46' }} />
+                <People sx={{ fontSize: 40, color: '#94A3B8' }} />
                 <Typography sx={{ color: '#52525B', fontSize: '0.8125rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   {userSearchQuery ? '검색 결과가 없습니다' : '해당 그룹에 멤버가 없습니다.'}
                 </Typography>
@@ -3724,9 +3724,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
                     <Box sx={{
                       width: 32, height: 32, borderRadius: '8px',
-                      bgcolor: user.is_admin ? '#a78bfa' : '#27272A',
+                      bgcolor: user.is_admin ? '#a78bfa' : '#E2E8F0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: user.is_admin ? '#09090B' : '#71717A', fontWeight: 700, fontSize: '0.7rem', flexShrink: 0,
+                      color: user.is_admin ? '#09090B' : '#475569', fontWeight: 700, fontSize: '0.7rem', flexShrink: 0,
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                     }}>
                       {user.username.substring(0, 2).toUpperCase()}
@@ -3751,7 +3751,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   }}>
                     <Security sx={{
                       position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)',
-                      fontSize: 13, color: user.is_admin ? '#a78bfa' : '#3F3F46', pointerEvents: 'none', zIndex: 1,
+                      fontSize: 13, color: user.is_admin ? '#a78bfa' : '#64748B', pointerEvents: 'none', zIndex: 1,
                     }} />
                     <select value={user.is_admin ? 'ADMIN' : 'GENERAL'}
                       onChange={(e) => updateUserRole(user.id, e.target.value === 'ADMIN')}
@@ -3761,7 +3761,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         width: '100%', height: '100%',
                         paddingLeft: '28px', paddingRight: '28px',
                         fontSize: '12px', fontWeight: 600, border: 'none', backgroundColor: 'transparent',
-                        color: user.is_admin ? '#c4b5fd' : '#71717A', cursor: 'pointer', outline: 'none',
+                        color: user.is_admin ? '#c4b5fd' : '#475569', cursor: 'pointer', outline: 'none',
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
                         position: 'relative', zIndex: 2,
                       }}
@@ -3771,7 +3771,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     </select>
                     <KeyboardArrowDown sx={{
                       position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)',
-                      fontSize: 16, color: user.is_admin ? 'rgba(167,139,250,0.5)' : '#3F3F46', pointerEvents: 'none',
+                      fontSize: 16, color: user.is_admin ? 'rgba(167,139,250,0.5)' : '#64748B', pointerEvents: 'none',
                     }} />
                   </Box>
 
@@ -3782,7 +3782,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   <Box sx={{
                     position: 'relative', display: 'inline-flex', alignItems: 'center',
                     maxWidth: '150px', borderRadius: '8px', height: 32,
-                    border: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#0C0C0D', overflow: 'hidden',
+                    border: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#F8FAFC', overflow: 'hidden',
                   }}>
                     <select value={user.group_id || ''} onChange={(e) => updateUserGroup(user.id, e.target.value || null)}
                       onClick={(e) => e.stopPropagation()}
@@ -3803,7 +3803,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     </select>
                     <KeyboardArrowDown sx={{
                       position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                      fontSize: 16, color: '#3F3F46', pointerEvents: 'none',
+                      fontSize: 16, color: '#94A3B8', pointerEvents: 'none',
                     }} />
                   </Box>
 
@@ -3865,9 +3865,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
           }}>
             {promptTemplates.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 10 }}>
-                <Article sx={{ fontSize: 48, color: '#3F3F46', mb: 1.5 }} />
+                <Article sx={{ fontSize: 48, color: '#94A3B8', mb: 1.5 }} />
                 <Typography sx={{ color: '#52525B', fontSize: '0.875rem', fontWeight: 600 }}>등록된 템플릿이 없습니다</Typography>
-                <Typography sx={{ color: '#3F3F46', fontSize: '0.75rem', mt: 0.5 }}>새 템플릿을 추가하여 사용자들에게 빠른 프롬프트를 제공하세요</Typography>
+                <Typography sx={{ color: '#94A3B8', fontSize: '0.75rem', mt: 0.5 }}>새 템플릿을 추가하여 사용자들에게 빠른 프롬프트를 제공하세요</Typography>
               </Box>
             ) : (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -3944,7 +3944,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     <Typography sx={{ color: '#71717A', fontSize: '0.75rem' }}>
                       {selectedSession.user?.username || 'Unknown'}
                     </Typography>
-                    <Typography sx={{ color: '#3F3F46', fontSize: '0.65rem', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <Typography sx={{ color: '#94A3B8', fontSize: '0.65rem', fontFamily: "'JetBrains Mono', monospace" }}>
                       {selectedSession.created_at ? new Date(selectedSession.created_at).toLocaleString('ko-KR') : ''}
                     </Typography>
                   </Box>
@@ -4095,7 +4095,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   return (s.title || '').toLowerCase().includes(q) || (s.username || '').toLowerCase().includes(q);
                 }).length === 0) ? (
                   <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <HistoryIcon sx={{ fontSize: 48, color: '#27272A', mb: 1.5 }} />
+                    <HistoryIcon sx={{ fontSize: 48, color: '#94A3B8', mb: 1.5 }} />
                     <Typography sx={{ color: '#52525B', fontSize: '0.875rem' }}>
                       {chatHistorySearch ? '검색 결과가 없습니다' : '채팅 내역이 없습니다'}
                     </Typography>
@@ -4233,14 +4233,14 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               선택한 그룹의 사용자만 이 저장소의 문서를 검색할 수 있습니다
             </Typography>
             {groups.length === 0 ? (
-              <Typography sx={{ color: '#3F3F46', fontSize: '0.75rem' }}>생성된 그룹이 없습니다</Typography>
+              <Typography sx={{ color: '#94A3B8', fontSize: '0.75rem' }}>생성된 그룹이 없습니다</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {groups.map((group) => (
                   <FormControlLabel key={group.id}
                     control={<Checkbox checked={newCorpusGroupIds.includes(group.id)}
                       onChange={(e) => { if (e.target.checked) { setNewCorpusGroupIds(prev => [...prev, group.id]); } else { setNewCorpusGroupIds(prev => prev.filter(id => id !== group.id)); } }}
-                      sx={{ color: '#3F3F46', '&.Mui-checked': { color: '#a78bfa' } }} size="small" />}
+                      sx={{ color: '#94A3B8', '&.Mui-checked': { color: '#a78bfa' } }} size="small" />}
                     label={<Typography sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>
                       {group.name}
                       {group.description && <Typography component="span" sx={{ color: '#52525B', fontSize: '0.7rem', ml: 1 }}>({group.description})</Typography>}
@@ -4382,7 +4382,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                           fontSize: '0.7rem', fontWeight: 600, borderRadius: '8px',
                           border: hasAccess ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(0,0,0,0.08)',
                           backgroundColor: hasAccess ? 'rgba(34,197,94,0.08)' : '#0C0C0D',
-                          color: hasAccess ? '#86efac' : '#52525B', cursor: 'pointer', outline: 'none',
+                          color: hasAccess ? '#15803d' : '#52525B', cursor: 'pointer', outline: 'none',
                         }}
                       >
                         <option value="allowed">허용됨</option>
@@ -4399,7 +4399,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
             </Box>
           ) : (
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Group sx={{ fontSize: 40, color: '#3F3F46', mb: 1 }} />
+              <Group sx={{ fontSize: 40, color: '#94A3B8', mb: 1 }} />
               <Typography sx={{ color: '#52525B' }}>생성된 그룹이 없습니다</Typography>
             </Box>
           )}
@@ -4591,7 +4591,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Checkbox checked={templateForm.is_active}
                   onChange={(e) => setTemplateForm({ ...templateForm, is_active: e.target.checked })}
-                  sx={{ color: '#3F3F46', '&.Mui-checked': { color: '#a78bfa' } }}
+                  sx={{ color: '#94A3B8', '&.Mui-checked': { color: '#a78bfa' } }}
                 />
                 <Typography sx={{ color: '#71717A', fontSize: '0.8125rem' }}>활성화 (채팅 화면에 표시)</Typography>
               </Box>
@@ -4685,7 +4685,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 '& .MuiInputLabel-root': { color: '#71717A' }, '& .MuiInputLabel-root.Mui-focused': { color: '#fbbf24' },
               }}
             />
-            <Typography sx={{ color: '#3F3F46', fontSize: '0.7rem', mt: 1 }}>
+            <Typography sx={{ color: '#94A3B8', fontSize: '0.7rem', mt: 1 }}>
               * 외부 SSO 사용자도 이 비밀번호로 일반 로그인이 가능해집니다
             </Typography>
           </Box>
@@ -4699,7 +4699,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
               color: 'white', fontWeight: 700, px: 3, borderRadius: '10px', textTransform: 'none',
               '&:hover': { background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)' },
-              '&.Mui-disabled': { background: 'rgba(0,0,0,0.04)', color: '#3F3F46' },
+              '&.Mui-disabled': { background: 'rgba(0,0,0,0.04)', color: '#94A3B8' },
             }}
           >비밀번호 변경</Button>
         </DialogActions>

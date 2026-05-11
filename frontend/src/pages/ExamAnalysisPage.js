@@ -654,8 +654,8 @@ ${answerSection}
               sx={{
                 border: `2px dashed ${isDragging ? '#a78bfa' : fileError ? '#ef4444' : 'rgba(0,0,0,0.15)'}`,
                 borderRadius: 2.5, p: 4, mb: 2, textAlign: 'center',
-                cursor: file ? 'default' : 'pointer', bgcolor: '#F1F5F9',
-                bgcolor: isDragging ? 'rgba(167,139,250,0.05)' : '#111115',
+                cursor: file ? 'default' : 'pointer',
+                bgcolor: isDragging ? 'rgba(167,139,250,0.05)' : '#F8FAFC',
                 transition: 'all 0.2s',
                 '&:hover': !file ? { borderColor: 'rgba(167,139,250,0.4)', bgcolor: 'rgba(167,139,250,0.03)' } : {},
               }}
