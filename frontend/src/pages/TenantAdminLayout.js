@@ -262,13 +262,13 @@ export default function TenantAdminLayout() {
             }}
             sx={{
               '& .MuiInputBase-input': {
-                color: 'white',
+                color: '#1E293B',
                 fontSize: '0.8125rem',
                 fontWeight: 400,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 padding: 0,
                 '&::placeholder': {
-                  color: 'rgba(255,255,255,0.3)',
+                  color: '#94A3B8',
                   opacity: 1,
                 },
               },
@@ -822,7 +822,7 @@ export default function TenantAdminLayout() {
           flexGrow: 1,
           mt: isMobile ? '56px' : 0,
           minHeight: '100vh',
-          bgcolor: '#09090B',
+          bgcolor: '#F8FAFC',
           position: 'relative',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}
