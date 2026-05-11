@@ -555,12 +555,12 @@ export default function AssignmentTab() {
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>과제명</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>대상 분반</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>부여일</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>마감일</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="center">제출률</TableCell>
-                  <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }} align="right">액션</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>과제명</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>대상 분반</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>부여일</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>마감일</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="center">제출률</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="right">액션</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -650,14 +650,14 @@ export default function AssignmentTab() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>학생명</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>분반</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>표시 상태</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>저장 상태</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>제출 일시</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>점수</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>피드백</TableCell>
-                    <TableCell sx={{ bgcolor: '#111113', color: '#71717A', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>메모</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>학생명</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>분반</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>표시 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>저장 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>제출 일시</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>점수</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>피드백</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>메모</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
