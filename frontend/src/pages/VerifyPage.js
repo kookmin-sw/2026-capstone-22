@@ -323,7 +323,7 @@ export default function VerifyPage() {
               {step === STEP.DONE && (
                 <Fade in>
                   <Box sx={{ textAlign: 'center' }}>
-                    <CheckCircle sx={{ fontSize: 64, color: '#4ade80', mb: 2 }} />
+                    <CheckCircle sx={{ fontSize: 64, color: '#16A34A', mb: 2 }} />
                     <Typography variant="h5" fontWeight={700} sx={{ color: '#1E293B', mb: 1 }}>
                       인증이 완료되었습니다!
                     </Typography>
@@ -337,9 +337,9 @@ export default function VerifyPage() {
                           key={name}
                           label={name}
                           sx={{
-                            bgcolor: 'rgba(74,222,128,0.15)',
-                            color: '#4ade80',
-                            border: '1px solid rgba(74,222,128,0.3)',
+                            bgcolor: '#DCFCE7',
+                            color: '#15803D',
+                            border: '1px solid #86EFAC',
                             fontWeight: 600,
                           }}
                         />
