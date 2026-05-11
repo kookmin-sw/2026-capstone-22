@@ -816,7 +816,7 @@ export default function ChatPage() {
                         <Typography
                           sx={{
                             fontSize: '0.75rem',
-                            color: 'rgba(255,255,255,0.5)',
+                            color: '#64748B',
                             textAlign: 'center',
                           }}
                         >
@@ -858,7 +858,7 @@ export default function ChatPage() {
                         <Typography
                           sx={{
                             fontSize: '0.875rem',
-                            color: 'rgba(255,255,255,0.85)',
+                            color: '#334155',
                             lineHeight: 1.5,
                           }}
                         >
@@ -943,7 +943,7 @@ export default function ChatPage() {
                             marginBottom: '0.5em',
                             lineHeight: 1.7,
                             fontSize: '0.9375rem',
-                            color: 'rgba(255,255,255,0.95)',
+                            color: '#334155',
                           },
                           '& p:last-child': {
                             marginBottom: 0,
