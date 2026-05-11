@@ -1034,8 +1034,8 @@ ${answerSection}
                       )}
 
                       {item.question_body && (
-                        <Box sx={{ bgcolor: '#F8FAFC', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.08)' }}>
-                          <Typography sx={{ color: '#000000', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                        <Box sx={{ bgcolor: '#F8FAFC', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+                          <Typography sx={{ color: '#000000', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                             {item.question_body}
                           </Typography>
                         </Box>
@@ -1231,8 +1231,8 @@ ${answerSection}
                 {selectedBankItem.question_body && (
                   <Box>
                     <Typography sx={{ color: '#1E293B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>문제 본문</Typography>
-                    <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.10)' }}>
-                      <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.10)', overflow: 'hidden' }}>
+                      <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                         {selectedBankItem.question_body}
                       </Typography>
                     </Box>
