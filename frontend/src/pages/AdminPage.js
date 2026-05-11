@@ -1510,7 +1510,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
       '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
     },
-    '& .MuiInputLabel-root': { color: '#64748B', fontSize: '0.8125rem' },
+    '& .MuiInputLabel-root': { color: '#334155', fontSize: '0.8125rem' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
   };
 
@@ -1522,16 +1522,16 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
     '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.15)' },
     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(167,139,250,0.3)' },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#a78bfa' },
-    '& .MuiSvgIcon-root': { color: '#64748B' },
+    '& .MuiSvgIcon-root': { color: '#334155' },
   };
 
   const menuProps = {
     PaperProps: {
-      sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', '& .MuiMenuItem-root': { fontSize: '0.8125rem', color: '#334155', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' }, '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' } } },
+      sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', '& .MuiMenuItem-root': { fontSize: '0.8125rem', color: '#1E293B', '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' }, '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' } } },
     },
   };
 
-  const colHeaderSx = { fontSize: '0.7rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' };
+  const colHeaderSx = { fontSize: '0.7rem', fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '0.05em' };
 
   return (
     <Box>
@@ -1542,7 +1542,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
           </Box>
           <Box>
             <Typography sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>학생 관리</Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>분반 · 학생 · 출결 · 과제 · 시험을 관리합니다</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>분반 · 학생 · 출결 · 과제 · 시험을 관리합니다</Typography>
           </Box>
         </Box>
       </Box>
@@ -1576,29 +1576,29 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
             </Box>
             {classes.length === 0 && (
               <Box sx={{ py: 6, textAlign: 'center' }}>
-                <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>등록된 분반이 없습니다.</Typography>
+                <Typography sx={{ color: '#1E293B', fontSize: '0.875rem' }}>등록된 분반이 없습니다.</Typography>
               </Box>
             )}
             {classes.map((cls, idx) => (
-              <Box key={cls.id} sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.6, borderBottom: idx < classes.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+              <Box key={cls.id} sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.6, borderBottom: idx < classes.length - 1 ? '1px solid rgba(0,0,0,0.09)' : 'none', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                 <Box>
                   <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{cls.name}</Typography>
-                  <Typography sx={{ fontSize: '0.7rem', color: '#64748B', fontFamily: 'JetBrains Mono, monospace' }}>{cls.code}</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: '#1E293B', fontFamily: 'JetBrains Mono, monospace' }}>{cls.code}</Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: '0.8125rem', color: '#334155' }}>{cls.grade_level}</Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: '#475569' }}>{cls.subject}</Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{cls.grade_level}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>{cls.subject}</Typography>
                 </Box>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>{cls.teacher_name}</Typography>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{cls.teacher_name}</Typography>
                 <Box>
-                  <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>{cls.day_of_week}</Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>{cls.start_time} ~ {cls.end_time}</Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{cls.day_of_week}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>{cls.start_time} ~ {cls.end_time}</Typography>
                 </Box>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#A1A1AA', textAlign: 'center' }}>{cls.capacity}명</Typography>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B', textAlign: 'center' }}>{cls.capacity}명</Typography>
                 <ClassStatusChip status={cls.status} />
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  <IconButton size="small" onClick={() => openEditClass(cls)} sx={{ color: '#64748B', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
-                  <IconButton size="small" onClick={() => setDeleteClassId(cls.id)} sx={{ color: '#64748B', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                  <IconButton size="small" onClick={() => openEditClass(cls)} sx={{ color: '#334155', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                  <IconButton size="small" onClick={() => setDeleteClassId(cls.id)} sx={{ color: '#334155', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
                 </Box>
               </Box>
             ))}
@@ -1614,7 +1614,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
               placeholder="이름, 학교명 또는 연락처 검색"
               value={studentSearch}
               onChange={e => setStudentSearch(e.target.value)}
-              InputProps={{ startAdornment: <Search sx={{ fontSize: 16, color: '#64748B', mr: 0.5 }} /> }}
+              InputProps={{ startAdornment: <Search sx={{ fontSize: 16, color: '#334155', mr: 0.5 }} /> }}
               sx={{ ...inputSx, width: 200 }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -1656,13 +1656,13 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                       </Box>
                       <Box>
                         <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>{cls.name}</Typography>
-                        <Typography sx={{ fontSize: '0.7rem', color: '#64748B' }}>{cls.teacher_name} · {cls.day_of_week} {cls.start_time}~{cls.end_time}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: '#1E293B' }}>{cls.teacher_name} · {cls.day_of_week} {cls.start_time}~{cls.end_time}</Typography>
                       </Box>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip label={`${clsStudents.length}명`} size="small" sx={{ bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
                       <ClassStatusChip status={cls.status} />
-                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#64748B' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#64748B' }} />}
+                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#334155' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#334155' }} />}
                     </Box>
                   </Box>
 
@@ -1674,29 +1674,29 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                         ))}
                       </Box>
                       {clsStudents.length === 0 && (
-                        <Box sx={{ py: 4, textAlign: 'center', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                          <Typography sx={{ color: '#64748B', fontSize: '0.8125rem' }}>조건에 맞는 학생이 없습니다.</Typography>
+                        <Box sx={{ py: 4, textAlign: 'center', borderTop: '1px solid rgba(0,0,0,0.09)' }}>
+                          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>조건에 맞는 학생이 없습니다.</Typography>
                         </Box>
                       )}
                       {clsStudents.map((stu) => (
-                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.06)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.09)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
                             <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{stu.name}</Typography>
                           </Box>
                           <Box>
-                            <Typography sx={{ fontSize: '0.8125rem', color: '#334155' }}>{stu.school_name}</Typography>
-                            <Typography sx={{ fontSize: '0.7rem', color: '#475569' }}>{stu.grade}</Typography>
+                            <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{stu.school_name}</Typography>
+                            <Typography sx={{ fontSize: '0.7rem', color: '#1E293B' }}>{stu.grade}</Typography>
                           </Box>
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#334155' }}>{cls.name}</Typography>
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>{stu.phone}</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{cls.name}</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{stu.phone}</Typography>
                           <Box onClick={() => toggleStudentStatus(stu)} sx={{ cursor: stu.status !== 'graduated' ? 'pointer' : 'default' }}>
                             <StudentStatusChip status={stu.status} />
                           </Box>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#64748B', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
-                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#64748B', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#334155', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#334155', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
                           </Box>
                         </Box>
                       ))}
@@ -1710,17 +1710,17 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
               if (classFilter !== 'all' || unassigned.length === 0) return null;
               const isExpanded = expandedClasses.has('unassigned');
               return (
-                <Box sx={{ border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+                <Box sx={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: 'rgba(0,0,0,0.03)', cursor: 'pointer' }} onClick={() => toggleClassExpanded('unassigned')}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: 'rgba(113,113,122,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Groups sx={{ fontSize: 15, color: '#64748B' }} />
+                        <Groups sx={{ fontSize: 15, color: '#1E293B' }} />
                       </Box>
-                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#64748B' }}>미배정</Typography>
+                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#1E293B' }}>미배정</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Chip label={`${unassigned.length}명`} size="small" sx={{ bgcolor: 'rgba(113,113,122,0.15)', color: '#64748B', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
-                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#64748B' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#64748B' }} />}
+                      <Chip label={`${unassigned.length}명`} size="small" sx={{ bgcolor: 'rgba(113,113,122,0.15)', color: '#1E293B', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+                      {isExpanded ? <ExpandLess sx={{ fontSize: 18, color: '#334155' }} /> : <ExpandMore sx={{ fontSize: 18, color: '#334155' }} />}
                     </Box>
                   </Box>
                   {isExpanded && (
@@ -1731,24 +1731,24 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                         ))}
                       </Box>
                       {unassigned.map(stu => (
-                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.06)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.09)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(113,113,122,0.15)', color: '#64748B', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
+                            <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(113,113,122,0.15)', color: '#334155', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
                             <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{stu.name}</Typography>
                           </Box>
                           <Box>
-                            <Typography sx={{ fontSize: '0.8125rem', color: '#334155' }}>{stu.school_name}</Typography>
-                            <Typography sx={{ fontSize: '0.7rem', color: '#475569' }}>{stu.grade}</Typography>
+                            <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{stu.school_name}</Typography>
+                            <Typography sx={{ fontSize: '0.7rem', color: '#1E293B' }}>{stu.grade}</Typography>
                           </Box>
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>-</Typography>
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>{stu.phone}</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>-</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#1E293B' }}>{stu.phone}</Typography>
                           <Box onClick={() => toggleStudentStatus(stu)} sx={{ cursor: stu.status !== 'graduated' ? 'pointer' : 'default' }}>
                             <StudentStatusChip status={stu.status} />
                           </Box>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>{stu.updated_at ? stu.updated_at.slice(0, 10) : '-'}</Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#64748B', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
-                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#64748B', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => openEditStudent(stu)} sx={{ color: '#334155', '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.08)' } }}><Edit sx={{ fontSize: 15 }} /></IconButton>
+                            <IconButton size="small" onClick={() => setDeleteStudentId(stu.id)} sx={{ color: '#334155', '&:hover': { color: '#DC2626', bgcolor: 'rgba(239,68,68,0.08)' } }}><DeleteOutline sx={{ fontSize: 15 }} /></IconButton>
                           </Box>
                         </Box>
                       ))}
@@ -1786,7 +1786,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
           <TextField label="비고" size="small" multiline rows={2} value={classForm.memo} onChange={e => setClassForm(p => ({ ...p, memo: e.target.value }))} sx={inputSx} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setClassDialogOpen(false)} sx={{ color: '#64748B', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={() => setClassDialogOpen(false)} sx={{ color: '#334155', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
           <Button onClick={saveClass} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>저장</Button>
         </DialogActions>
       </Dialog>
@@ -1794,10 +1794,10 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       <Dialog open={!!deleteClassId} onClose={() => setDeleteClassId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#111827', fontWeight: 700, fontSize: '1rem' }}>분반 삭제</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>해당 분반과 소속 학생 데이터가 모두 삭제됩니다. 계속하시겠습니까?</Typography>
+          <Typography sx={{ color: '#334155', fontSize: '0.875rem' }}>해당 분반과 소속 학생 데이터가 모두 삭제됩니다. 계속하시겠습니까?</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setDeleteClassId(null)} sx={{ color: '#64748B', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={() => setDeleteClassId(null)} sx={{ color: '#334155', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
           <Button onClick={confirmDeleteClass} sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>삭제</Button>
         </DialogActions>
       </Dialog>
@@ -1820,11 +1820,11 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                   opacity: 1,
                 },
                 '& .MuiInputBase-input.Mui-disabled': {
-                  color: '#64748B',
+                  color: '#334155',
                   WebkitTextFillColor: '#64748B',
                 },
                 '& .MuiInputLabel-root.Mui-disabled': {
-                  color: '#64748B',
+                  color: '#334155',
                 },
               }}
             />
@@ -1852,7 +1852,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
           <TextField label="비고" size="small" multiline rows={2} value={studentForm.memo} onChange={e => setStudentForm(p => ({ ...p, memo: e.target.value }))} sx={inputSx} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setStudentDialogOpen(false)} sx={{ color: '#64748B', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={() => setStudentDialogOpen(false)} sx={{ color: '#334155', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
           <Button onClick={saveStudent} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>저장</Button>
         </DialogActions>
       </Dialog>
@@ -1860,10 +1860,10 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
       <Dialog open={!!deleteStudentId} onClose={() => setDeleteStudentId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#111827', fontWeight: 700, fontSize: '1rem' }}>학생 삭제</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>학생 데이터가 삭제됩니다. 계속하시겠습니까?</Typography>
+          <Typography sx={{ color: '#334155', fontSize: '0.875rem' }}>학생 데이터가 삭제됩니다. 계속하시겠습니까?</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setDeleteStudentId(null)} sx={{ color: '#64748B', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
+          <Button onClick={() => setDeleteStudentId(null)} sx={{ color: '#334155', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem' }}>취소</Button>
           <Button onClick={confirmDeleteStudent} sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 2.5, textTransform: 'none', fontSize: '0.8125rem', '&:hover': { opacity: 0.9 } }}>삭제</Button>
         </DialogActions>
       </Dialog>
@@ -3094,7 +3094,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         {/* Stats row */}
                         <Box sx={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          pt: 1, borderTop: '1px solid rgba(0,0,0,0.06)',
+                          pt: 1, borderTop: '1px solid rgba(0,0,0,0.09)',
                         }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -3163,7 +3163,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
                         {/* Action buttons - always visible */}
                         <Box sx={{
-                          display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.06)',
+                          display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.09)',
                         }}>
                           <Box
                             onClick={(e) => { e.stopPropagation(); setSelectedCorpusForPermission(corpus); setPermissionDialogOpen(true); }}
@@ -4155,7 +4155,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
                 {/* Pagination */}
                 {chatSessionsTotal > 20 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid rgba(0,0,0,0.09)' }}>
                     <Pagination
                       count={Math.ceil(chatSessionsTotal / 20)}
                       page={chatSessionsPage}
