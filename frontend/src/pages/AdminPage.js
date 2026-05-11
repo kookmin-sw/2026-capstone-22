@@ -1075,7 +1075,7 @@ function HITLPanel() {
             <Typography variant="h5" sx={{ fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
               상담 대기 (HITL)
             </Typography>
-            <Typography sx={{ color: '#334155', fontSize: '0.8125rem' }}>
+            <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>
               AI가 답변하기 어려운 질문 목록입니다. (오래된 순 / pending 우선)
             </Typography>
           </Box>
@@ -1096,7 +1096,7 @@ function HITLPanel() {
           border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
         }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'rgba(0,0,0,0.12)', mb: 2 }} />
-          <Typography sx={{ color: '#334155', fontSize: '1rem', fontWeight: 500 }}>
+          <Typography sx={{ color: '#1E293B', fontSize: '1rem', fontWeight: 500 }}>
             처리 대기 중인 항목이 없습니다.
           </Typography>
         </Paper>
@@ -1125,7 +1125,7 @@ function HITLPanel() {
                       <Chip label={item.hitl_reason} size="small" sx={{ bgcolor: '#FEF3C7', color: '#A16207', fontWeight: 700, fontSize: '0.65rem', maxWidth: 240, border: '1px solid #FACC15' }} />
                     )}
                   </Box>
-                  <Typography sx={{ color: '#475569', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <Typography sx={{ color: '#1E293B', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
                     {item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '-'}
                   </Typography>
                 </Box>
@@ -1150,7 +1150,7 @@ function HITLPanel() {
                             size="small"
                             onClick={() => toggleExpand(item.id)}
                             sx={{
-                              color: '#475569', fontSize: '0.72rem', textTransform: 'none',
+                              color: '#1E293B', fontSize: '0.72rem', textTransform: 'none',
                               fontWeight: 600, p: 0, minWidth: 0,
                               '&:hover': { bgcolor: 'transparent', color: '#a78bfa' },
                             }}
@@ -1213,8 +1213,9 @@ function HITLPanel() {
                             bgcolor: '#F8FAFC',
                             borderRadius: '10px',
                             fontSize: '0.875rem',
-                            color: '#334155',
+                            color: '#1E293B',
                             minHeight: 40,
+                            '& input::placeholder': { color: '#475569', opacity: 1 },
                             '& fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
                             '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
                             '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
