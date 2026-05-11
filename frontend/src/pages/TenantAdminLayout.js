@@ -165,7 +165,7 @@ export default function TenantAdminLayout() {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: '#111113',
+        bgcolor: '#FFFFFF',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
@@ -520,7 +520,7 @@ export default function TenantAdminLayout() {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: '#111113',
+        bgcolor: '#FFFFFF',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
@@ -741,7 +741,7 @@ export default function TenantAdminLayout() {
             left: 0,
             right: 0,
             height: 56,
-            bgcolor: '#111113',
+            bgcolor: '#FFFFFF',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             display: 'flex',
             alignItems: 'center',
@@ -790,7 +790,7 @@ export default function TenantAdminLayout() {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              bgcolor: '#111113',
+              bgcolor: '#FFFFFF',
               borderRight: '1px solid rgba(255,255,255,0.06)',
             },
           }}
@@ -806,7 +806,7 @@ export default function TenantAdminLayout() {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              bgcolor: '#111113',
+              bgcolor: '#FFFFFF',
               borderRight: '1px solid rgba(255,255,255,0.06)',
             },
           }}
