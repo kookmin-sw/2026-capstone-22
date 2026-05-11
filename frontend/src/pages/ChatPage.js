@@ -911,7 +911,7 @@ export default function ChatPage() {
                         <Typography
                           variant="caption"
                           sx={{
-                            color: 'white',
+                            color: '#1E293B',
                             fontWeight: 600,
                             fontSize: '0.8125rem',
                           }}
@@ -921,7 +921,7 @@ export default function ChatPage() {
                         <Typography
                           variant="caption"
                           sx={{
-                            color: 'rgba(255,255,255,0.3)',
+                            color: 'rgba(0,0,0,0.35)',
                             fontSize: '0.75rem',
                           }}
                         >
