@@ -569,7 +569,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderBottom: '1px solid rgba(0,0,0,0.04)',
+            borderBottom: '1px solid rgba(0,0,0,0.10)',
             bgcolor: 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -609,11 +609,11 @@ export default function ChatPage() {
                   py: 0.75,
                   borderRadius: 2,
                   bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(0,0,0,0.03)',
-                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(0,0,0,0.1)',
+                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(0,0,0,0.20)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(0,0,0,0.04)',
+                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(0,0,0,0.10)',
                   },
                 }}
                 onClick={() => setWebSearchEnabled(!webSearchEnabled)}
@@ -786,7 +786,7 @@ export default function ChatPage() {
                         },
                         '&:disabled': {
                           color: 'rgba(0,0,0,0.3)',
-                          borderColor: 'rgba(0,0,0,0.1)',
+                          borderColor: 'rgba(0,0,0,0.20)',
                         },
                       }}
                     >
@@ -1746,7 +1746,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderTop: '1px solid rgba(0,0,0,0.04)',
+            borderTop: '1px solid rgba(0,0,0,0.10)',
             bgcolor: 'transparent',
           }}
         >
@@ -1872,7 +1872,7 @@ export default function ChatPage() {
                   sx={{
                     color: '#94A3B8',
                     '&:hover': {
-                      bgcolor: 'rgba(0,0,0,0.04)',
+                      bgcolor: 'rgba(0,0,0,0.10)',
                       color: '#a78bfa',
                     },
                   }}
@@ -1898,7 +1898,7 @@ export default function ChatPage() {
                       },
                     },
                     '&:hover': {
-                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.04)',
+                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.10)',
                       color: isListening ? '#ef4444' : '#a78bfa',
                     },
                   }}
