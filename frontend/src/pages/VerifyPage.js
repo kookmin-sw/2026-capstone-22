@@ -164,7 +164,7 @@ export default function VerifyPage() {
                   <Box component="form" onSubmit={handleRequestOtp}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                       <PhoneAndroid sx={{ color: '#a78bfa' }} />
-                      <Typography variant="h6" fontWeight={700} sx={{ color: 'white' }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ color: '#1E293B' }}>
                         학부모 전화번호 입력
                       </Typography>
                     </Box>
@@ -229,7 +229,7 @@ export default function VerifyPage() {
                   <Box component="form" onSubmit={handleConfirmOtp}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                       <PhoneAndroid sx={{ color: '#a78bfa' }} />
-                      <Typography variant="h6" fontWeight={700} sx={{ color: 'white' }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ color: '#1E293B' }}>
                         인증번호 확인
                       </Typography>
                     </Box>
@@ -311,7 +311,7 @@ export default function VerifyPage() {
                       variant="text"
                       size="small"
                       onClick={() => { setStep(STEP.PHONE); setError(''); setIssuedOtp(''); }}
-                      sx={{ color: '#94A3B8', '&:hover': { color: 'rgba(255,255,255,0.7)' } }}
+                      sx={{ color: '#94A3B8', '&:hover': { color: '#475569' } }}
                     >
                       전화번호 다시 입력
                     </Button>
@@ -324,7 +324,7 @@ export default function VerifyPage() {
                 <Fade in>
                   <Box sx={{ textAlign: 'center' }}>
                     <CheckCircle sx={{ fontSize: 64, color: '#4ade80', mb: 2 }} />
-                    <Typography variant="h5" fontWeight={700} sx={{ color: 'white', mb: 1 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ color: '#1E293B', mb: 1 }}>
                       인증이 완료되었습니다!
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>

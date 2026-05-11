@@ -409,8 +409,8 @@ export default function ExamAnalysisPage() {
   // ── 공통 sx ──────────────────────────────────────────────────────────────
   const inputSx = {
     '& .MuiOutlinedInput-root': {
-      bgcolor: '#18181B', borderRadius: 1.5, color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem',
-      '& fieldset': { borderColor: 'rgba(255,255,255,0.08)' },
+      bgcolor: 'rgba(0,0,0,0.03)', borderRadius: 1.5, color: '#334155', fontSize: '0.875rem',
+      '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
       '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
       '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
     },
