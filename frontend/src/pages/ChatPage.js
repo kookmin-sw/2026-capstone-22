@@ -545,7 +545,7 @@ export default function ChatPage() {
             <Box
               sx={{
                 textAlign: 'center',
-                color: 'white',
+                color: '#1E293B',
                 p: 4,
                 bgcolor: 'rgba(255, 255, 255, 0.97)',
                 borderRadius: 3,
@@ -1960,8 +1960,8 @@ export default function ChatPage() {
                       boxShadow: '0 0 30px rgba(102, 126, 234, 0.6), 0 0 60px rgba(118, 75, 162, 0.3), 0 8px 16px rgba(0,0,0,0.2)',
                     },
                     '&:disabled': {
-                      background: 'rgba(102, 126, 234, 0.2)',
-                      color: 'rgba(255,255,255,0.3)',
+                      background: 'rgba(102, 126, 234, 0.15)',
+                      color: 'rgba(0,0,0,0.3)',
                       boxShadow: 'none',
                     },
                     transition: 'all 0.3s ease',
