@@ -974,14 +974,14 @@ export default function ChatPage() {
                           '& ul, & ol': {
                             margin: '0.5em 0',
                             paddingLeft: '1.5em',
-                            color: 'rgba(255,255,255,0.95)',
+                            color: '#334155',
                           },
                           '& li': {
                             marginBottom: '0.25em',
                             lineHeight: 1.6,
                           },
                           '& h1, & h2, & h3, & h4, & h5, & h6': {
-                            color: 'white',
+                            color: '#1E293B',
                             fontWeight: 600,
                             marginTop: '1em',
                             marginBottom: '0.5em',
