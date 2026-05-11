@@ -411,7 +411,7 @@ function ChatbotSettingsPanel() {
                   borderRadius: '10px',
                   px: 1.5,
                   py: 1,
-                  borderLeft: `2px solid ${isSelected ? '#a78bfa' : 'rgba(255,255,255,0.08)'}`,
+                  borderLeft: `2px solid ${isSelected ? '#a78bfa' : 'rgba(0,0,0,0.1)'}`,
                 }}>
                   <Typography sx={{
                     color: isSelected ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
@@ -445,7 +445,7 @@ function ChatbotSettingsPanel() {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
             <TuneIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-            <Typography sx={{ fontWeight: 700, color: 'white', fontSize: '0.9375rem' }}>
+            <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: '0.9375rem' }}>
               세부 설정
             </Typography>
           </Box>
@@ -466,7 +466,7 @@ function ChatbotSettingsPanel() {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: 'rgba(0,0,0,0.03)',
                     borderRadius: '10px',
-                    color: 'white',
+                    color: '#1E293B',
                     fontSize: '0.8125rem',
                     '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
                     '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.2)' },
@@ -493,7 +493,7 @@ function ChatbotSettingsPanel() {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: 'rgba(0,0,0,0.03)',
                     borderRadius: '10px',
-                    color: 'white',
+                    color: '#1E293B',
                     fontSize: '0.8125rem',
                     '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
                     '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.2)' },
@@ -530,7 +530,7 @@ function ChatbotSettingsPanel() {
                     }}
                   >
                     {Object.entries(TONE_LABELS).map(([val, label]) => (
-                      <MenuItem key={val} value={val} sx={{ color: 'white', fontSize: '0.8125rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.1)' } }}>
+                      <MenuItem key={val} value={val} sx={{ color: '#1E293B', fontSize: '0.8125rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.1)' } }}>
                         {label}
                       </MenuItem>
                     ))}
@@ -563,7 +563,7 @@ function ChatbotSettingsPanel() {
                     }}
                   >
                     {Object.entries(STYLE_LABELS).map(([val, label]) => (
-                      <MenuItem key={val} value={val} sx={{ color: 'white', fontSize: '0.8125rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.1)' } }}>
+                      <MenuItem key={val} value={val} sx={{ color: '#1E293B', fontSize: '0.8125rem', '&:hover': { bgcolor: 'rgba(167,139,250,0.1)' } }}>
                         {label}
                       </MenuItem>
                     ))}
@@ -592,7 +592,7 @@ function ChatbotSettingsPanel() {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: 'rgba(0,0,0,0.03)',
                     borderRadius: '10px',
-                    color: 'white',
+                    color: '#1E293B',
                     fontSize: '0.8125rem',
                     '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
                     '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.2)' },
