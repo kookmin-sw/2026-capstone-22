@@ -1141,7 +1141,7 @@ function HITLPanel() {
                       <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
                         질문
                       </Typography>
-                      <Typography sx={{ color: '#1E293B', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                      <Typography sx={{ color: '#000000', fontSize: '0.875rem', lineHeight: 1.6 }}>
                         {extracted || '-'}
                       </Typography>
                       {hasContext && (
@@ -1161,7 +1161,7 @@ function HITLPanel() {
                       )}
                       {hasContext && isExpanded && (
                         <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.15)' }}>
-                          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                          <Typography sx={{ color: '#000000', fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                             {item.user_message}
                           </Typography>
                         </Box>
@@ -1651,8 +1651,8 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
               if (classFilter !== 'all' && cls.id !== Number(classFilter)) return null;
               const isExpanded = expandedClasses.has(cls.id);
               return (
-                <Box key={cls.id} sx={{ border: '1px solid rgba(167,139,250,0.12)', borderRadius: '10px', overflow: 'hidden' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: 'rgba(167,139,250,0.06)', borderRadius: isExpanded ? '10px 10px 0 0' : '10px', cursor: 'pointer' }} onClick={() => toggleClassExpanded(cls.id)}>
+                <Box key={cls.id} sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: '#F8FAFC', borderRadius: isExpanded ? '10px 10px 0 0' : '10px', cursor: 'pointer' }} onClick={() => toggleClassExpanded(cls.id)}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Groups sx={{ fontSize: 15, color: '#fff' }} />
@@ -1715,8 +1715,8 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
               if (classFilter !== 'all' || unassigned.length === 0) return null;
               const isExpanded = expandedClasses.has('unassigned');
               return (
-                <Box sx={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', overflow: 'hidden' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: 'rgba(0,0,0,0.03)', cursor: 'pointer' }} onClick={() => toggleClassExpanded('unassigned')}>
+                <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.5, bgcolor: '#F8FAFC', cursor: 'pointer' }} onClick={() => toggleClassExpanded('unassigned')}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box sx={{ width: 30, height: 30, borderRadius: '8px', bgcolor: 'rgba(113,113,122,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Groups sx={{ fontSize: 15, color: '#1E293B' }} />

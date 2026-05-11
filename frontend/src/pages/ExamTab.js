@@ -406,7 +406,7 @@ export default function ExamTab() {
                         <TableCell sx={{ fontWeight: 700, color: '#0F172A !important' }}>{e.title}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
-                            <Chip label={e.exam_type || '일반'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }} />
+                            <Chip label={e.exam_type || '일반'} size="small" sx={{ height: 20, fontSize: '0.75rem', fontWeight: 500, bgcolor: 'transparent', color: '#6D28D9', border: 'none', '& .MuiChip-label': { px: 0 } }} />
                           </Box>
                         </TableCell>
                         <TableCell>{e.exam_date}</TableCell>
@@ -457,7 +457,7 @@ export default function ExamTab() {
                         <TableRow key={item.id} sx={{ '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#334155', py: 1.5 } }}>
                           <TableCell><Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}><Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.name[0]}</Avatar><Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>{item.name}</Typography></Box></TableCell>
                           <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
-                          <TableCell><TextField size="small" type="number" value={item.result.score ?? ''} onChange={ev => updateResult(item.id, { score: ev.target.value === '' ? null : Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#a78bfa', fontWeight: 700, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
+                          <TableCell><TextField size="small" type="number" value={item.result.score ?? ''} onChange={ev => updateResult(item.id, { score: ev.target.value === '' ? null : Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#6D28D9', fontWeight: 600, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
                           <TableCell>
                             <Select
                               value={item.result.grade ?? ''}

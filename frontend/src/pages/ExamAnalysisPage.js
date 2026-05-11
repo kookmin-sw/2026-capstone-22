@@ -1034,8 +1034,8 @@ ${answerSection}
                       )}
 
                       {item.question_body && (
-                        <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5 }}>
-                          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                        <Box sx={{ bgcolor: '#F8FAFC', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.08)' }}>
+                          <Typography sx={{ color: '#000000', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                             {item.question_body}
                           </Typography>
                         </Box>
@@ -1044,7 +1044,7 @@ ${answerSection}
                       {Array.isArray(item.choices) && item.choices.length > 0 && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4, pl: 0.5 }}>
                           {item.choices.map((c, ci) => (
-                            <Typography key={ci} sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>{c}</Typography>
+                            <Typography key={ci} sx={{ color: '#000000', fontSize: '0.8125rem' }}>{c}</Typography>
                           ))}
                         </Box>
                       )}
