@@ -2035,21 +2035,21 @@ export default function ChatPage() {
           fullWidth
           PaperProps={{
             sx: {
-              bgcolor: '#111113',
-              color: '#e2e8f0',
+              bgcolor: '#FFFFFF',
+              color: '#1E293B',
               border: '1px solid rgba(167, 139, 250, 0.3)',
               borderRadius: 3,
             },
           }}
         >
-          <DialogTitle sx={{ borderBottom: '1px solid rgba(100, 116, 139, 0.2)', pb: 1.5 }}>
+          <DialogTitle sx={{ borderBottom: '1px solid rgba(100, 116, 139, 0.15)', pb: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Feedback sx={{ color: '#f59e0b' }} />
               <Typography variant="h6" sx={{ fontWeight: 600 }}>피드백 보내기</Typography>
             </Box>
           </DialogTitle>
           <DialogContent sx={{ pt: '16px !important' }}>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
               이 AI 응답에 대한 피드백을 보내주세요. 서비스 개선에 활용됩니다.
             </Typography>
             <TextField
@@ -2062,8 +2062,8 @@ export default function ChatPage() {
               defaultValue=""
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#e2e8f0',
-                  bgcolor: 'rgba(15, 23, 42, 0.6)',
+                  color: '#1E293B',
+                  bgcolor: 'rgba(0, 0, 0, 0.02)',
                   '& fieldset': { borderColor: 'rgba(100, 116, 139, 0.3)' },
                   '&:hover fieldset': { borderColor: 'rgba(167, 139, 250, 0.5)' },
                   '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
