@@ -993,7 +993,7 @@ export default function ChatPage() {
                             borderLeft: '3px solid rgba(167, 139, 250, 0.5)',
                             paddingLeft: '1em',
                             margin: '0.75em 0',
-                            color: 'rgba(255,255,255,0.8)',
+                            color: '#64748B',
                             fontStyle: 'italic',
                           },
                           '& a': {
@@ -1702,7 +1702,7 @@ export default function ChatPage() {
                       <Typography
                         variant="caption"
                         sx={{
-                          color: 'rgba(255,255,255,0.4)',
+                          color: '#94A3B8',
                           fontWeight: 600,
                           textTransform: 'uppercase',
                           letterSpacing: 0.3,
@@ -1726,7 +1726,7 @@ export default function ChatPage() {
                         }}
                       >
                         <CircularProgress size={14} sx={{ color: '#a78bfa' }} />
-                        <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>
                           응답 생성 중...
                         </Typography>
                       </Paper>
@@ -1766,7 +1766,7 @@ export default function ChatPage() {
                       color: '#c4b5fd',
                       border: '1px solid rgba(167, 139, 250, 0.3)',
                       '& .MuiChip-deleteIcon': {
-                        color: 'rgba(255,255,255,0.5)',
+                        color: '#64748B',
                         '&:hover': {
                           color: '#ef4444',
                         },
@@ -1870,7 +1870,7 @@ export default function ChatPage() {
                   size="small"
                   onClick={() => fileInputRef.current?.click()}
                   sx={{
-                    color: 'rgba(255,255,255,0.4)',
+                    color: '#94A3B8',
                     '&:hover': {
                       bgcolor: 'rgba(0,0,0,0.04)',
                       color: '#a78bfa',
@@ -1886,7 +1886,7 @@ export default function ChatPage() {
                   size="small"
                   onClick={toggleListening}
                   sx={{
-                    color: isListening ? '#ef4444' : 'rgba(255,255,255,0.4)',
+                    color: isListening ? '#ef4444' : '#94A3B8',
                     bgcolor: isListening ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
                     animation: isListening ? 'pulse 1.5s ease-in-out infinite' : 'none',
                     '@keyframes pulse': {
@@ -1910,7 +1910,7 @@ export default function ChatPage() {
               {/* Enter to send text */}
               <Typography
                 sx={{
-                  color: 'rgba(255,255,255,0.4)',
+                  color: '#94A3B8',
                   fontSize: '0.75rem',
                   ml: 1,
                   mr: 0.5,
@@ -2093,7 +2093,7 @@ export default function ChatPage() {
             <Button
               onClick={() => setFeedbackDialogOpen(false)}
               disabled={feedbackLoading}
-              sx={{ color: 'rgba(255,255,255,0.5)' }}
+              sx={{ color: '#64748B' }}
             >
               취소
             </Button>
