@@ -620,7 +620,7 @@ export default function ExamTab() {
           <Box sx={{
             position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
             zIndex: 9999, bgcolor: snack.severity === 'error' ? '#FEE2E2' : '#DCFCE7',
-            border: `1px solid ${snack.severity === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+            border: `1px solid ${snack.severity === 'error' ? '#FCA5A5' : '#86EFAC'}`,
             color: snack.severity === 'error' ? '#DC2626' : '#15803D',
             px: 3, py: 1.2, borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600,
             cursor: 'pointer'

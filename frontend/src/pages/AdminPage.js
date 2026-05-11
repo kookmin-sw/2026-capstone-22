@@ -1105,7 +1105,7 @@ function HITLPanel() {
           {items.map((item) => (
             <Card key={item.id} sx={{
               bgcolor: '#FFFFFF', borderRadius: '16px',
-              border: `1px solid ${item.status === 'pending' ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.08)'}`,
+              border: `1px solid ${item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.08)'}`,
               overflow: 'visible', position: 'relative',
               transition: 'all 0.2s ease',
               opacity: item.status === 'resolved' ? 0.6 : 1,
