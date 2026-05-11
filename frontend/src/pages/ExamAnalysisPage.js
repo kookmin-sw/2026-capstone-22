@@ -1217,9 +1217,9 @@ ${answerSection}
                 {/* 메타 칩 */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                   {[
-                    { label: selectedBankItem.area, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+                    { label: selectedBankItem.area, color: '#6D28D9', bg: 'transparent', border: 'none' },
                   ].filter(c => c.label).map((c, i) => (
-                    <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.6875rem', border: `1px solid ${c.border}`, '& .MuiChip-label': { px: 0.75 } }} />
+                    <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.75rem', fontWeight: 500, border: c.border, '& .MuiChip-label': { px: 0 } }} />
                   ))}
                   {selectedBankItem.difficulty && <DiffChip v={selectedBankItem.difficulty} />}
                   {selectedBankItem.score_point && (
@@ -1250,7 +1250,7 @@ ${answerSection}
                           <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start',
                             bgcolor: isCorrect ? '#DCFCE7' : 'transparent',
                             borderRadius: 1, px: 1, py: 0.5, border: isCorrect ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
-                            <Typography sx={{ color: isCorrect ? '#0F172A' : '#64748B', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                            <Typography sx={{ color: isCorrect ? '#0F172A' : '#1E293B', fontSize: '0.8125rem', lineHeight: 1.5 }}>
                               {c}
                             </Typography>
                           </Box>
