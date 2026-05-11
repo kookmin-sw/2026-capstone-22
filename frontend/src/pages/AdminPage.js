@@ -90,7 +90,7 @@ function SortableTemplateRow({ template, index, isLast, getTemplateIcon, openTem
         transition: 'background 0.15s',
         bgcolor: isDragging ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
         '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' },
-        borderBottom: !isLast ? '1px solid rgba(0,0,0,0.05)' : 'none',
+        borderBottom: !isLast ? '1px solid rgba(0,0,0,0.08)' : 'none',
       }}
     >
       {/* 드래그 핸들 */}
@@ -440,7 +440,7 @@ function ChatbotSettingsPanel() {
           flex: 1,
           borderRadius: '16px',
           bgcolor: '#FFFFFF',
-          border: '1px solid rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.14)',
           p: 3,
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -525,7 +525,7 @@ function ChatbotSettingsPanel() {
                     }}
                     MenuProps={{
                       PaperProps: {
-                        sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 1.5 },
+                        sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: 1.5 },
                       },
                     }}
                   >
@@ -558,7 +558,7 @@ function ChatbotSettingsPanel() {
                     }}
                     MenuProps={{
                       PaperProps: {
-                        sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 1.5 },
+                        sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: 1.5 },
                       },
                     }}
                   >
@@ -639,7 +639,7 @@ function ChatbotSettingsPanel() {
           flexShrink: 0,
           borderRadius: '16px',
           bgcolor: '#FFFFFF',
-          border: '1px solid rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.14)',
           p: 0,
           overflow: 'hidden',
           display: 'flex',
@@ -893,7 +893,7 @@ function CalendarSettingsPanel() {
           <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             mb: 3, p: 2, borderRadius: '14px',
-            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
+            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)',
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{
@@ -922,7 +922,7 @@ function CalendarSettingsPanel() {
               sx={{
                 color: '#4B4450', fontSize: '0.75rem', fontWeight: 600,
                 textTransform: 'none', borderRadius: '8px',
-                border: '1px solid rgba(0,0,0,0.08)',
+                border: '1px solid rgba(0,0,0,0.14)',
                 '&:hover': { borderColor: '#FCA5A5', color: '#DC2626', bgcolor: 'rgba(239,68,68,0.06)' },
               }}
             >
@@ -938,7 +938,7 @@ function CalendarSettingsPanel() {
       ) : (
         /* Not connected */
         <Box sx={{
-          bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
+          bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)',
           borderRadius: '16px', p: 5, textAlign: 'center',
         }}>
           <Box sx={{
@@ -1093,7 +1093,7 @@ function HITLPanel() {
       {items.length === 0 ? (
         <Paper sx={{
           p: 8, textAlign: 'center', bgcolor: '#FFFFFF', borderRadius: '20px',
-          border: '1px solid rgba(0,0,0,0.08)'
+          border: '1px solid rgba(0,0,0,0.14)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
         }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'rgba(0,0,0,0.12)', mb: 2 }} />
           <Typography sx={{ color: '#4B4450', fontSize: '1rem', fontWeight: 500 }}>
@@ -1107,9 +1107,10 @@ function HITLPanel() {
               bgcolor: '#FFFFFF', borderRadius: '16px',
               border: `1px solid ${item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.08)'}`,
               overflow: 'visible', position: 'relative',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               transition: 'all 0.2s ease',
               opacity: item.status === 'resolved' ? 0.6 : 1,
-              '&:hover': { borderColor: item.status === 'pending' ? 'rgba(239,68,68,0.4)' : 'rgba(0,0,0,0.12)', transform: 'translateY(-2px)' }
+              '&:hover': { borderColor: item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.20)', transform: 'translateY(-2px)' }
             }}>
               <CardContent sx={{ p: 3 }}>
                 {/* 상단: 상태 + 접수 시각 */}
@@ -1121,7 +1122,7 @@ function HITLPanel() {
                       <Chip label="처리완료" size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: '0.65rem' }} />
                     )}
                     {item.hitl_reason && (
-                      <Chip label={item.hitl_reason} size="small" sx={{ bgcolor: 'rgba(251,191,36,0.1)', color: '#fbbf24', fontWeight: 600, fontSize: '0.65rem', maxWidth: 240 }} />
+                      <Chip label={item.hitl_reason} size="small" sx={{ bgcolor: '#FEF3C7', color: '#A16207', fontWeight: 700, fontSize: '0.65rem', maxWidth: 240, border: '1px solid #FACC15' }} />
                     )}
                   </Box>
                   <Typography sx={{ color: '#4B4450', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -1136,7 +1137,7 @@ function HITLPanel() {
                     item.user_message.split('\n').some((l) => l.trim() === '[사용자]');
                   const isExpanded = !!expandedHitl[item.id];
                   return (
-                    <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(0,0,0,0.10)' }}>
                       <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
                         질문
                       </Typography>
@@ -1171,7 +1172,7 @@ function HITLPanel() {
 
                 {/* AI 답변 */}
                 {item.ai_response && (
-                  <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '10px', p: 2, mb: 2, border: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ bgcolor: '#F1F5F9', borderRadius: '10px', p: 2, mb: 2, border: '1px solid rgba(0,0,0,0.12)' }}>
                     <Typography sx={{ color: '#15803D', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
                       AI
                     </Typography>
@@ -1274,13 +1275,13 @@ function HITLPanel() {
                           onClick={() => handleResolve(item.id)}
                           sx={{
                             minWidth: 118,
-                            borderColor: 'rgba(134,239,172,0.3)',
+                            borderColor: '#86EFAC',
                             color: '#15803D',
                             borderRadius: '10px',
                             fontWeight: 700,
                             textTransform: 'none',
                             fontSize: '0.8rem',
-                            '&:hover': { borderColor: '#86efac', bgcolor: 'rgba(134,239,172,0.05)' },
+                            '&:hover': { borderColor: '#86EFAC', bgcolor: '#DCFCE7' },
                             '&.Mui-disabled': { opacity: 0.3 },
                           }}
                         >
@@ -1567,7 +1568,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
             </Button>
           </Box>
 
-          <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)', overflow: 'hidden' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.08)', bgcolor: '#F8FAFC' }}>
               {['분반명/코드', '대상/과목', '담당자', '요일/시간', '정원', '상태', '액션'].map(h => (
                 <Typography key={h} sx={colHeaderSx}>{h}</Typography>
@@ -1760,7 +1761,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
         </Box>
       )}
 
-      <Dialog open={classDialogOpen} onClose={() => setClassDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}>
+      <Dialog open={classDialogOpen} onClose={() => setClassDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           {editingClass ? '분반 수정' : '분반 추가'}
         </DialogTitle>
@@ -1790,7 +1791,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteClassId} onClose={() => setDeleteClassId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}>
+      <Dialog open={!!deleteClassId} onClose={() => setDeleteClassId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '1rem' }}>분반 삭제</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: '#4B4450', fontSize: '0.875rem' }}>해당 분반과 소속 학생 데이터가 모두 삭제됩니다. 계속하시겠습니까?</Typography>
@@ -1801,7 +1802,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={studentDialogOpen} onClose={() => setStudentDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}>
+      <Dialog open={studentDialogOpen} onClose={() => setStudentDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '1rem', pb: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           {editingStudent ? '학생 수정' : '학생 추가'}
         </DialogTitle>
@@ -1856,7 +1857,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteStudentId} onClose={() => setDeleteStudentId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}>
+      <Dialog open={!!deleteStudentId} onClose={() => setDeleteStudentId(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '1rem' }}>학생 삭제</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: '#4B4450', fontSize: '0.875rem' }}>학생 데이터가 삭제됩니다. 계속하시겠습니까?</Typography>
@@ -2801,7 +2802,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               { label: '메시지', value: dashStats?.message_count ?? 0, Icon: MessageIcon, color: '#F59E0B' },
             ].map((card) => (
               <Grid item xs={6} md={2.4} key={card.label}>
-                <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', p: 3 }}>
+                <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', p: 3 }}>
                   <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: `${card.color}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
                     <card.Icon sx={{ fontSize: 20, color: card.color }} />
                   </Box>
@@ -2822,7 +2823,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               {/* Daily Messages Bar Chart (8/12) */}
               <Grid item xs={12} lg={8}>
                 <Box sx={{
-                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', p: 3,
+                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', p: 3,
                   position: 'relative', overflow: 'hidden',
                   '&::before': { content: '""', position: 'absolute', top: '-40%', left: '50%', transform: 'translateX(-50%)', width: '80%', height: '60%', background: 'radial-gradient(ellipse, rgba(167,139,250,0.04) 0%, transparent 70%)', pointerEvents: 'none' },
                 }}>
@@ -2865,7 +2866,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               {/* Hourly Activity (4/12) */}
               <Grid item xs={12} lg={4}>
                 <Box sx={{
-                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', p: 3,
+                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', p: 3,
                   position: 'relative', overflow: 'hidden',
                   '&::before': { content: '""', position: 'absolute', top: '-40%', left: '50%', transform: 'translateX(-50%)', width: '80%', height: '60%', background: 'radial-gradient(ellipse, rgba(139,92,246,0.04) 0%, transparent 70%)', pointerEvents: 'none' },
                 }}>
@@ -2904,7 +2905,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               {/* Daily Sessions + Users (full width) */}
               <Grid item xs={12}>
                 <Box sx={{
-                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', p: 3,
+                  bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', p: 3,
                   position: 'relative', overflow: 'hidden',
                   '&::before': { content: '""', position: 'absolute', top: '-40%', left: '50%', transform: 'translateX(-50%)', width: '80%', height: '60%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.03) 0%, transparent 70%)', pointerEvents: 'none' },
                 }}>
@@ -3021,7 +3022,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               gap: 1.5,
             }}>
               {corpora.length === 0 ? (
-                <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8, bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)' }}>
+                <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8, bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)' }}>
                   <Folder sx={{ fontSize: 48, color: '#8A8190', mb: 1.5 }} />
                   <Typography sx={{ color: '#4B4450', fontSize: '0.8125rem' }}>생성된 저장소가 없습니다</Typography>
                 </Box>
@@ -3204,7 +3205,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
           {/* Selected Store Details (Full Width) */}
           {selectedCorpus ? (
             <Box sx={{
-              bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+              bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px',
               overflow: 'hidden', animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
             }}>
               {/* Detail Header */}
@@ -3301,7 +3302,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   {selectedFiles.length > 0 && (
                     <Box sx={{
                       mt: 2, maxHeight: 180, overflowY: 'auto',
-                      bgcolor: '#F8FAFC', borderRadius: '10px', p: 1.5, border: '1px solid rgba(0,0,0,0.06)',
+                      bgcolor: '#F8FAFC', borderRadius: '10px', p: 1.5, border: '1px solid rgba(0,0,0,0.10)',
                       '&::-webkit-scrollbar': { width: 6 },
                       '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(167,139,250,0.3)', borderRadius: 3 },
                     }}>
@@ -3406,7 +3407,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 )}
 
                 {/* Documents Grid Table */}
-                <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.10)' }}>
                   {/* Header Row */}
                   <Box sx={{
                     display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
@@ -3440,7 +3441,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                       <Box key={doc.document_name} sx={{
                         display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
                         px: 2.5, py: 1.6, alignItems: 'center',
-                        borderBottom: index < documents.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                        borderBottom: index < documents.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
                         transition: 'all 0.2s', cursor: 'pointer',
                         '&:hover': { bgcolor: 'rgba(0,0,0,0.02)', borderLeft: '3px solid #a78bfa' },
                       }}>
@@ -3547,7 +3548,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
             </Box>
           ) : (
             <Box sx={{
-              bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+              bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               py: 12, animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
             }}>
@@ -3686,7 +3687,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
           {/* ── Users Table ── */}
           <Box sx={{
-            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px',
             overflow: 'hidden', animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both',
           }}>
             {/* Grid Header */}
@@ -3715,7 +3716,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 <Box key={user.id} sx={{
                   display: 'grid', gridTemplateColumns: '1fr 160px 40px 180px 60px', gap: 1,
                   px: 3, py: 1.6, alignItems: 'center',
-                  borderBottom: index < filteredUsers.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                  borderBottom: index < filteredUsers.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
                   borderLeft: '3px solid transparent',
                   transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
                   '&:hover': { bgcolor: 'rgba(0,0,0,0.02)', borderLeft: '3px solid #a78bfa' },
@@ -3782,7 +3783,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   <Box sx={{
                     position: 'relative', display: 'inline-flex', alignItems: 'center',
                     maxWidth: '150px', borderRadius: '8px', height: 32,
-                    border: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#F8FAFC', overflow: 'hidden',
+                    border: '1px solid rgba(0,0,0,0.14)', backgroundColor: '#F8FAFC', overflow: 'hidden',
                   }}>
                     <select value={user.group_id || ''} onChange={(e) => updateUserGroup(user.id, e.target.value || null)}
                       onClick={(e) => e.stopPropagation()}
@@ -3860,7 +3861,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
           {/* Templates Card */}
           <Box sx={{
-            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+            bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px',
             overflow: 'hidden', animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both',
           }}>
             {promptTemplates.length === 0 ? (
@@ -3930,7 +3931,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
           {selectedSession ? (
             /* ===== Message Detail View ===== */
-            <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', overflow: 'hidden' }}>
+            <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', overflow: 'hidden' }}>
               {/* Session Header */}
               <Box sx={{ px: 3, py: 2, borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: 2, bgcolor: 'rgba(167,139,250,0.03)' }}>
                 <Button size="small" onClick={() => { setSelectedSession(null); setSessionMessages([]); }}
@@ -4019,7 +4020,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   InputProps={{
                     startAdornment: <Search sx={{ color: '#4B4450', fontSize: 18, mr: 1 }} />,
                     sx: {
-                      bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
+                      bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)',
                       borderRadius: '12px', color: '#1F1A1F', fontSize: '0.8125rem',
                       '& fieldset': { border: 'none' },
                       '&:hover': { borderColor: 'rgba(167,139,250,0.3)' },
@@ -4032,7 +4033,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                 {/* User Filter */}
                 <Box sx={{
                   display: 'flex', alignItems: 'center', bgcolor: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                  border: '1px solid rgba(0,0,0,0.14)', borderRadius: '12px',
                   px: 1.5, height: 40,
                 }}>
                   <People sx={{ color: '#4B4450', fontSize: 16, mr: 1 }} />
@@ -4072,7 +4073,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
               {/* Sessions Table */}
               <Box sx={{
-                bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', overflow: 'hidden',
+                bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', overflow: 'hidden',
                 animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both',
               }}>
                 {/* Table Header */}
@@ -4109,7 +4110,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     <Box key={sess.id} sx={{
                       display: 'grid', gridTemplateColumns: '1fr 180px 100px 120px 50px',
                       px: 3, py: 2, alignItems: 'center',
-                      borderBottom: index < arr.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                      borderBottom: index < arr.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
                       transition: 'all 0.2s',
                       cursor: 'pointer',
                       '&:hover': { bgcolor: 'rgba(167,139,250,0.03)' },
@@ -4182,7 +4183,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
       <Dialog open={createDialogOpen}
         onClose={creatingCorpus ? undefined : () => setCreateDialogOpen(false)}
         disableEscapeKeyDown={creatingCorpus} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4212,7 +4213,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
             }}
           />
-          <Box sx={{ mt: 2, p: 2, bgcolor: '#F8FAFC', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#F8FAFC', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.10)' }}>
             <FormControlLabel
               control={<Switch checked={newCorpusIsPublic} onChange={(e) => setNewCorpusIsPublic(e.target.checked)}
                 sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#a78bfa' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#7c3aed' } }} />}
@@ -4225,7 +4226,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               {newCorpusIsPublic ? '챗봇이 참조 시 문서 다운로드 링크를 제공합니다' : '챗봇이 참조하더라도 문서 다운로드 링크를 제공하지 않습니다'}
             </Typography>
           </Box>
-          <Box sx={{ mt: 2, p: 2, bgcolor: '#F8FAFC', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#F8FAFC', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.10)' }}>
             <Typography sx={{ color: '#1F1A1F', fontSize: '0.8125rem', fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Security sx={{ fontSize: 15, color: '#a78bfa' }} /> 접근 권한 그룹
             </Typography>
@@ -4268,7 +4269,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
       {/* Create Group Dialog */}
       <Dialog open={groupDialogOpen} onClose={() => setGroupDialogOpen(false)} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4318,7 +4319,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
       <Dialog open={permissionDialogOpen}
         onClose={() => { setPermissionDialogOpen(false); setSelectedCorpusForPermission(null); }}
         maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4340,7 +4341,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {selectedCorpusForPermission && groups.length > 0 ? (
-            <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.10)' }}>
               {/* Grid Header */}
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 200px', px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                 <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4B4450' }}>Group</Typography>
@@ -4366,7 +4367,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   <Box key={group.id} sx={{
                     display: 'grid', gridTemplateColumns: '1fr 200px',
                     px: 2.5, py: 1.8, alignItems: 'center',
-                    borderBottom: index < groups.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                    borderBottom: index < groups.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
                     transition: 'all 0.2s',
                     '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
                   }}>
@@ -4419,7 +4420,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
       <Dialog open={passwordDialogOpen}
         onClose={deletingCorpus ? undefined : () => { setPasswordDialogOpen(false); setPassword(''); setDeletingCorpusName(null); }}
         disableEscapeKeyDown={deletingCorpus} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4463,7 +4464,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
       {/* Bulk Delete Dialog */}
       <Dialog open={bulkDeleteDialogOpen} onClose={() => { setBulkDeleteDialogOpen(false); setBulkDeletePassword(''); }}
         maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4481,7 +4482,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
           <Typography sx={{ color: '#4B4450', mb: 2, fontSize: '0.875rem' }}>
             <strong style={{ color: '#DC2626' }}>{selectedDocuments.length}개</strong> 문서를 삭제합니다.
           </Typography>
-          <Box sx={{ maxHeight: 150, overflow: 'auto', bgcolor: '#F8FAFC', borderRadius: '10px', p: 1.5, mb: 3, border: '1px solid rgba(0,0,0,0.06)' }}>
+          <Box sx={{ maxHeight: 150, overflow: 'auto', bgcolor: '#F8FAFC', borderRadius: '10px', p: 1.5, mb: 3, border: '1px solid rgba(0,0,0,0.10)' }}>
             {selectedDocuments.map(docName => {
               const doc = documents.find(d => d.document_name === docName);
               return (
@@ -4518,7 +4519,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
       {/* Template Dialog */}
       <Dialog open={templateDialogOpen} onClose={closeTemplateDialog} maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -4614,7 +4615,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
       {/* User Actions Menu */}
       <Menu anchorEl={userMenuAnchor} open={Boolean(userMenuAnchor)} onClose={handleUserMenuClose}
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', minWidth: 180, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '12px', minWidth: 180, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' } }}
       >
         <MenuItem onClick={openUserEditDialog} sx={{ color: '#1F1A1F', fontSize: '0.8125rem', py: 1.25, '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }}>
           <Edit sx={{ fontSize: 16, mr: 1.5, color: '#60a5fa' }} /> 정보 수정
@@ -4629,7 +4630,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
       {/* User Edit Dialog */}
       <Dialog open={userEditDialogOpen} onClose={() => setUserEditDialogOpen(false)} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 800, fontSize: '1.1rem', pb: 1, letterSpacing: '-0.02em' }}>유저 정보 수정</DialogTitle>
         <DialogContent>
@@ -4666,7 +4667,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
       {/* User Password Dialog */}
       <Dialog open={userPasswordDialogOpen} onClose={() => setUserPasswordDialogOpen(false)} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)' } }}
       >
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 800, fontSize: '1.1rem', pb: 1, letterSpacing: '-0.02em' }}>
           비밀번호 변경
@@ -4709,7 +4710,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
       <Dialog open={visibilityDialogOpen}
         onClose={() => { setVisibilityDialogOpen(false); setVisibilityTarget(null); }}
         maxWidth="xs" fullWidth
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', backgroundImage: 'none' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', backgroundImage: 'none' } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1F1A1F', pb: 1, letterSpacing: '-0.02em' }}>
           공개 설정 변경

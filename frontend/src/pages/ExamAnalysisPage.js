@@ -640,7 +640,7 @@ ${answerSection}
               파일이 업로드되었습니다. 분석 이력에서 진행 상태를 확인하세요.
             </Alert>
           )}
-          <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', p: 3 }}>
+          <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', p: 3 }}>
             <Typography sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '0.9375rem', mb: 2.5 }}>
               파일 업로드
             </Typography>
@@ -751,7 +751,7 @@ ${answerSection}
           탭 1-A: 분석 이력 (paper 미선택)
       ══════════════════════════════════════════════════════ */}
       {subTab === 1 && !selectedPaper && (
-        <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
           <Box sx={{ px: 3, py: 2, borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography sx={{ color: '#1F1A1F', fontWeight: 700, fontSize: '0.9375rem' }}>분석 이력</Typography>
             <Typography sx={{ color: '#4B4450', fontSize: '0.75rem' }}>총 {history.length}건</Typography>
@@ -811,7 +811,7 @@ ${answerSection}
                                 color: canView ? '#a78bfa' : '#94A3B8',
                                 border: canView ? '1px solid rgba(167,139,250,0.25)' : '1px solid rgba(0,0,0,0.08)',
                                 '&:hover': canView ? { bgcolor: 'rgba(167,139,250,0.18)' } : {},
-                                '&.Mui-disabled': { color: '#8A8190', border: '1px solid rgba(0,0,0,0.06)' },
+                                '&.Mui-disabled': { color: '#8A8190', border: '1px solid rgba(0,0,0,0.10)' },
                               }}>
                               결과 보기
                             </Button>
@@ -1051,7 +1051,7 @@ ${answerSection}
 
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button size="small" onClick={() => openEdit(item)}
-                          sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.04)', color: '#4B4450', border: '1px solid rgba(0,0,0,0.08)', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}>
+                          sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.04)', color: '#4B4450', border: '1px solid rgba(0,0,0,0.14)', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}>
                           수정
                         </Button>
                         <Button size="small" disabled={rs === 'reviewed'} onClick={() => handleReview(item.id)}
@@ -1134,7 +1134,7 @@ ${answerSection}
               <Button size="small" startIcon={<PrintIcon sx={{ fontSize: '0.875rem !important' }} />}
                 onClick={openPrintPreview} disabled={filteredBank.length === 0}
                 sx={{ color: '#a78bfa', fontSize: '0.75rem', textTransform: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 1.5, px: 1.5,
-                  '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' }, '&:disabled': { color: '#8A8190', borderColor: 'rgba(0,0,0,0.08)' } }}>
+                  '&:hover': { bgcolor: 'rgba(167,139,250,0.08)' }, '&:disabled': { color: '#8A8190', borderColor: 'rgba(0,0,0,0.12)' } }}>
                 문제지 인쇄
               </Button>
             </Box>
@@ -1143,7 +1143,7 @@ ${answerSection}
           {/* 테이블 + 상세 패널 */}
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
             {/* 테이블 */}
-            <Box sx={{ flex: 1, minWidth: 0, bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+            <Box sx={{ flex: 1, minWidth: 0, bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.14)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
               {bankLoading ? (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
                   <CircularProgress size={28} sx={{ color: '#a78bfa' }} />
@@ -1223,7 +1223,7 @@ ${answerSection}
                   ))}
                   {selectedBankItem.difficulty && <DiffChip v={selectedBankItem.difficulty} />}
                   {selectedBankItem.score_point && (
-                    <Chip label={`${selectedBankItem.score_point}점`} size="small" sx={{ height: 20, bgcolor: 'rgba(0,0,0,0.04)', color: '#4B4450', fontSize: '0.6875rem', border: '1px solid rgba(0,0,0,0.08)', '& .MuiChip-label': { px: 0.75 } }} />
+                    <Chip label={`${selectedBankItem.score_point}점`} size="small" sx={{ height: 20, bgcolor: 'rgba(0,0,0,0.04)', color: '#4B4450', fontSize: '0.6875rem', border: '1px solid rgba(0,0,0,0.14)', '& .MuiChip-label': { px: 0.75 } }} />
                   )}
                 </Box>
 
@@ -1231,7 +1231,7 @@ ${answerSection}
                 {selectedBankItem.question_body && (
                   <Box>
                     <Typography sx={{ color: '#4B4450', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>문제 본문</Typography>
-                    <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.14)' }}>
                       <Typography sx={{ color: '#332C32', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                         {selectedBankItem.question_body}
                       </Typography>
@@ -1279,7 +1279,7 @@ ${answerSection}
                     sx={{ color: '#DC2626', fontSize: '0.75rem', textTransform: 'none',
                       border: '1px solid rgba(248,113,113,0.25)', borderRadius: 1.5,
                       '&:hover': { bgcolor: 'rgba(248,113,113,0.07)' },
-                      '&:disabled': { color: '#8A8190', borderColor: 'rgba(0,0,0,0.08)' } }}>
+                      '&:disabled': { color: '#8A8190', borderColor: 'rgba(0,0,0,0.12)' } }}>
                     {revertingBankItem ? '처리 중...' : '검수 되돌리기'}
                   </Button>
                 </Box>

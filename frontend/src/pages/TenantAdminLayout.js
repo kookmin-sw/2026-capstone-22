@@ -166,7 +166,7 @@ export default function TenantAdminLayout() {
         flexDirection: 'column',
         height: '100%',
         bgcolor: '#FFFFFF',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
+        borderRight: '1px solid rgba(0,0,0,0.14)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
@@ -238,7 +238,7 @@ export default function TenantAdminLayout() {
             px: 1.5,
             py: 1,
             bgcolor: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            border: '1px solid rgba(0,0,0,0.14)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -468,7 +468,7 @@ export default function TenantAdminLayout() {
 
       {/* User info */}
       <Box>
-        <Divider sx={{ borderColor: 'rgba(0,0,0,0.08)' }} />
+        <Divider sx={{ borderColor: 'rgba(0,0,0,0.12)' }} />
         <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
             sx={{
@@ -521,7 +521,7 @@ export default function TenantAdminLayout() {
         flexDirection: 'column',
         height: '100%',
         bgcolor: '#FFFFFF',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
+        borderRight: '1px solid rgba(0,0,0,0.14)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
@@ -682,7 +682,7 @@ export default function TenantAdminLayout() {
 
       {/* User info */}
       <Box>
-        <Divider sx={{ borderColor: 'rgba(0,0,0,0.08)' }} />
+        <Divider sx={{ borderColor: 'rgba(0,0,0,0.12)' }} />
         <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
             sx={{
@@ -791,7 +791,7 @@ export default function TenantAdminLayout() {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
               bgcolor: '#FFFFFF',
-              borderRight: '1px solid rgba(0,0,0,0.08)',
+              borderRight: '1px solid rgba(0,0,0,0.14)',
             },
           }}
         >
@@ -807,7 +807,7 @@ export default function TenantAdminLayout() {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
               bgcolor: '#FFFFFF',
-              borderRight: '1px solid rgba(0,0,0,0.08)',
+              borderRight: '1px solid rgba(0,0,0,0.14)',
             },
           }}
         >
@@ -822,7 +822,7 @@ export default function TenantAdminLayout() {
           flexGrow: 1,
           mt: isMobile ? '56px' : 0,
           minHeight: '100vh',
-          bgcolor: '#F8FAFC',
+          bgcolor: '#EEF2F5',
           position: 'relative',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}

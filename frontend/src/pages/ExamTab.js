@@ -353,7 +353,7 @@ export default function ExamTab() {
       </Grid>
 
       {/* ── 2. 필터 섹션 ── */}
-      <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', p: 2.5, mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.07)', mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel sx={{ color: '#4B4450' }}>분반 선택</InputLabel>
           <Select value={filters.class_id} onChange={e => setFilters(p => ({ ...p, class_id: e.target.value }))} label="분반 선택" sx={selectSx} MenuProps={menuProps}>
@@ -366,7 +366,7 @@ export default function ExamTab() {
 
         <TextField size="small" placeholder="시험명 검색" value={filters.exam_title} onChange={e => setFilters(p => ({ ...p, exam_title: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#4B4450', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
 
-        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.08)' }} />
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.12)' }} />
 
         <TextField size="small" placeholder="학생명 검색" value={filters.student_name} onChange={e => setFilters(p => ({ ...p, student_name: e.target.value }))} InputProps={{ startAdornment: <SearchIcon sx={{ color: '#4B4450', fontSize: 18, mr: 1 }} /> }} sx={{ ...inputSx, minWidth: 180 }} />
 
@@ -378,7 +378,7 @@ export default function ExamTab() {
       <Grid container spacing={3}>
         <Grid item xs={12} lg={9}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', overflow: 'hidden' }}>
+            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
               <Box sx={{ px: 3, py: 2, bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <EventNoteIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
@@ -423,7 +423,7 @@ export default function ExamTab() {
               </Box>
             </Paper>
 
-            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', overflow: 'hidden' }}>
+            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
               <Box sx={{ px: 3, py: 2, bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <SchoolIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
@@ -457,7 +457,7 @@ export default function ExamTab() {
                         <TableRow key={item.id} sx={{ '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#4B4450', py: 1.5 } }}>
                           <TableCell><Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}><Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.name[0]}</Avatar><Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#1F1A1F' }}>{item.name}</Typography></Box></TableCell>
                           <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
-                          <TableCell><TextField size="small" type="number" value={item.result.score ?? ''} onChange={ev => updateResult(item.id, { score: ev.target.value === '' ? null : Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#a78bfa', fontWeight: 700, '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
+                          <TableCell><TextField size="small" type="number" value={item.result.score ?? ''} onChange={ev => updateResult(item.id, { score: ev.target.value === '' ? null : Number(ev.target.value) })} sx={{ width: 80, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#a78bfa', fontWeight: 700, '& fieldset': { borderColor: 'rgba(0,0,0,0.12)' } }, '& .MuiOutlinedInput-input': { p: 0.5, textAlign: 'center' } }} /></TableCell>
                           <TableCell>
                             <Select
                               value={item.result.grade ?? ''}
@@ -471,7 +471,7 @@ export default function ExamTab() {
                               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(g => <MenuItem key={g} value={g}>{g}등급</MenuItem>)}
                             </Select>
                           </TableCell>
-                          <TableCell><TextField fullWidth size="small" value={item.result.comment ?? ''} onChange={ev => updateResult(item.id, { comment: ev.target.value })} placeholder="피드백 입력..." sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#1F1A1F', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }} /></TableCell>
+                          <TableCell><TextField fullWidth size="small" value={item.result.comment ?? ''} onChange={ev => updateResult(item.id, { comment: ev.target.value })} placeholder="피드백 입력..." sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.02)', fontSize: '0.8125rem', color: '#1F1A1F', '& fieldset': { borderColor: 'rgba(0,0,0,0.12)' } } }} /></TableCell>
                           <TableCell sx={{ fontSize: '0.75rem' }}>{item.result.updated_at ? item.result.updated_at.slice(0, 10) : '-'}</TableCell>
                         </TableRow>
                       ))}
@@ -485,7 +485,7 @@ export default function ExamTab() {
 
         <Grid item xs={12} lg={3}>
           <Box sx={{ position: 'sticky', top: 20, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', p: 3 }}>
+            <Paper sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', p: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <BarChartIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
@@ -530,7 +530,7 @@ export default function ExamTab() {
                       </BarChart>
                     </ResponsiveContainer>
                   </Box>
-                  <Divider sx={{ borderColor: 'rgba(0,0,0,0.08)', mb: 3 }} />
+                  <Divider sx={{ borderColor: 'rgba(0,0,0,0.12)', mb: 3 }} />
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#4B4450', fontSize: '0.8125rem' }}>시험 평균</Typography><Typography sx={{ color: '#a78bfa', fontWeight: 800 }}>{stats.avg ? `${stats.avg}점` : '-'}</Typography></Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ color: '#4B4450', fontSize: '0.8125rem' }}>최고 점수</Typography><Typography sx={{ color: '#f59e0b', fontWeight: 800 }}>{stats.max ? `${stats.max}점` : '-'}</Typography></Box>
@@ -558,7 +558,7 @@ export default function ExamTab() {
       </Grid>
 
       {/* ── 시험 등록/수정 다이얼로그 ── */}
-      <Dialog open={examDialogOpen} onClose={() => setExamDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px' } }}>
+      <Dialog open={examDialogOpen} onClose={() => setExamDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 900 }}>{editingExam ? '시험 정보 수정' : '새 시험 등록'}</DialogTitle>
         <DialogContent sx={{ pt: 6, pb: 1, overflow: 'visible', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
@@ -582,7 +582,7 @@ export default function ExamTab() {
                   sx: {
                     bgcolor: '#FFFFFF',
                     color: '#4B4450',
-                    border: '1px solid rgba(0,0,0,0.08)',
+                    border: '1px solid rgba(0,0,0,0.14)',
                     borderRadius: '10px',
                     '& .MuiAutocomplete-option': {
                       fontSize: '0.8125rem',
@@ -608,7 +608,7 @@ export default function ExamTab() {
         <DialogActions sx={{ p: 3 }}><Button onClick={() => setExamDialogOpen(false)} sx={{ color: '#4B4450', fontWeight: 700 }}>취소</Button><Button variant="contained" onClick={handleSaveExam} sx={{ background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', fontWeight: 800, borderRadius: '10px', px: 3 }}>저장하기</Button></DialogActions>
       </Dialog>
 
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}>
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}>
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 800 }}>시험 삭제</DialogTitle>
         <DialogContent><Typography sx={{ color: '#4B4450', fontSize: '0.875rem' }}>이 시험과 모든 학생 성적 데이터가 삭제됩니다. 계속하시겠습니까?</Typography></DialogContent>
         <DialogActions sx={{ p: 2.5 }}><Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#4B4450' }}>취소</Button><Button onClick={handleDeleteExam} sx={{ bgcolor: '#FEE2E2', color: '#DC2626', fontWeight: 700 }}>삭제</Button></DialogActions>

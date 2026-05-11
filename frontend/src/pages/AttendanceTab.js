@@ -417,7 +417,7 @@ export default function AttendanceTab() {
       <Box sx={{
         display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap', alignItems: 'center',
         p: 2.5, borderRadius: '16px',
-        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
+        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <TextField
           type="date" size="small" label="날짜 선택"
@@ -510,7 +510,7 @@ export default function AttendanceTab() {
 
         {/* ── 좌측: 출결 입력 테이블 ── */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden' }}>
             {/* 테이블 헤더 */}
             <Box sx={{
               display: 'grid',
@@ -610,7 +610,7 @@ export default function AttendanceTab() {
                             borderRadius: '8px',
                             fontSize: '0.75rem',
                             color: '#4B4450',
-                            '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
+                            '& fieldset': { borderColor: 'rgba(0,0,0,0.12)' },
                             '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.2)' },
                             '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
                           },
@@ -683,7 +683,7 @@ export default function AttendanceTab() {
                 </Typography>
               </Box>
 
-              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', mb: 3, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', mb: 3, border: '1px solid rgba(0,0,0,0.10)' }}>
                 <Typography sx={{ fontSize: '0.75rem', color: '#4B4450', fontWeight: 700, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <EventNoteIcon sx={{ fontSize: 14 }} /> 현재 출결 상태
                 </Typography>
@@ -740,7 +740,7 @@ export default function AttendanceTab() {
             </Box>
           ) : (
             /* 분반별 요약 카드 */
-            <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', p: 3 }}>
+            <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <GroupsIcon sx={{ fontSize: 18, color: '#a78bfa' }} />
                 <Typography sx={{ fontSize: '0.875rem', fontWeight: 800, color: '#1F1A1F' }}>분반별 출석 통계</Typography>
@@ -829,7 +829,7 @@ export default function AttendanceTab() {
           <Box sx={{ mb: 3 }}>
             <Typography sx={{ fontSize: '0.75rem', color: '#4B4450', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>학생 정보</Typography>
             {formDialog?.mode === 'edit' ? (
-              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }}>
+              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.14)' }}>
                 <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#1F1A1F' }}>{formDialog.student?.student_name}</Typography>
                 <Typography sx={{ fontSize: '0.8125rem', color: '#4B4450' }}>{formDialog.student?.class_name} · {formDialog.student?.school_name}</Typography>
               </Box>
@@ -852,7 +852,7 @@ export default function AttendanceTab() {
           {/* 날짜 표시 */}
           <Box sx={{ mb: 3 }}>
             <Typography sx={{ fontSize: '0.75rem', color: '#4B4450', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>출결 일자</Typography>
-            <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.14)', display: 'flex', alignItems: 'center', gap: 1 }}>
               <EventNoteIcon sx={{ fontSize: 18, color: '#a78bfa' }} />
               <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#1F1A1F' }}>{filters.date}</Typography>
             </Box>

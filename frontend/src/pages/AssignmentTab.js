@@ -454,7 +454,7 @@ export default function AssignmentTab() {
 
       {/* ── 2. 필터 섹션 ── */}
       <Box sx={{
-        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
         p: 2.5, mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center'
       }}>
         {/* 과제 목록 필터 */}
@@ -493,7 +493,7 @@ export default function AssignmentTab() {
           sx={{ ...inputSx, minWidth: 180 }}
         />
 
-        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.08)' }} />
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.12)' }} />
 
         {/* 제출 roster 필터 */}
         <FormControl size="small" sx={{ minWidth: 130 }}>
@@ -538,7 +538,7 @@ export default function AssignmentTab() {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
         {/* 상단: 과제 목록 테이블 */}
-        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AssignmentIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
@@ -600,7 +600,7 @@ export default function AssignmentTab() {
         </Box>
 
         {/* 하단: 학생별 제출 상태 */}
-        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', overflow: 'hidden' }}>
+        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <PeopleIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
@@ -786,7 +786,7 @@ export default function AssignmentTab() {
         onClose={() => setAssignmentDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px' } }}
       >
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 900, pb: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           {editingAssignment ? '과제 정보 수정' : '새 과제 등록'}
@@ -859,7 +859,7 @@ export default function AssignmentTab() {
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}
       >
         <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 800 }}>과제 삭제</DialogTitle>
         <DialogContent>
