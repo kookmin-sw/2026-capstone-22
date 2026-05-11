@@ -609,7 +609,7 @@ export default function ChatPage() {
                   py: 0.75,
                   borderRadius: 2,
                   bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(0,0,0,0.03)',
-                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(255,255,255,0.1)',
+                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(0,0,0,0.1)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
                   '&:hover': {
@@ -621,13 +621,13 @@ export default function ChatPage() {
                 <Language
                   sx={{
                     fontSize: 18,
-                    color: webSearchEnabled ? '#667eea' : 'rgba(255,255,255,0.4)',
+                    color: webSearchEnabled ? '#667eea' : '#94A3B8',
                     transition: 'color 0.3s ease',
                   }}
                 />
                 <Typography
                   sx={{
-                    color: webSearchEnabled ? '#667eea' : 'rgba(255,255,255,0.4)',
+                    color: webSearchEnabled ? '#667eea' : '#94A3B8',
                     fontSize: '0.75rem',
                     fontWeight: webSearchEnabled ? 600 : 500,
                     whiteSpace: 'nowrap',
@@ -741,10 +741,10 @@ export default function ChatPage() {
                   }}
                 />
               </Box>
-              <Typography variant="h5" sx={{ color: 'white', fontWeight: 600, mb: 0.5, fontSize: '1.25rem' }}>
+              <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 600, mb: 0.5, fontSize: '1.25rem' }}>
                 ReadyTalk에게 질문하세요
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', mb: 4 }}>
+              <Typography variant="body2" sx={{ color: '#94A3B8', fontSize: '0.85rem', mb: 4 }}>
                 문서 검색 기반 지능형 응답 시스템
               </Typography>
 
