@@ -588,7 +588,7 @@ export default function ChatPage() {
             />
             <Typography
               sx={{
-                color: 'white',
+                color: '#1E293B',
                 fontWeight: 600,
                 fontSize: '0.875rem',
               }}
@@ -786,7 +786,7 @@ export default function ChatPage() {
                         },
                         '&:disabled': {
                           color: 'rgba(255,255,255,0.3)',
-                          borderColor: 'rgba(255,255,255,0.1)',
+                          borderColor: 'rgba(0,0,0,0.1)',
                         },
                       }}
                     >
