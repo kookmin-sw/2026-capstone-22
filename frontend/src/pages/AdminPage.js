@@ -1075,7 +1075,7 @@ function HITLPanel() {
             <Typography variant="h5" sx={{ fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
               상담 대기 (HITL)
             </Typography>
-            <Typography sx={{ color: '#64748B', fontSize: '0.8125rem' }}>
+            <Typography sx={{ color: '#334155', fontSize: '0.8125rem' }}>
               AI가 답변하기 어려운 질문 목록입니다. (오래된 순 / pending 우선)
             </Typography>
           </Box>
@@ -1096,7 +1096,7 @@ function HITLPanel() {
           border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
         }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'rgba(0,0,0,0.12)', mb: 2 }} />
-          <Typography sx={{ color: '#64748B', fontSize: '1rem', fontWeight: 500 }}>
+          <Typography sx={{ color: '#334155', fontSize: '1rem', fontWeight: 500 }}>
             처리 대기 중인 항목이 없습니다.
           </Typography>
         </Paper>
@@ -1105,11 +1105,11 @@ function HITLPanel() {
           {items.map((item) => (
             <Card key={item.id} sx={{
               bgcolor: '#FFFFFF', borderRadius: '16px',
-              border: `1px solid ${item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.08)'}`,
+              border: `1px solid ${item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.14)'}`,
               overflow: 'visible', position: 'relative',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               transition: 'all 0.2s ease',
-              opacity: item.status === 'resolved' ? 0.6 : 1,
+              opacity: item.status === 'resolved' ? 0.75 : 1,
               '&:hover': { borderColor: item.status === 'pending' ? '#FCA5A5' : 'rgba(0,0,0,0.20)', transform: 'translateY(-2px)' }
             }}>
               <CardContent sx={{ p: 3 }}>
@@ -1125,7 +1125,7 @@ function HITLPanel() {
                       <Chip label={item.hitl_reason} size="small" sx={{ bgcolor: '#FEF3C7', color: '#A16207', fontWeight: 700, fontSize: '0.65rem', maxWidth: 240, border: '1px solid #FACC15' }} />
                     )}
                   </Box>
-                  <Typography sx={{ color: '#64748B', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <Typography sx={{ color: '#475569', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace' }}>
                     {item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '-'}
                   </Typography>
                 </Box>
@@ -1137,11 +1137,11 @@ function HITLPanel() {
                     item.user_message.split('\n').some((l) => l.trim() === '[사용자]');
                   const isExpanded = !!expandedHitl[item.id];
                   return (
-                    <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(0,0,0,0.10)' }}>
+                    <Box sx={{ bgcolor: '#F1F5F9', borderRadius: '10px', p: 2, mb: 1.5, border: '1px solid rgba(0,0,0,0.15)' }}>
                       <Typography sx={{ color: '#a78bfa', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
                         질문
                       </Typography>
-                      <Typography sx={{ color: '#334155', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                      <Typography sx={{ color: '#1E293B', fontSize: '0.875rem', lineHeight: 1.6 }}>
                         {extracted || '-'}
                       </Typography>
                       {hasContext && (
@@ -1150,7 +1150,7 @@ function HITLPanel() {
                             size="small"
                             onClick={() => toggleExpand(item.id)}
                             sx={{
-                              color: '#64748B', fontSize: '0.72rem', textTransform: 'none',
+                              color: '#475569', fontSize: '0.72rem', textTransform: 'none',
                               fontWeight: 600, p: 0, minWidth: 0,
                               '&:hover': { bgcolor: 'transparent', color: '#a78bfa' },
                             }}
@@ -1161,7 +1161,7 @@ function HITLPanel() {
                       )}
                       {hasContext && isExpanded && (
                         <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                          <Typography sx={{ color: '#64748B', fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                             {item.user_message}
                           </Typography>
                         </Box>
@@ -1172,11 +1172,11 @@ function HITLPanel() {
 
                 {/* AI 답변 */}
                 {item.ai_response && (
-                  <Box sx={{ bgcolor: '#F1F5F9', borderRadius: '10px', p: 2, mb: 2, border: '1px solid rgba(0,0,0,0.08)' }}>
+                  <Box sx={{ bgcolor: '#E9EEF4', borderRadius: '10px', p: 2, mb: 2, border: '1px solid rgba(0,0,0,0.15)' }}>
                     <Typography sx={{ color: '#15803D', fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', mb: 0.75, letterSpacing: '0.05em' }}>
                       AI
                     </Typography>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.875rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                       {item.ai_response}
                     </Typography>
                   </Box>
