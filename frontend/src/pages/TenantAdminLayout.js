@@ -238,7 +238,7 @@ export default function TenantAdminLayout() {
             px: 1.5,
             py: 1,
             bgcolor: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -246,11 +246,11 @@ export default function TenantAdminLayout() {
             transition: 'all 0.2s ease',
             '&:focus-within': {
               borderColor: 'rgba(167, 139, 250, 0.3)',
-              bgcolor: 'rgba(255,255,255,0.05)',
+              bgcolor: 'rgba(0,0,0,0.03)',
             },
           }}
         >
-          <SearchIcon sx={{ color: 'rgba(255,255,255,0.3)', fontSize: 18 }} />
+          <SearchIcon sx={{ color: '#94A3B8', fontSize: 18 }} />
           <TextField
             fullWidth
             placeholder="Search conversations..."
@@ -596,7 +596,7 @@ export default function TenantAdminLayout() {
         >
           <ArrowBackIcon sx={{ fontSize: 16, color: '#F59E0B' }} />
           <Typography sx={{
-            color: '#FCD34D',
+            color: '#92400E',
             fontSize: '0.7rem',
             fontWeight: 600,
             fontFamily: "'Plus Jakarta Sans', sans-serif",
