@@ -46,9 +46,9 @@ const STATUS_CFG = {
 };
 
 const DIFF_CFG = {
-  '하': { bg: '#DCFCE7',  color: '#15803D', border: '#86EFAC' },
-  '중': { bg: '#FEF3C7',  color: '#A16207', border: '#FACC15' },
-  '상': { bg: '#FEE2E2', color: '#DC2626', border: '#FCA5A5' },
+  '하': { bg: '#BBF7D0',  color: '#1C0A00', border: '#4ADE80' },
+  '중': { bg: '#FDE68A',  color: '#1C0A00', border: '#F59E0B' },
+  '상': { bg: '#FECACA',  color: '#1C0A00', border: '#F87171' },
 };
 
 const EMPTY_FORM = { grade:'', examName:'', examType:'', year:'', source:'', note:'' };
@@ -72,7 +72,7 @@ function DiffChip({ v }) {
   const cfg = DIFF_CFG[v] || DIFF_CFG['중'];
   return (
     <Chip label={v} size="small" sx={{
-      height: 20, bgcolor: cfg.bg, color: cfg.color, fontWeight: 600,
+      height: 20, bgcolor: cfg.bg, color: cfg.color, fontWeight: 500,
       fontSize: '0.625rem', border: `1px solid ${cfg.border}`,
       '& .MuiChip-label': { px: 0.75 },
     }} />
@@ -409,26 +409,26 @@ export default function ExamAnalysisPage() {
   // ── 공통 sx ──────────────────────────────────────────────────────────────
   const inputSx = {
     '& .MuiOutlinedInput-root': {
-      bgcolor: 'rgba(0,0,0,0.03)', borderRadius: 1.5, color: '#334155', fontSize: '0.875rem',
+      bgcolor: 'rgba(0,0,0,0.03)', borderRadius: 1.5, color: '#1E293B', fontSize: '0.875rem',
       '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
       '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
       '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
     },
-    '& .MuiInputLabel-root': { color: '#64748B', fontSize: '0.875rem' },
+    '& .MuiInputLabel-root': { color: '#1E293B', fontSize: '0.875rem' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
     '& .MuiFormHelperText-root': { color: '#DC2626', fontSize: '0.75rem', mx: 0 },
-    '& .MuiSelect-icon': { color: '#64748B' },
+    '& .MuiSelect-icon': { color: '#1E293B' },
   };
 
   const colHSx = {
-    fontSize: '0.7rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase',
+    fontSize: '0.7rem', fontWeight: 700, color: '#1E293B', textTransform: 'uppercase',
     letterSpacing: '0.05em', bgcolor: '#F1F5F9',
     borderBottom: '1px solid rgba(0,0,0,0.08)', py: 1.5, px: 2, whiteSpace: 'nowrap',
   };
 
   const cellSx = {
     borderBottom: '1px solid rgba(0,0,0,0.08)', py: 1.25, px: 2,
-    color: '#334155', fontSize: '0.8125rem', whiteSpace: 'nowrap',
+    color: '#1E293B', fontSize: '0.8125rem', whiteSpace: 'nowrap',
   };
 
   const subTabSx = (active) => ({
@@ -617,7 +617,7 @@ ${answerSection}
         </Box>
         <Box>
           <Typography sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>기출문제 분석</Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>시험지를 업로드하고 문항을 자동 분류·관리합니다</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#1E293B' }}>시험지를 업로드하고 문항을 자동 분류·관리합니다</Typography>
         </Box>
       </Box>
 
@@ -667,20 +667,20 @@ ${answerSection}
                   <InsertDriveFileIcon sx={{ color: '#a78bfa', fontSize: 28 }} />
                   <Box sx={{ textAlign: 'left' }}>
                     <Typography sx={{ color: '#111827', fontWeight: 600, fontSize: '0.875rem' }}>{file.name}</Typography>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</Typography>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</Typography>
                   </Box>
                   <Box onClick={(e) => { e.stopPropagation(); setFile(null); setFileError(''); }}
                     sx={{ ml: 1, p: 0.5, borderRadius: 1, cursor: 'pointer', '&:hover': { bgcolor: '#FEE2E2' } }}>
-                    <CloseIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                    <CloseIcon sx={{ fontSize: 16, color: '#1E293B' }} />
                   </Box>
                 </Box>
               ) : (
                 <>
                   <CloudUploadIcon sx={{ fontSize: 40, color: isDragging ? '#a78bfa' : '#94A3B8', mb: 1.5 }} />
-                  <Typography sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.875rem', mb: 0.5 }}>
+                  <Typography sx={{ color: '#1E293B', fontWeight: 600, fontSize: '0.875rem', mb: 0.5 }}>
                     파일을 드래그하거나 클릭하여 선택
                   </Typography>
-                  <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>PDF, PNG, JPG/JPEG · 최대 {MAX_SIZE_MB}MB</Typography>
+                  <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>PDF, PNG, JPG/JPEG · 최대 {MAX_SIZE_MB}MB</Typography>
                 </>
               )}
             </Box>
@@ -692,7 +692,7 @@ ${answerSection}
                 <FormControl fullWidth error={!!errors.grade} sx={inputSx}>
                   <InputLabel shrink>학년</InputLabel>
                   <Select value={form.grade} onChange={handleFormChange('grade')} label="학년" displayEmpty sx={{ color: form.grade ? '#1E293B' : '#94A3B8' }}>
-                    <MenuItem value="" disabled sx={{ color: '#64748B' }}>선택</MenuItem>
+                    <MenuItem value="" disabled sx={{ color: '#1E293B' }}>선택</MenuItem>
                     {GRADE_OPTIONS.map(g => <MenuItem key={g} value={g} sx={menuItemSx}>{g}</MenuItem>)}
                   </Select>
                   {errors.grade && <FormHelperText>{errors.grade}</FormHelperText>}
@@ -706,7 +706,7 @@ ${answerSection}
                 <FormControl fullWidth error={!!errors.examType} sx={inputSx}>
                   <InputLabel shrink>시험 구분</InputLabel>
                   <Select value={form.examType} onChange={handleFormChange('examType')} label="시험 구분" displayEmpty sx={{ color: form.examType ? '#1E293B' : '#94A3B8' }}>
-                    <MenuItem value="" disabled sx={{ color: '#64748B' }}>선택</MenuItem>
+                    <MenuItem value="" disabled sx={{ color: '#1E293B' }}>선택</MenuItem>
                     {EXAM_TYPE_OPTIONS.map(t => <MenuItem key={t} value={t} sx={menuItemSx}>{t}</MenuItem>)}
                   </Select>
                   {errors.examType && <FormHelperText>{errors.examType}</FormHelperText>}
@@ -716,7 +716,7 @@ ${answerSection}
                 <FormControl fullWidth sx={inputSx}>
                   <InputLabel shrink>시행 연도 (선택)</InputLabel>
                   <Select value={form.year} onChange={handleFormChange('year')} label="시행 연도 (선택)" displayEmpty sx={{ color: form.year ? '#1E293B' : '#94A3B8' }}>
-                    <MenuItem value="" sx={{ color: '#64748B', fontSize: '0.875rem' }}>선택 안 함</MenuItem>
+                    <MenuItem value="" sx={{ color: '#1E293B', fontSize: '0.875rem' }}>선택 안 함</MenuItem>
                     {YEAR_OPTIONS.map(y => <MenuItem key={y} value={y} sx={menuItemSx}>{y}</MenuItem>)}
                   </Select>
                 </FormControl>
@@ -737,7 +737,7 @@ ${answerSection}
                 sx={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
                   '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' },
-                  '&:disabled': { background: 'rgba(167,139,250,0.3)', color: '#64748B' },
+                  '&:disabled': { background: 'rgba(167,139,250,0.3)', color: '#1E293B' },
                   fontWeight: 600, borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontSize: '0.875rem',
                 }}>
                 {uploading ? '업로드 중...' : '업로드 및 분석 시작'}
@@ -754,12 +754,12 @@ ${answerSection}
         <Box sx={{ bgcolor: '#FFFFFF', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
           <Box sx={{ px: 3, py: 2, borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography sx={{ color: '#111827', fontWeight: 700, fontSize: '0.9375rem' }}>분석 이력</Typography>
-            <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>총 {history.length}건</Typography>
+            <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>총 {history.length}건</Typography>
           </Box>
 
           {history.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
-              <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>업로드된 파일이 없습니다.</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.875rem' }}>업로드된 파일이 없습니다.</Typography>
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
@@ -787,8 +787,8 @@ ${answerSection}
                         <TableCell sx={cellSx}>{paper.grade || '-'}</TableCell>
                         <TableCell sx={{ ...cellSx, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            <InsertDriveFileIcon sx={{ fontSize: 14, color: '#64748B', flexShrink: 0 }} />
-                            <Typography sx={{ color: '#64748B', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <InsertDriveFileIcon sx={{ fontSize: 14, color: '#1E293B', flexShrink: 0 }} />
+                            <Typography sx={{ color: '#1E293B', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {paper.file_name || '-'}
                             </Typography>
                           </Box>
@@ -801,15 +801,15 @@ ${answerSection}
                             </Typography>
                           )}
                         </TableCell>
-                        <TableCell sx={{ ...cellSx, color: '#64748B', fontSize: '0.75rem' }}>{uploadedAt}</TableCell>
+                        <TableCell sx={{ ...cellSx, color: '#1E293B', fontSize: '0.75rem' }}>{uploadedAt}</TableCell>
                         <TableCell sx={{ ...cellSx, whiteSpace: 'nowrap' }}>
                           <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
                             <Button size="small" disabled={!canView} onClick={() => handleViewResult(paper)}
                               sx={{
                                 fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none',
-                                bgcolor: canView ? 'rgba(167,139,250,0.1)' : 'transparent',
-                                color: canView ? '#a78bfa' : '#94A3B8',
-                                border: canView ? '1px solid rgba(167,139,250,0.25)' : '1px solid rgba(0,0,0,0.08)',
+                                bgcolor: canView ? 'rgba(167,139,250,0.2)' : 'rgba(0,0,0,0.03)',
+                                color: canView ? '#6D28D9' : '#64748B',
+                                border: canView ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(0,0,0,0.12)',
                                 '&:hover': canView ? { bgcolor: 'rgba(167,139,250,0.18)' } : {},
                                 '&.Mui-disabled': { color: '#8A8190', border: '1px solid rgba(0,0,0,0.10)' },
                               }}>
@@ -862,15 +862,15 @@ ${answerSection}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
             <Button onClick={() => { setSelectedPaper(null); setItems([]); setOnlyNeedsReview(false); setSelectedItems(new Set()); }}
               startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
-              sx={{ color: '#64748B', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#a78bfa' } }}>
+              sx={{ color: '#334155', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#a78bfa' } }}>
               분석 이력
             </Button>
-            <Typography sx={{ color: '#8A8190' }}>/</Typography>
+            <Typography sx={{ color: '#1E293B' }}>/</Typography>
             <Typography sx={{ color: '#111827', fontSize: '0.875rem', fontWeight: 600 }}>{selectedPaper.title}</Typography>
             <Chip label={`${selectedPaper.subject} · ${selectedPaper.grade || '-'}`} size="small"
               sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.6875rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 1 } }} />
             {selectedPaper.total_questions != null && (
-              <Typography sx={{ color: '#64748B', fontSize: '0.75rem', ml: 'auto' }}>총 {selectedPaper.total_questions}문항</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.75rem', ml: 'auto' }}>총 {selectedPaper.total_questions}문항</Typography>
             )}
           </Box>
 
@@ -899,12 +899,12 @@ ${answerSection}
                         }
                       }}
                       sx={{
-                        p: 0, color: '#8A8190',
+                        p: 0, color: '#1E293B',
                         '&.Mui-checked': { color: '#a78bfa' },
                         '&.MuiCheckbox-indeterminate': { color: '#a78bfa' },
                       }}
                     />
-                    <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>전체 선택</Typography>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>전체 선택</Typography>
                   </Box>
                 ) : null;
               })()}
@@ -913,7 +913,7 @@ ${answerSection}
                   ⚠ 우선 확인 {needsReviewCount}건
                 </Typography>
               )}
-              <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>검수 대기 {pendingCount}건</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>검수 대기 {pendingCount}건</Typography>
               <Typography sx={{ color: '#15803D', fontSize: '0.75rem' }}>검수 완료 {reviewedCount}건</Typography>
               {selectedItems.size > 0 && (
                 <Typography sx={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -963,15 +963,15 @@ ${answerSection}
           {itemsLoading ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <CircularProgress size={32} sx={{ color: '#a78bfa' }} />
-              <Typography sx={{ color: '#64748B', fontSize: '0.875rem', mt: 2 }}>문항 불러오는 중...</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.875rem', mt: 2 }}>문항 불러오는 중...</Typography>
             </Box>
           ) : items.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
-              <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>저장된 문항이 없습니다.</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.875rem' }}>저장된 문항이 없습니다.</Typography>
             </Box>
           ) : displayItems.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
-              <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>우선 확인 필요 문항이 없습니다.</Typography>
+              <Typography sx={{ color: '#1E293B', fontSize: '0.875rem' }}>우선 확인 필요 문항이 없습니다.</Typography>
             </Box>
           ) : (
             <Grid container spacing={2}>
@@ -996,7 +996,7 @@ ${answerSection}
                           checked={selectedItems.has(item.id)}
                           onChange={() => toggleSelectItem(item.id)}
                           sx={{
-                            p: 0, color: '#8A8190',
+                            p: 0, color: '#1E293B',
                             '&.Mui-checked': { color: '#a78bfa' },
                             '&.Mui-disabled': { color: 'rgba(0,0,0,0.06)' },
                           }}
@@ -1005,11 +1005,11 @@ ${answerSection}
                           {item.question_number}번
                         </Typography>
                         {item.area && (
-                          <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />
+                          <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'transparent', color: '#6D28D9', fontSize: '0.75rem', fontWeight: 500, border: 'none', '& .MuiChip-label': { px: 0 } }} />
                         )}
                         <DiffChip v={item.difficulty} />
                         {item.score_point && (
-                          <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>{item.score_point}점</Typography>
+                          <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>{item.score_point}점</Typography>
                         )}
                         <Box sx={{ ml: 'auto' }}>
                           {rs === 'reviewed' && (
@@ -1035,7 +1035,7 @@ ${answerSection}
 
                       {item.question_body && (
                         <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5 }}>
-                          <Typography sx={{ color: '#334155', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                             {item.question_body}
                           </Typography>
                         </Box>
@@ -1044,14 +1044,14 @@ ${answerSection}
                       {Array.isArray(item.choices) && item.choices.length > 0 && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4, pl: 0.5 }}>
                           {item.choices.map((c, ci) => (
-                            <Typography key={ci} sx={{ color: '#64748B', fontSize: '0.8125rem' }}>{c}</Typography>
+                            <Typography key={ci} sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>{c}</Typography>
                           ))}
                         </Box>
                       )}
 
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button size="small" onClick={() => openEdit(item)}
-                          sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.04)', color: '#64748B', border: '1px solid rgba(0,0,0,0.10)', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}>
+                          sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: '8px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.05)', color: '#334155', border: '1px solid rgba(0,0,0,0.15)', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}>
                           수정
                         </Button>
                         <Button size="small" disabled={rs === 'reviewed'} onClick={() => handleReview(item.id)}
@@ -1103,7 +1103,7 @@ ${answerSection}
                   onChange={(e) => setBankFilters(prev => ({ ...prev, [key]: e.target.value }))}
                   label={label} displayEmpty
                   sx={{ color: bankFilters[key] ? '#1E293B' : '#94A3B8', fontSize: '0.8125rem' }}>
-                  <MenuItem value="" sx={{ color: '#64748B', fontSize: '0.8125rem' }}>전체</MenuItem>
+                  <MenuItem value="" sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>전체</MenuItem>
                   {options.map(opt => <MenuItem key={opt} value={opt} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{opt}</MenuItem>)}
                 </Select>
               </FormControl>
@@ -1114,7 +1114,7 @@ ${answerSection}
                 onChange={(e) => setBankFilters(prev => ({ ...prev, area: e.target.value }))}
                 label="유형" displayEmpty
                 sx={{ color: bankFilters.area ? '#1E293B' : '#94A3B8', fontSize: '0.8125rem' }}>
-                <MenuItem value="" sx={{ color: '#64748B', fontSize: '0.8125rem' }}>전체</MenuItem>
+                <MenuItem value="" sx={{ color: '#1E293B', fontSize: '0.8125rem' }}>전체</MenuItem>
                 {AREA_OPTIONS.map(a => <MenuItem key={a} value={a} sx={{ ...menuItemSx, fontSize: '0.8125rem' }}>{a}</MenuItem>)}
               </Select>
             </FormControl>
@@ -1122,14 +1122,14 @@ ${answerSection}
               sx={{ color: '#64748B', fontSize: '0.75rem', textTransform: 'none', '&:hover': { color: '#a78bfa' } }}>
               초기화
             </Button>
-            <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>{filteredBank.length}건</Typography>
+            <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>{filteredBank.length}건</Typography>
             {/* 정답 포함 토글 + 문제지 인쇄 */}
             <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', userSelect: 'none' }}>
                 <Box component="input" type="checkbox" checked={printWithAnswers}
                   onChange={(e) => setPrintWithAnswers(e.target.checked)}
                   sx={{ accentColor: '#a78bfa', width: 13, height: 13, cursor: 'pointer' }} />
-                <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>정답 포함</Typography>
+                <Typography sx={{ color: '#1E293B', fontSize: '0.75rem' }}>정답 포함</Typography>
               </Box>
               <Button size="small" startIcon={<PrintIcon sx={{ fontSize: '0.875rem !important' }} />}
                 onClick={openPrintPreview} disabled={filteredBank.length === 0}
@@ -1147,11 +1147,11 @@ ${answerSection}
               {bankLoading ? (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
                   <CircularProgress size={28} sx={{ color: '#a78bfa' }} />
-                  <Typography sx={{ color: '#64748B', fontSize: '0.875rem', mt: 2 }}>불러오는 중...</Typography>
+                  <Typography sx={{ color: '#1E293B', fontSize: '0.875rem', mt: 2 }}>불러오는 중...</Typography>
                 </Box>
               ) : filteredBank.length === 0 ? (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>
+                  <Typography sx={{ color: '#1E293B', fontSize: '0.875rem' }}>
                     {bankItems.length === 0 ? '검수 완료된 문항이 없습니다.' : '필터 조건에 맞는 문항이 없습니다.'}
                   </Typography>
                 </Box>
@@ -1178,12 +1178,12 @@ ${answerSection}
                             <TableCell sx={{ ...cellSx, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.paper_title}</TableCell>
                             <TableCell sx={cellSx}>{item.paper_grade || '-'}</TableCell>
                             <TableCell sx={cellSx}>
-                              {item.area && <Chip label={item.area} size="small" sx={{ height: 18, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.625rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 0.75 } }} />}
+                              {item.area && <Chip label={item.area} size="small" sx={{ height: 20, bgcolor: 'transparent', color: '#6D28D9', fontSize: '0.75rem', fontWeight: 500, border: 'none', '& .MuiChip-label': { px: 0 } }} />}
                             </TableCell>
                             <TableCell sx={cellSx}><DiffChip v={item.difficulty} /></TableCell>
-                            <TableCell sx={{ ...cellSx, color: '#64748B' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
+                            <TableCell sx={{ ...cellSx, color: '#1E293B' }}>{item.score_point ? `${item.score_point}점` : '-'}</TableCell>
                             <TableCell sx={{ ...cellSx, width: 32, p: '4px 8px' }}>
-                              <VisibilityIcon sx={{ fontSize: '0.9rem', color: isSelected ? '#a78bfa' : '#94A3B8' }} />
+                              <VisibilityIcon sx={{ fontSize: '0.9rem', color: isSelected ? '#a78bfa' : '#475569' }} />
                             </TableCell>
                           </TableRow>
                         );
@@ -1204,7 +1204,7 @@ ${answerSection}
                     <Typography sx={{ color: '#111827', fontWeight: 700, fontSize: '0.9375rem' }}>
                       {selectedBankItem.question_number}번 문항
                     </Typography>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.75rem', mt: 0.25 }}>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.75rem', mt: 0.25 }}>
                       {selectedBankItem.paper_title}
                     </Typography>
                   </Box>
@@ -1217,22 +1217,22 @@ ${answerSection}
                 {/* 메타 칩 */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                   {[
-                    { label: selectedBankItem.area, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+                    { label: selectedBankItem.area, color: '#6D28D9', bg: 'transparent', border: 'none' },
                   ].filter(c => c.label).map((c, i) => (
-                    <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.6875rem', border: `1px solid ${c.border}`, '& .MuiChip-label': { px: 0.75 } }} />
+                    <Chip key={i} label={c.label} size="small" sx={{ height: 20, bgcolor: c.bg, color: c.color, fontSize: '0.75rem', fontWeight: 500, border: c.border, '& .MuiChip-label': { px: 0 } }} />
                   ))}
                   {selectedBankItem.difficulty && <DiffChip v={selectedBankItem.difficulty} />}
                   {selectedBankItem.score_point && (
-                    <Chip label={`${selectedBankItem.score_point}점`} size="small" sx={{ height: 20, bgcolor: 'rgba(0,0,0,0.04)', color: '#64748B', fontSize: '0.6875rem', border: '1px solid rgba(0,0,0,0.10)', '& .MuiChip-label': { px: 0.75 } }} />
+                    <Chip label={`${selectedBankItem.score_point}점`} size="small" sx={{ height: 20, bgcolor: 'rgba(0,0,0,0.04)', color: '#1E293B', fontSize: '0.6875rem', border: '1px solid rgba(0,0,0,0.10)', '& .MuiChip-label': { px: 0.75 } }} />
                   )}
                 </Box>
 
                 {/* 문제 본문 */}
                 {selectedBankItem.question_body && (
                   <Box>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>문제 본문</Typography>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>문제 본문</Typography>
                     <Box sx={{ bgcolor: '#F1F5F9', borderRadius: 1.5, p: 1.5, border: '1px solid rgba(0,0,0,0.10)' }}>
-                      <Typography sx={{ color: '#334155', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                      <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                         {selectedBankItem.question_body}
                       </Typography>
                     </Box>
@@ -1242,7 +1242,7 @@ ${answerSection}
                 {/* 선택지 */}
                 {selectedBankItem.choices && selectedBankItem.choices.length > 0 && (
                   <Box>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>선택지</Typography>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>선택지</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {selectedBankItem.choices.map((c, i) => {
                         const isCorrect = String(selectedBankItem.answer) === String(i + 1);
@@ -1250,7 +1250,7 @@ ${answerSection}
                           <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start',
                             bgcolor: isCorrect ? '#DCFCE7' : 'transparent',
                             borderRadius: 1, px: 1, py: 0.5, border: isCorrect ? '1px solid rgba(34,197,94,0.2)' : '1px solid transparent' }}>
-                            <Typography sx={{ color: isCorrect ? '#0F172A' : '#64748B', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                            <Typography sx={{ color: isCorrect ? '#0F172A' : '#1E293B', fontSize: '0.8125rem', lineHeight: 1.5 }}>
                               {c}
                             </Typography>
                           </Box>
@@ -1263,7 +1263,7 @@ ${answerSection}
                 {/* 정답 (선택지 없는 경우 또는 서술형) */}
                 {selectedBankItem.answer && (!selectedBankItem.choices || selectedBankItem.choices.length === 0) && (
                   <Box>
-                    <Typography sx={{ color: '#64748B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>정답</Typography>
+                    <Typography sx={{ color: '#1E293B', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.75 }}>정답</Typography>
                     <Box sx={{ bgcolor: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: 1.5, px: 1.5, py: 1 }}>
                       <Typography sx={{ color: '#15803D', fontSize: '0.875rem', fontWeight: 600 }}>
                         {selectedBankItem.answer}
@@ -1279,7 +1279,7 @@ ${answerSection}
                     sx={{ color: '#DC2626', fontSize: '0.75rem', textTransform: 'none',
                       border: '1px solid rgba(248,113,113,0.25)', borderRadius: 1.5,
                       '&:hover': { bgcolor: 'rgba(248,113,113,0.07)' },
-                      '&:disabled': { color: '#8A8190', borderColor: 'rgba(0,0,0,0.08)' } }}>
+                      '&:disabled': { color: '#475569', borderColor: 'rgba(0,0,0,0.08)' } }}>
                     {revertingBankItem ? '처리 중...' : '검수 되돌리기'}
                   </Button>
                 </Box>
@@ -1328,7 +1328,7 @@ ${answerSection}
           </FormControl>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(0,0,0,0.08)', gap: 1 }}>
-          <Button onClick={() => setEditOpen(false)} sx={{ color: '#64748B', textTransform: 'none', fontSize: '0.875rem' }}>취소</Button>
+          <Button onClick={() => setEditOpen(false)} sx={{ color: '#1E293B', textTransform: 'none', fontSize: '0.875rem' }}>취소</Button>
           <Button variant="contained" onClick={handleSaveEdit} disabled={saving}
             sx={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', '&:hover': { background: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)' }, fontWeight: 600, textTransform: 'none', fontSize: '0.875rem', borderRadius: '8px' }}>
             {saving ? '저장 중...' : '저장'}
@@ -1349,7 +1349,7 @@ ${answerSection}
             <span style={{ color: '#111827', fontWeight: 700 }}>"{deleteDialog.label}"</span>을 삭제합니다.
           </Typography>
           {deleteDialog.type === 'paper' && (
-            <Typography sx={{ color: '#64748B', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+            <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.6 }}>
               연결된 문항 데이터도 함께 삭제됩니다.
             </Typography>
           )}
@@ -1361,7 +1361,7 @@ ${answerSection}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(0,0,0,0.08)', gap: 1 }}>
           <Button onClick={() => setDeleteDialog({ open: false, type: '', id: null, label: '' })} disabled={deleting}
-            sx={{ color: '#64748B', textTransform: 'none', fontSize: '0.875rem' }}>
+            sx={{ color: '#1E293B', textTransform: 'none', fontSize: '0.875rem' }}>
             취소
           </Button>
           <Button variant="contained" onClick={handleDeleteConfirm} disabled={deleting}
@@ -1388,7 +1388,7 @@ ${answerSection}
           <Typography sx={{ color: '#111827', fontSize: '0.875rem', lineHeight: 1.6 }}>
             AI 분류 결과를 확인 후 승인하세요.
           </Typography>
-          <Typography sx={{ color: '#64748B', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+          <Typography sx={{ color: '#1E293B', fontSize: '0.8125rem', lineHeight: 1.6 }}>
             검수 대기 중인{' '}
             <span style={{ color: '#111827', fontWeight: 700 }}>
               {items.filter(i => i.review_status !== 'reviewed').length}개
@@ -1403,7 +1403,7 @@ ${answerSection}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, borderTop: '1px solid rgba(0,0,0,0.08)', gap: 1 }}>
           <Button onClick={() => setApproveAllOpen(false)} disabled={approvingAll}
-            sx={{ color: '#64748B', textTransform: 'none', fontSize: '0.875rem' }}>
+            sx={{ color: '#1E293B', textTransform: 'none', fontSize: '0.875rem' }}>
             취소
           </Button>
           <Button variant="contained" onClick={handleApproveAll} disabled={approvingAll}
