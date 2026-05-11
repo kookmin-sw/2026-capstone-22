@@ -514,7 +514,7 @@ export default function ChatPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#09090B' }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F8FAFC' }}>
       {/* Main Content */}
       <Box
         sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
@@ -545,9 +545,9 @@ export default function ChatPage() {
             <Box
               sx={{
                 textAlign: 'center',
-                color: 'white',
+                color: '#1E293B',
                 p: 4,
-                bgcolor: 'rgba(26, 31, 46, 0.9)',
+                bgcolor: 'rgba(255, 255, 255, 0.97)',
                 borderRadius: 3,
                 border: '2px solid rgba(167, 139, 250, 0.3)',
                 boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
@@ -557,7 +557,7 @@ export default function ChatPage() {
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                 파일을 여기에 드롭하세요
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
                 이미지, PDF, 비디오, 오디오 등 지원
               </Typography>
             </Box>
@@ -569,7 +569,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            borderBottom: '1px solid rgba(0,0,0,0.10)',
             bgcolor: 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -588,7 +588,7 @@ export default function ChatPage() {
             />
             <Typography
               sx={{
-                color: 'white',
+                color: '#1E293B',
                 fontWeight: 600,
                 fontSize: '0.875rem',
               }}
@@ -608,12 +608,12 @@ export default function ChatPage() {
                   px: 1.5,
                   py: 0.75,
                   borderRadius: 2,
-                  bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(255,255,255,0.03)',
-                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(255,255,255,0.1)',
+                  bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(0,0,0,0.03)',
+                  border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(0,0,0,0.20)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(255,255,255,0.05)',
+                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(0,0,0,0.10)',
                   },
                 }}
                 onClick={() => setWebSearchEnabled(!webSearchEnabled)}
@@ -621,13 +621,13 @@ export default function ChatPage() {
                 <Language
                   sx={{
                     fontSize: 18,
-                    color: webSearchEnabled ? '#667eea' : 'rgba(255,255,255,0.4)',
+                    color: webSearchEnabled ? '#667eea' : '#94A3B8',
                     transition: 'color 0.3s ease',
                   }}
                 />
                 <Typography
                   sx={{
-                    color: webSearchEnabled ? '#667eea' : 'rgba(255,255,255,0.4)',
+                    color: webSearchEnabled ? '#667eea' : '#94A3B8',
                     fontSize: '0.75rem',
                     fontWeight: webSearchEnabled ? 600 : 500,
                     whiteSpace: 'nowrap',
@@ -686,7 +686,7 @@ export default function ChatPage() {
               width: '6px',
             },
             '&::-webkit-scrollbar-track': {
-              background: 'rgba(255,255,255,0.03)',
+              background: 'rgba(0,0,0,0.03)',
             },
             '&::-webkit-scrollbar-thumb': {
               background: 'rgba(167, 139, 250, 0.2)',
@@ -741,10 +741,10 @@ export default function ChatPage() {
                   }}
                 />
               </Box>
-              <Typography variant="h5" sx={{ color: 'white', fontWeight: 600, mb: 0.5, fontSize: '1.25rem' }}>
+              <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 600, mb: 0.5, fontSize: '1.25rem' }}>
                 ReadyTalk에게 질문하세요
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', mb: 4 }}>
+              <Typography variant="body2" sx={{ color: '#94A3B8', fontSize: '0.85rem', mb: 4 }}>
                 문서 검색 기반 지능형 응답 시스템
               </Typography>
 
@@ -773,9 +773,9 @@ export default function ChatPage() {
                         py: 2,
                         minWidth: 160,
                         borderRadius: 3,
-                        bgcolor: 'rgba(255,255,255,0.03)',
+                        bgcolor: 'rgba(0,0,0,0.03)',
                         border: '1px solid rgba(167, 139, 250, 0.2)',
-                        color: 'white',
+                        color: '#1E293B',
                         textTransform: 'none',
                         transition: 'all 0.3s ease',
                         '&:hover': {
@@ -785,8 +785,8 @@ export default function ChatPage() {
                           boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)',
                         },
                         '&:disabled': {
-                          color: 'rgba(255,255,255,0.3)',
-                          borderColor: 'rgba(255,255,255,0.1)',
+                          color: 'rgba(0,0,0,0.3)',
+                          borderColor: 'rgba(0,0,0,0.20)',
                         },
                       }}
                     >
@@ -816,7 +816,7 @@ export default function ChatPage() {
                         <Typography
                           sx={{
                             fontSize: '0.75rem',
-                            color: 'rgba(255,255,255,0.5)',
+                            color: '#64748B',
                             textAlign: 'center',
                           }}
                         >
@@ -858,7 +858,7 @@ export default function ChatPage() {
                         <Typography
                           sx={{
                             fontSize: '0.875rem',
-                            color: 'rgba(255,255,255,0.85)',
+                            color: '#334155',
                             lineHeight: 1.5,
                           }}
                         >
@@ -911,7 +911,7 @@ export default function ChatPage() {
                         <Typography
                           variant="caption"
                           sx={{
-                            color: 'white',
+                            color: '#1E293B',
                             fontWeight: 600,
                             fontSize: '0.8125rem',
                           }}
@@ -921,7 +921,7 @@ export default function ChatPage() {
                         <Typography
                           variant="caption"
                           sx={{
-                            color: 'rgba(255,255,255,0.3)',
+                            color: 'rgba(0,0,0,0.35)',
                             fontSize: '0.75rem',
                           }}
                         >
@@ -943,7 +943,7 @@ export default function ChatPage() {
                             marginBottom: '0.5em',
                             lineHeight: 1.7,
                             fontSize: '0.9375rem',
-                            color: 'rgba(255,255,255,0.95)',
+                            color: '#334155',
                           },
                           '& p:last-child': {
                             marginBottom: 0,
@@ -974,14 +974,14 @@ export default function ChatPage() {
                           '& ul, & ol': {
                             margin: '0.5em 0',
                             paddingLeft: '1.5em',
-                            color: 'rgba(255,255,255,0.95)',
+                            color: '#334155',
                           },
                           '& li': {
                             marginBottom: '0.25em',
                             lineHeight: 1.6,
                           },
                           '& h1, & h2, & h3, & h4, & h5, & h6': {
-                            color: 'white',
+                            color: '#1E293B',
                             fontWeight: 600,
                             marginTop: '1em',
                             marginBottom: '0.5em',
@@ -993,7 +993,7 @@ export default function ChatPage() {
                             borderLeft: '3px solid rgba(167, 139, 250, 0.5)',
                             paddingLeft: '1em',
                             margin: '0.75em 0',
-                            color: 'rgba(255,255,255,0.8)',
+                            color: '#64748B',
                             fontStyle: 'italic',
                           },
                           '& a': {
@@ -1054,8 +1054,8 @@ export default function ChatPage() {
                                   style={{
                                     margin: '16px 0',
                                     borderRadius: '10px',
-                                    border: '1px solid rgba(148, 163, 184, 0.15)',
-                                    background: '#0f172a',
+                                    border: '1px solid rgba(71, 85, 105, 0.15)',
+                                    background: '#ffffff',
                                     overflow: 'hidden',
                                     fontSize: '13px',
                                     ...style,
@@ -1070,8 +1070,8 @@ export default function ChatPage() {
                               return (
                                 <div
                                   style={{
-                                    background: '#1e293b',
-                                    borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
+                                    background: '#f1f5f9',
+                                    borderBottom: '1px solid rgba(71, 85, 105, 0.1)',
                                     ...style,
                                   }}
                                   {...restProps}
@@ -1081,7 +1081,7 @@ export default function ChatPage() {
                               );
                             },
                             tbody({ node, children, style, ...restProps }) {
-                              return <div style={{ background: '#0f172a', ...style }} {...restProps}>{children}</div>;
+                              return <div style={{ background: '#ffffff', ...style }} {...restProps}>{children}</div>;
                             },
                             tr({ node, children, style, ...restProps }) {
                               const childArray = React.Children.toArray(children);
@@ -1105,7 +1105,7 @@ export default function ChatPage() {
                                 <div
                                   style={{
                                     padding: '12px 16px',
-                                    color: '#94a3b8',
+                                    color: '#475569',
                                     fontWeight: 600,
                                     fontSize: '11px',
                                     textTransform: 'uppercase',
@@ -1123,7 +1123,7 @@ export default function ChatPage() {
                                 <div
                                   style={{
                                     padding: '14px 16px',
-                                    color: '#e2e8f0',
+                                    color: '#334155',
                                     fontSize: '13px',
                                     lineHeight: 1.6,
                                     ...style,
@@ -1190,7 +1190,7 @@ export default function ChatPage() {
                                 borderRadius: '6px',
                                 transition: 'all 0.2s',
                                 '&:hover': {
-                                  bgcolor: 'rgba(30, 41, 59, 0.3)',
+                                  bgcolor: 'rgba(226, 232, 240, 0.7)',
                                 },
                               }}
                             >
@@ -1262,13 +1262,13 @@ export default function ChatPage() {
                                   gap: 1.5,
                                   p: 1.25,
                                   borderRadius: '8px',
-                                  bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                  bgcolor: 'rgba(226, 232, 240, 0.8)',
                                   border: '1px solid rgba(100, 116, 139, 0.3)',
                                   textDecoration: 'none',
                                   cursor: msg.cited_sources[0].uri ? 'pointer' : 'default',
                                   transition: 'all 0.2s',
                                   '&:hover': msg.cited_sources[0].uri ? {
-                                    bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                    bgcolor: 'rgba(209, 218, 230, 0.9)',
                                     borderColor: 'rgba(167, 139, 250, 0.4)',
                                   } : {},
                                 }}
@@ -1277,7 +1277,7 @@ export default function ChatPage() {
                                   sx={{
                                     p: 1,
                                     borderRadius: '6px',
-                                    bgcolor: 'rgba(15, 23, 42, 1)',
+                                    bgcolor: 'rgba(226, 232, 240, 1)',
                                     color: msg.cited_sources[0].uri ? 'rgba(167, 139, 250, 0.8)' : 'rgba(148, 163, 184, 0.8)',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1332,16 +1332,16 @@ export default function ChatPage() {
                                       gap: 1.5,
                                       p: 1.25,
                                       borderRadius: '8px',
-                                      bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                      bgcolor: 'rgba(226, 232, 240, 0.8)',
                                       border: '1px solid rgba(100, 116, 139, 0.3)',
                                       textDecoration: 'none',
                                       cursor: source.uri ? 'pointer' : 'default',
                                       transition: 'all 0.2s',
                                       '&:hover': source.uri ? {
-                                        bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                        bgcolor: 'rgba(209, 218, 230, 0.9)',
                                         borderColor: 'rgba(167, 139, 250, 0.4)',
                                       } : {
-                                        bgcolor: 'rgba(30, 41, 59, 0.6)',
+                                        bgcolor: 'rgba(209, 218, 230, 0.9)',
                                         borderColor: 'rgba(167, 139, 250, 0.3)',
                                       },
                                     }}
@@ -1350,7 +1350,7 @@ export default function ChatPage() {
                                       sx={{
                                         p: 1,
                                         borderRadius: '6px',
-                                        bgcolor: 'rgba(15, 23, 42, 1)',
+                                        bgcolor: 'rgba(226, 232, 240, 1)',
                                         color: source.uri ? 'rgba(167, 139, 250, 0.8)' : 'rgba(148, 163, 184, 0.8)',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -1380,7 +1380,7 @@ export default function ChatPage() {
                                       sx={{
                                         fontSize: '10px',
                                         color: 'rgba(148, 163, 184, 0.5)',
-                                        bgcolor: 'rgba(15, 23, 42, 0.5)',
+                                        bgcolor: 'rgba(226, 232, 240, 0.7)',
                                         px: 1,
                                         py: 0.25,
                                         borderRadius: '4px',
@@ -1496,7 +1496,7 @@ export default function ChatPage() {
                                 overflowY: 'auto',
                                 p: 1,
                                 borderRadius: '8px',
-                                bgcolor: 'rgba(15, 23, 42, 0.5)',
+                                bgcolor: 'rgba(226, 232, 240, 0.7)',
                                 border: '1px solid rgba(100, 116, 139, 0.2)',
                                 '&::-webkit-scrollbar': {
                                   width: '6px',
@@ -1526,7 +1526,7 @@ export default function ChatPage() {
                                     gap: 1,
                                     p: 1,
                                     borderRadius: '6px',
-                                    bgcolor: 'rgba(30, 41, 59, 0.4)',
+                                    bgcolor: 'rgba(226, 232, 240, 0.8)',
                                     border: '1px solid rgba(100, 116, 139, 0.2)',
                                     textDecoration: 'none',
                                     transition: 'all 0.2s',
@@ -1551,7 +1551,7 @@ export default function ChatPage() {
                                       sx={{
                                         fontSize: '11px',
                                         fontWeight: 500,
-                                        color: item.type === 'folder' ? '#fbbf24' : '#e2e8f0',
+                                        color: item.type === 'folder' ? '#f59e0b' : '#475569',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
@@ -1700,7 +1700,7 @@ export default function ChatPage() {
                       <Typography
                         variant="caption"
                         sx={{
-                          color: 'rgba(255,255,255,0.4)',
+                          color: '#94A3B8',
                           fontWeight: 600,
                           textTransform: 'uppercase',
                           letterSpacing: 0.3,
@@ -1724,7 +1724,7 @@ export default function ChatPage() {
                         }}
                       >
                         <CircularProgress size={14} sx={{ color: '#a78bfa' }} />
-                        <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>
                           응답 생성 중...
                         </Typography>
                       </Paper>
@@ -1744,7 +1744,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderTop: '1px solid rgba(0,0,0,0.10)',
             bgcolor: 'transparent',
           }}
         >
@@ -1764,7 +1764,7 @@ export default function ChatPage() {
                       color: '#c4b5fd',
                       border: '1px solid rgba(167, 139, 250, 0.3)',
                       '& .MuiChip-deleteIcon': {
-                        color: 'rgba(255,255,255,0.5)',
+                        color: '#64748B',
                         '&:hover': {
                           color: '#ef4444',
                         },
@@ -1786,11 +1786,11 @@ export default function ChatPage() {
               py: 1.5,
               borderRadius: 5,
               position: 'relative',
-              bgcolor: 'rgba(255,255,255,0.03)',
+              bgcolor: 'rgba(0,0,0,0.03)',
               transition: 'background-image 0.3s ease', // box-shadow 제외하여 글로우 즉시 적용
               // 항상 1.5px 테두리 공간 유지 (활성화 시에는 투명하게)
               border: '1.5px solid transparent',
-              backgroundImage: !isInputFocused ? 'linear-gradient(#0d1117, #0d1117), linear-gradient(135deg, rgba(167, 139, 250, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)' : 'none',
+              backgroundImage: !isInputFocused ? 'linear-gradient(#F8FAFC, #F8FAFC), linear-gradient(135deg, rgba(167, 139, 250, 0.4) 0%, rgba(99, 102, 241, 0.4) 100%)' : 'none',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               boxShadow: isInputFocused
@@ -1838,19 +1838,19 @@ export default function ChatPage() {
               }}
               sx={{
                 '& .MuiInputBase-input': {
-                  color: 'white',
+                  color: '#1E293B',
                   fontSize: '0.95rem',
                   fontWeight: 400,
                   padding: 0,
                   lineHeight: 1.6,
                   '&::placeholder': {
-                    color: 'rgba(255,255,255,0.35)',
+                    color: '#94A3B8',
                     opacity: 1,
                   },
                 },
                 '& .MuiInputBase-input.Mui-disabled': {
-                  WebkitTextFillColor: 'rgba(255,255,255,0.35)',
-                  color: 'rgba(255,255,255,0.35)',
+                  WebkitTextFillColor: 'rgba(0,0,0,0.3)',
+                  color: 'rgba(0,0,0,0.3)',
                 },
               }}
             />
@@ -1868,9 +1868,9 @@ export default function ChatPage() {
                   size="small"
                   onClick={() => fileInputRef.current?.click()}
                   sx={{
-                    color: 'rgba(255,255,255,0.4)',
+                    color: '#94A3B8',
                     '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.05)',
+                      bgcolor: 'rgba(0,0,0,0.10)',
                       color: '#a78bfa',
                     },
                   }}
@@ -1884,7 +1884,7 @@ export default function ChatPage() {
                   size="small"
                   onClick={toggleListening}
                   sx={{
-                    color: isListening ? '#ef4444' : 'rgba(255,255,255,0.4)',
+                    color: isListening ? '#ef4444' : '#94A3B8',
                     bgcolor: isListening ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
                     animation: isListening ? 'pulse 1.5s ease-in-out infinite' : 'none',
                     '@keyframes pulse': {
@@ -1896,7 +1896,7 @@ export default function ChatPage() {
                       },
                     },
                     '&:hover': {
-                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.05)',
+                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.10)',
                       color: isListening ? '#ef4444' : '#a78bfa',
                     },
                   }}
@@ -1908,7 +1908,7 @@ export default function ChatPage() {
               {/* Enter to send text */}
               <Typography
                 sx={{
-                  color: 'rgba(255,255,255,0.4)',
+                  color: '#94A3B8',
                   fontSize: '0.75rem',
                   ml: 1,
                   mr: 0.5,
@@ -1958,8 +1958,8 @@ export default function ChatPage() {
                       boxShadow: '0 0 30px rgba(102, 126, 234, 0.6), 0 0 60px rgba(118, 75, 162, 0.3), 0 8px 16px rgba(0,0,0,0.2)',
                     },
                     '&:disabled': {
-                      background: 'rgba(102, 126, 234, 0.2)',
-                      color: 'rgba(255,255,255,0.3)',
+                      background: 'rgba(102, 126, 234, 0.15)',
+                      color: 'rgba(0,0,0,0.3)',
                       boxShadow: 'none',
                     },
                     transition: 'all 0.3s ease',
@@ -1987,11 +1987,11 @@ export default function ChatPage() {
           }}
           PaperProps={{
             sx: {
-              bgcolor: '#111113',
-              border: '1px solid rgba(255,255,255,0.15)',
+              bgcolor: '#FFFFFF',
+              border: '1px solid rgba(0,0,0,0.12)',
               borderRadius: 2,
               minWidth: 220,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
               mt: 0.5,
             },
           }}
@@ -2007,13 +2007,13 @@ export default function ChatPage() {
               sx={{
                 py: 1.2,
                 px: 2.5,
-                color: 'white',
+                color: '#1E293B',
                 fontSize: '0.875rem',
                 '&:hover': {
-                  bgcolor: 'rgba(102, 126, 234, 0.15)',
+                  bgcolor: 'rgba(102, 126, 234, 0.1)',
                 },
                 '&.Mui-selected': {
-                  bgcolor: 'rgba(102, 126, 234, 0.2)',
+                  bgcolor: 'rgba(102, 126, 234, 0.12)',
                   '&:hover': {
                     bgcolor: 'rgba(102, 126, 234, 0.25)',
                   },
@@ -2033,21 +2033,21 @@ export default function ChatPage() {
           fullWidth
           PaperProps={{
             sx: {
-              bgcolor: '#111113',
-              color: '#e2e8f0',
+              bgcolor: '#FFFFFF',
+              color: '#1E293B',
               border: '1px solid rgba(167, 139, 250, 0.3)',
               borderRadius: 3,
             },
           }}
         >
-          <DialogTitle sx={{ borderBottom: '1px solid rgba(100, 116, 139, 0.2)', pb: 1.5 }}>
+          <DialogTitle sx={{ borderBottom: '1px solid rgba(100, 116, 139, 0.15)', pb: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Feedback sx={{ color: '#f59e0b' }} />
               <Typography variant="h6" sx={{ fontWeight: 600 }}>피드백 보내기</Typography>
             </Box>
           </DialogTitle>
           <DialogContent sx={{ pt: '16px !important' }}>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
               이 AI 응답에 대한 피드백을 보내주세요. 서비스 개선에 활용됩니다.
             </Typography>
             <TextField
@@ -2060,8 +2060,8 @@ export default function ChatPage() {
               defaultValue=""
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#e2e8f0',
-                  bgcolor: 'rgba(15, 23, 42, 0.6)',
+                  color: '#1E293B',
+                  bgcolor: 'rgba(0, 0, 0, 0.02)',
                   '& fieldset': { borderColor: 'rgba(100, 116, 139, 0.3)' },
                   '&:hover fieldset': { borderColor: 'rgba(167, 139, 250, 0.5)' },
                   '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
@@ -2080,7 +2080,7 @@ export default function ChatPage() {
                 />
               }
               label={
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#475569' }}>
                   대화 내역도 함께 전송합니다 (더 정확한 피드백 분석을 위해)
                 </Typography>
               }
@@ -2091,7 +2091,7 @@ export default function ChatPage() {
             <Button
               onClick={() => setFeedbackDialogOpen(false)}
               disabled={feedbackLoading}
-              sx={{ color: 'rgba(255,255,255,0.5)' }}
+              sx={{ color: '#64748B' }}
             >
               취소
             </Button>
@@ -2103,7 +2103,7 @@ export default function ChatPage() {
               sx={{
                 bgcolor: '#a78bfa',
                 '&:hover': { bgcolor: '#8b5cf6' },
-                '&.Mui-disabled': { bgcolor: 'rgba(167, 139, 250, 0.3)', color: 'rgba(255,255,255,0.3)' },
+                '&.Mui-disabled': { bgcolor: 'rgba(167, 139, 250, 0.2)', color: 'rgba(0,0,0,0.3)' },
               }}
             >
               {feedbackLoading ? '전송 중...' : '보내기'}

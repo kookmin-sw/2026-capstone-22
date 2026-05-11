@@ -34,7 +34,6 @@ export default function Login() {
     setError('');
     try {
       await login(email, password);
-      // Check user role after login for redirect
       const meRes = await authAPI.me();
       const loggedInUser = meRes.data;
       if (loggedInUser.is_superadmin) {
@@ -53,11 +52,10 @@ export default function Login() {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#0f1419',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2d1b3d 100%)',
+        background: 'linear-gradient(135deg, #F5F7FA 0%, #EEF2F5 50%, #F0EEFF 100%)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -67,7 +65,7 @@ export default function Login() {
           right: '-50%',
           width: '100%',
           height: '100%',
-          background: 'radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%)',
           animation: 'pulse 8s ease-in-out infinite',
         },
         '@keyframes pulse': {
@@ -92,7 +90,7 @@ export default function Login() {
                     justifyContent: 'center',
                     margin: '0 auto',
                     mb: 3,
-                    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)',
+                    boxShadow: '0 12px 40px rgba(167, 139, 250, 0.25)',
                     animation: 'float 3s ease-in-out infinite',
                     '@keyframes float': {
                       '0%, 100%': { transform: 'translateY(0px)' },
@@ -103,18 +101,13 @@ export default function Login() {
                   <img
                     src={masLogo}
                     alt="MAS Logo"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </Box>
               </Slide>
               <Typography
                 variant="h3"
                 sx={{
-                  color: 'white',
                   fontWeight: 800,
                   letterSpacing: -1,
                   mb: 1,
@@ -125,7 +118,7 @@ export default function Login() {
               >
                 {tenant ? tenant.name : 'ReadyTalk'}
               </Typography>
-              <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 400 }}>
+              <Typography variant="h6" sx={{ color: '#475569', fontWeight: 400 }}>
                 문서 검색 기반 지능형 챗봇
               </Typography>
             </Box>
@@ -136,14 +129,14 @@ export default function Login() {
               sx={{
                 p: 5,
                 borderRadius: 4,
-                bgcolor: '#1a1f2e',
-                border: '1px solid rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(10px)',
+                bgcolor: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.10)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 4 }}>
                 <LoginIcon sx={{ color: '#a78bfa', fontSize: 28 }} />
-                <Typography variant="h5" fontWeight="700" sx={{ color: 'white' }}>
+                <Typography variant="h5" fontWeight="700" sx={{ color: '#111827' }}>
                   {tenant ? `${tenant.name} 로그인` : '로그인'}
                 </Typography>
               </Box>
@@ -155,10 +148,10 @@ export default function Login() {
                     sx={{
                       mb: 3,
                       borderRadius: 2,
-                      bgcolor: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                      color: '#fca5a5',
-                      '& .MuiAlert-icon': { color: '#ef4444' },
+                      bgcolor: '#FEE2E2',
+                      border: '1px solid #FCA5A5',
+                      color: '#DC2626',
+                      '& .MuiAlert-icon': { color: '#DC2626' },
                     }}
                   >
                     {error}
@@ -186,43 +179,32 @@ export default function Login() {
                   sx={{
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: '#0f1419',
-                      color: 'white',
+                      bgcolor: '#F8FAFC',
+                      color: '#111827',
                       borderRadius: 2,
-                      '& fieldset': {
-                        borderColor: 'rgba(255,255,255,0.1)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(167, 139, 250, 0.5)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#a78bfa',
-                      },
-                      // Autofill 스타일 방지
+                      '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
+                      '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
+                      '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
                       '& input:-webkit-autofill': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
-                        caretColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
+                        caretColor: '#111827',
                       },
                       '& input:-webkit-autofill:hover': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                       '& input:-webkit-autofill:focus': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                       '& input:-webkit-autofill:active': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                     },
-                    '& .MuiInputLabel-root': {
-                      color: 'rgba(255,255,255,0.7)',
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#a78bfa',
-                    },
+                    '& .MuiInputLabel-root': { color: '#64748B' },
+                    '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
                   }}
                 />
 
@@ -246,7 +228,7 @@ export default function Login() {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
-                          sx={{ color: 'rgba(255,255,255,0.5)' }}
+                          sx={{ color: '#64748B' }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
@@ -256,43 +238,32 @@ export default function Login() {
                   sx={{
                     mb: 4,
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: '#0f1419',
-                      color: 'white',
+                      bgcolor: '#F8FAFC',
+                      color: '#111827',
                       borderRadius: 2,
-                      '& fieldset': {
-                        borderColor: 'rgba(255,255,255,0.1)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'rgba(167, 139, 250, 0.5)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#a78bfa',
-                      },
-                      // Autofill 스타일 방지
+                      '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
+                      '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.5)' },
+                      '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
                       '& input:-webkit-autofill': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
-                        caretColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
+                        caretColor: '#111827',
                       },
                       '& input:-webkit-autofill:hover': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                       '& input:-webkit-autofill:focus': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                       '& input:-webkit-autofill:active': {
-                        WebkitBoxShadow: '0 0 0 100px #0f1419 inset',
-                        WebkitTextFillColor: 'white',
+                        WebkitBoxShadow: '0 0 0 100px #F8FAFC inset',
+                        WebkitTextFillColor: '#111827',
                       },
                     },
-                    '& .MuiInputLabel-root': {
-                      color: 'rgba(255,255,255,0.7)',
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#a78bfa',
-                    },
+                    '& .MuiInputLabel-root': { color: '#64748B' },
+                    '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
                   }}
                 />
 
@@ -303,24 +274,24 @@ export default function Login() {
                   size="large"
                   sx={{
                     py: 1.8,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8a 100%)',
+                      background: 'linear-gradient(135deg, #9270f5 0%, #6d28d9 100%)',
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
+                      boxShadow: '0 12px 32px rgba(167,139,250,0.4)',
                     },
                     fontWeight: 700,
                     fontSize: '1.1rem',
                     borderRadius: 2,
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+                    boxShadow: '0 6px 20px rgba(167,139,250,0.3)',
                   }}
                 >
                   로그인
                 </Button>
 
                 <Box sx={{ textAlign: 'center', mt: 4 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', mb: 1 }}>
                     계정이 없으신가요?
                   </Typography>
                   <Link
@@ -332,7 +303,7 @@ export default function Login() {
                       fontWeight: 600,
                       fontSize: '1rem',
                       '&:hover': {
-                        color: '#c4b5fd',
+                        color: '#7c3aed',
                         textDecoration: 'underline',
                       },
                     }}
@@ -348,7 +319,7 @@ export default function Login() {
               sx={{
                 display: 'block',
                 textAlign: 'center',
-                color: 'rgba(255,255,255,0.3)',
+                color: '#94A3B8',
                 mt: 4,
               }}
             >

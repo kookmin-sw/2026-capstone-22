@@ -24,14 +24,14 @@ const STEP = { PHONE: 'phone', OTP: 'otp', DONE: 'done' };
 
 const inputSx = {
   '& .MuiOutlinedInput-root': {
-    bgcolor: '#0f1419',
-    color: 'white',
+    bgcolor: 'rgba(0,0,0,0.03)',
+    color: '#1E293B',
     borderRadius: 2,
-    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+    '& fieldset': { borderColor: 'rgba(0,0,0,0.15)' },
     '&:hover fieldset': { borderColor: 'rgba(167, 139, 250, 0.5)' },
     '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
   },
-  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+  '& .MuiInputLabel-root': { color: '#64748B' },
   '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
 };
 
@@ -58,7 +58,7 @@ export default function VerifyPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2d1b3d 100%)',
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F5F3FF 100%)',
         }}
       >
         <Alert severity="error" sx={{ maxWidth: 400 }}>
@@ -108,7 +108,7 @@ export default function VerifyPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2d1b3d 100%)',
+        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F5F3FF 100%)',
       }}
     >
       <Container maxWidth="sm">
@@ -144,7 +144,7 @@ export default function VerifyPage() {
               >
                 {tenant ? tenant.name : '학원'} 본인 확인
               </Typography>
-              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+              <Typography variant="body1" sx={{ color: '#475569' }}>
                 학생 정보 조회를 위한 학부모 인증
               </Typography>
             </Box>
@@ -154,8 +154,8 @@ export default function VerifyPage() {
               sx={{
                 p: 5,
                 borderRadius: 4,
-                bgcolor: '#1a1f2e',
-                border: '1px solid rgba(255,255,255,0.1)',
+                bgcolor: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.08)',
               }}
             >
               {/* STEP 1: 전화번호 입력 */}
@@ -164,11 +164,11 @@ export default function VerifyPage() {
                   <Box component="form" onSubmit={handleRequestOtp}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                       <PhoneAndroid sx={{ color: '#a78bfa' }} />
-                      <Typography variant="h6" fontWeight={700} sx={{ color: 'white' }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ color: '#1E293B' }}>
                         학부모 전화번호 입력
                       </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>
                       학원에 등록된 학부모 전화번호를 입력하세요.
                     </Typography>
 
@@ -229,7 +229,7 @@ export default function VerifyPage() {
                   <Box component="form" onSubmit={handleConfirmOtp}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                       <PhoneAndroid sx={{ color: '#a78bfa' }} />
-                      <Typography variant="h6" fontWeight={700} sx={{ color: 'white' }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ color: '#1E293B' }}>
                         인증번호 확인
                       </Typography>
                     </Box>
@@ -245,7 +245,7 @@ export default function VerifyPage() {
                         textAlign: 'center',
                       }}
                     >
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 0.5 }}>
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 0.5 }}>
                         인증 코드
                       </Typography>
                       <Typography
@@ -311,7 +311,7 @@ export default function VerifyPage() {
                       variant="text"
                       size="small"
                       onClick={() => { setStep(STEP.PHONE); setError(''); setIssuedOtp(''); }}
-                      sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: 'rgba(255,255,255,0.7)' } }}
+                      sx={{ color: '#94A3B8', '&:hover': { color: '#475569' } }}
                     >
                       전화번호 다시 입력
                     </Button>
@@ -324,10 +324,10 @@ export default function VerifyPage() {
                 <Fade in>
                   <Box sx={{ textAlign: 'center' }}>
                     <CheckCircle sx={{ fontSize: 64, color: '#4ade80', mb: 2 }} />
-                    <Typography variant="h5" fontWeight={700} sx={{ color: 'white', mb: 1 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ color: '#1E293B', mb: 1 }}>
                       인증이 완료되었습니다!
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>
                       아래 학생 정보 조회가 허용되었습니다.
                     </Typography>
 
@@ -346,7 +346,7 @@ export default function VerifyPage() {
                       ))}
                     </Box>
 
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
+                    <Typography variant="body2" sx={{ color: '#94A3B8' }}>
                       카카오 채팅으로 돌아가서 다시 질문해 주세요.
                     </Typography>
                   </Box>
