@@ -43,7 +43,7 @@ export const STATUS_OPTIONS = [
 ];
 
 // 미입력 표시용 상수
-const UNRECORDED_STYLE = { color: '#64748B', bg: 'transparent', border: 'rgba(0,0,0,0.12)' };
+const UNRECORDED_STYLE = { color: '#334155', bg: 'transparent', border: 'rgba(0,0,0,0.12)' };
 
 // ── 유틸 및 공통 스타일 ────────────────────────────────────────────────────────
 function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -58,9 +58,9 @@ const inputSx = {
     '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
     '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
   },
-  '& .MuiInputLabel-root': { color: '#64748B', fontSize: '0.8125rem' },
+  '& .MuiInputLabel-root': { color: '#334155', fontSize: '0.8125rem' },
   '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
-  '& .MuiInputAdornment-root .MuiSvgIcon-root': { color: '#64748B', fontSize: 18 },
+  '& .MuiInputAdornment-root .MuiSvgIcon-root': { color: '#334155', fontSize: 18 },
 };
 
 const selectSx = {
@@ -71,7 +71,7 @@ const selectSx = {
   '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.08)' },
   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(167,139,250,0.3)' },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#a78bfa' },
-  '& .MuiSvgIcon-root': { color: '#64748B' },
+  '& .MuiSvgIcon-root': { color: '#334155' },
 };
 
 const menuProps = {
@@ -82,7 +82,7 @@ const menuProps = {
       borderRadius: '10px',
       '& .MuiMenuItem-root': {
         fontSize: '0.8125rem',
-        color: '#334155',
+        color: '#1E293B',
         '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' },
         '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' },
       },
@@ -402,7 +402,7 @@ export default function AttendanceTab() {
                 <Typography sx={{ fontSize: '2.25rem', fontWeight: 900, color: opt.color, lineHeight: 1 }}>
                   {displayedSummary?.[opt.value] ?? 0}
                 </Typography>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#64748B', fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#334155', fontWeight: 600 }}>
                   / {displayedSummary?.total_students ?? 0}명
                 </Typography>
               </Box>
@@ -427,7 +427,7 @@ export default function AttendanceTab() {
           InputLabelProps={{ shrink: true }}
         />
         <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel sx={{ color: '#64748B', fontSize: '0.8125rem' }}>분반 필터</InputLabel>
+          <InputLabel sx={{ color: '#334155', fontSize: '0.8125rem' }}>분반 필터</InputLabel>
           <Select
             value={filters.classId}
             onChange={e => setFilter('classId', e.target.value)}
@@ -457,7 +457,7 @@ export default function AttendanceTab() {
             startIcon={<AddIcon sx={{ fontSize: 18 }} />}
             onClick={() => openForm('add')}
             sx={{
-              borderColor: 'rgba(0,0,0,0.08)', color: '#64748B',
+              borderColor: 'rgba(0,0,0,0.08)', color: '#334155',
               fontWeight: 600, fontSize: '0.8125rem', borderRadius: '10px',
               px: 2, py: 1, textTransform: 'none',
               '&:hover': { borderColor: 'rgba(0,0,0,0.2)', bgcolor: 'rgba(0,0,0,0.03)' },
@@ -520,7 +520,7 @@ export default function AttendanceTab() {
               bgcolor: 'rgba(0,0,0,0.02)',
             }}>
               {['학생명', '분반', '상태 (빠른 변경)', '메모', '수정일', ''].map((h, i) => (
-                <Typography key={i} sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <Typography key={i} sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {h}
                 </Typography>
               ))}
@@ -535,7 +535,7 @@ export default function AttendanceTab() {
               ) : filteredRoster.length === 0 ? (
                 <Box sx={{ py: 12, textAlign: 'center' }}>
                   <EventNoteIcon sx={{ fontSize: 48, color: '#8A8190', mb: 2 }} />
-                  <Typography sx={{ color: '#64748B', fontSize: '0.9375rem', fontWeight: 500 }}>
+                  <Typography sx={{ color: '#334155', fontSize: '0.9375rem', fontWeight: 500 }}>
                     선택한 조건에 맞는 학생이 없습니다
                   </Typography>
                 </Box>
@@ -575,12 +575,12 @@ export default function AttendanceTab() {
                           <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
                             {student.student_name}
                           </Typography>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>{student.school_name}</Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#334155' }}>{student.school_name}</Typography>
                         </Box>
                       </Box>
 
                       {/* 분반 */}
-                      <Typography sx={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 600 }}>
+                      <Typography sx={{ fontSize: '0.875rem', color: '#334155', fontWeight: 600 }}>
                         {student.class_name}
                       </Typography>
 
@@ -609,7 +609,7 @@ export default function AttendanceTab() {
                             bgcolor: 'rgba(0,0,0,0.02)',
                             borderRadius: '8px',
                             fontSize: '0.75rem',
-                            color: '#64748B',
+                            color: '#334155',
                             '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
                             '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.2)' },
                             '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
@@ -628,7 +628,7 @@ export default function AttendanceTab() {
                         size="small"
                         onClick={e => { e.stopPropagation(); openForm('edit', student); }}
                         sx={{
-                          color: '#64748B', p: 0.75,
+                          color: '#334155', p: 0.75,
                           '&:hover': { color: '#a78bfa', bgcolor: 'rgba(167,139,250,0.1)' },
                         }}
                       >
@@ -675,16 +675,16 @@ export default function AttendanceTab() {
                 <Typography sx={{ fontSize: '1.125rem', fontWeight: 800, color: '#111827', mb: 0.5 }}>
                   {selectedStudent.student_name}
                 </Typography>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#64748B', fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#334155', fontWeight: 600 }}>
                   {selectedStudent.class_name} · {selectedStudent.grade}학년
                 </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', mt: 0.5 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: '#334155', mt: 0.5 }}>
                   {selectedStudent.school_name}
                 </Typography>
               </Box>
 
               <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', mb: 3, border: '1px solid rgba(0,0,0,0.10)' }}>
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 700, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <EventNoteIcon sx={{ fontSize: 14 }} /> 현재 출결 상태
                 </Typography>
                 {(() => {
@@ -712,8 +712,8 @@ export default function AttendanceTab() {
                       )}
                       {merged.memo && (
                         <Box sx={{ mt: 1 }}>
-                          <Typography sx={{ fontSize: '0.7rem', color: '#64748B', mb: 0.5 }}>메모</Typography>
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#64748B', fontStyle: 'italic', lineHeight: 1.4 }}>
+                          <Typography sx={{ fontSize: '0.7rem', color: '#334155', mb: 0.5 }}>메모</Typography>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#334155', fontStyle: 'italic', lineHeight: 1.4 }}>
                             "{merged.memo}"
                           </Typography>
                         </Box>
@@ -761,7 +761,7 @@ export default function AttendanceTab() {
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                       <Typography sx={{ fontSize: '0.9375rem', fontWeight: 800, color: '#111827' }}>{cs.className}</Typography>
-                      <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>총 {cs.total}명</Typography>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600 }}>총 {cs.total}명</Typography>
                     </Box>
 
                     {/* 출석 현황 인디케이터 */}
@@ -827,15 +827,15 @@ export default function AttendanceTab() {
         <DialogContent sx={{ px: 4 }}>
           {/* 학생 선택/표시 */}
           <Box sx={{ mb: 3 }}>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>학생 정보</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>학생 정보</Typography>
             {formDialog?.mode === 'edit' ? (
               <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.10)' }}>
                 <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#111827' }}>{formDialog.student?.student_name}</Typography>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#64748B' }}>{formDialog.student?.class_name} · {formDialog.student?.school_name}</Typography>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#334155' }}>{formDialog.student?.class_name} · {formDialog.student?.school_name}</Typography>
               </Box>
             ) : (
               <FormControl fullWidth size="small" sx={selectSx}>
-                <InputLabel sx={{ color: '#64748B' }}>학생을 선택하세요</InputLabel>
+                <InputLabel sx={{ color: '#334155' }}>학생을 선택하세요</InputLabel>
                 <Select
                   value={formData.student_id}
                   onChange={e => setFormData(p => ({ ...p, student_id: e.target.value }))}
@@ -851,7 +851,7 @@ export default function AttendanceTab() {
 
           {/* 날짜 표시 */}
           <Box sx={{ mb: 3 }}>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>출결 일자</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>출결 일자</Typography>
             <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.10)', display: 'flex', alignItems: 'center', gap: 1 }}>
               <EventNoteIcon sx={{ fontSize: 18, color: '#a78bfa' }} />
               <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: '#111827' }}>{filters.date}</Typography>
@@ -860,7 +860,7 @@ export default function AttendanceTab() {
 
           {/* 상태 선택 */}
           <Box sx={{ mb: 3 }}>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 800, mb: 1.5, textTransform: 'uppercase' }}>출결 상태</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 800, mb: 1.5, textTransform: 'uppercase' }}>출결 상태</Typography>
             <Grid container spacing={1}>
               {STATUS_OPTIONS.map(opt => (
                 <Grid item xs={3} key={opt.value}>
@@ -884,7 +884,7 @@ export default function AttendanceTab() {
 
           {/* 메모 입력 */}
           <Box sx={{ mb: 1 }}>
-            <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>비고 및 메모</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#334155', fontWeight: 800, mb: 1, textTransform: 'uppercase' }}>비고 및 메모</Typography>
             <TextField
               fullWidth
               multiline
@@ -903,7 +903,7 @@ export default function AttendanceTab() {
           <Button
             fullWidth
             onClick={() => setFormDialog(null)}
-            sx={{ color: '#64748B', fontWeight: 700, fontSize: '0.9375rem', textTransform: 'none', py: 1.5 }}
+            sx={{ color: '#334155', fontWeight: 700, fontSize: '0.9375rem', textTransform: 'none', py: 1.5 }}
           >
             취소
           </Button>

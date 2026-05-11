@@ -194,10 +194,10 @@ export default function TenantAdminLayout() {
               '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
             }}
           >
-            <ArrowBackIcon sx={{ fontSize: 16, color: '#64748B' }} />
+            <ArrowBackIcon sx={{ fontSize: 16, color: '#334155' }} />
             <Typography
               sx={{
-                color: '#64748B',
+                color: '#334155',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -390,7 +390,7 @@ export default function TenantAdminLayout() {
           <>
             <Typography
               sx={{
-                color: '#64748B',
+                color: '#334155',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -487,7 +487,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#64748B',
+                color: '#334155',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',
@@ -615,7 +615,7 @@ export default function TenantAdminLayout() {
             <Box key={section.label}>
               <Typography
                 sx={{
-                  color: '#64748B',
+                  color: '#334155',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -701,7 +701,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#64748B',
+                color: '#334155',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',

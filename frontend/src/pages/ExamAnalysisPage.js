@@ -865,7 +865,7 @@ ${answerSection}
               sx={{ color: '#334155', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none', px: 1, borderRadius: '8px', '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#a78bfa' } }}>
               분석 이력
             </Button>
-            <Typography sx={{ color: '#475569' }}>/</Typography>
+            <Typography sx={{ color: '#1E293B' }}>/</Typography>
             <Typography sx={{ color: '#111827', fontSize: '0.875rem', fontWeight: 600 }}>{selectedPaper.title}</Typography>
             <Chip label={`${selectedPaper.subject} · ${selectedPaper.grade || '-'}`} size="small"
               sx={{ height: 20, bgcolor: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.6875rem', border: '1px solid rgba(167,139,250,0.2)', '& .MuiChip-label': { px: 1 } }} />
@@ -899,7 +899,7 @@ ${answerSection}
                         }
                       }}
                       sx={{
-                        p: 0, color: '#475569',
+                        p: 0, color: '#1E293B',
                         '&.Mui-checked': { color: '#a78bfa' },
                         '&.MuiCheckbox-indeterminate': { color: '#a78bfa' },
                       }}
@@ -996,7 +996,7 @@ ${answerSection}
                           checked={selectedItems.has(item.id)}
                           onChange={() => toggleSelectItem(item.id)}
                           sx={{
-                            p: 0, color: '#475569',
+                            p: 0, color: '#1E293B',
                             '&.Mui-checked': { color: '#a78bfa' },
                             '&.Mui-disabled': { color: 'rgba(0,0,0,0.06)' },
                           }}
