@@ -3725,9 +3725,9 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
                     <Box sx={{
                       width: 32, height: 32, borderRadius: '8px',
-                      bgcolor: user.is_admin ? '#a78bfa' : '#E2E8F0',
+                      bgcolor: user.is_admin ? '#a78bfa' : user.username.startsWith('카카오') ? '#FDE047' : '#E2E8F0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: user.is_admin ? '#09090B' : '#475569', fontWeight: 700, fontSize: '0.7rem', flexShrink: 0,
+                      color: user.is_admin ? '#09090B' : user.username.startsWith('카카오') ? '#92400E' : '#475569', fontWeight: 700, fontSize: '0.7rem', flexShrink: 0,
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                     }}>
                       {user.username.substring(0, 2).toUpperCase()}
