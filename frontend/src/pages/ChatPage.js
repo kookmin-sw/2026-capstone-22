@@ -557,7 +557,7 @@ export default function ChatPage() {
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                 파일을 여기에 드롭하세요
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
                 이미지, PDF, 비디오, 오디오 등 지원
               </Typography>
             </Box>
