@@ -2009,13 +2009,13 @@ export default function ChatPage() {
               sx={{
                 py: 1.2,
                 px: 2.5,
-                color: 'white',
+                color: '#1E293B',
                 fontSize: '0.875rem',
                 '&:hover': {
-                  bgcolor: 'rgba(102, 126, 234, 0.15)',
+                  bgcolor: 'rgba(102, 126, 234, 0.1)',
                 },
                 '&.Mui-selected': {
-                  bgcolor: 'rgba(102, 126, 234, 0.2)',
+                  bgcolor: 'rgba(102, 126, 234, 0.12)',
                   '&:hover': {
                     bgcolor: 'rgba(102, 126, 234, 0.25)',
                   },
