@@ -98,7 +98,7 @@ function StatusChip({ opt, active, onClick }) {
       sx={{
         px: 1.25, py: 0.35,
         borderRadius: '6px',
-        fontSize: '0.75rem', fontWeight: 700,
+        fontSize: '0.75rem', fontWeight: 500,
         cursor: 'pointer', userSelect: 'none',
         transition: 'all 0.15s',
         bgcolor: active ? opt.bg : 'transparent',
@@ -580,7 +580,7 @@ export default function AttendanceTab() {
                       </Box>
 
                       {/* 분반 */}
-                      <Typography sx={{ fontSize: '0.875rem', color: '#334155', fontWeight: 600 }}>
+                      <Typography sx={{ fontSize: '0.875rem', color: '#334155', fontWeight: 500 }}>
                         {student.class_name}
                       </Typography>
 
