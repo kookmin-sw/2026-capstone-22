@@ -368,7 +368,7 @@ export default function TenantAdminLayout() {
                           right: 4,
                           width: 24,
                           height: 24,
-                          color: 'rgba(255,255,255,0.5)',
+                          color: 'rgba(0,0,0,0.4)',
                           '&:hover': {
                             color: '#ef4444',
                             bgcolor: 'rgba(239, 68, 68, 0.1)',
@@ -448,7 +448,7 @@ export default function TenantAdminLayout() {
                           right: 4,
                           width: 24,
                           height: 24,
-                          color: 'rgba(255,255,255,0.5)',
+                          color: 'rgba(0,0,0,0.4)',
                           '&:hover': {
                             color: '#ef4444',
                             bgcolor: 'rgba(239, 68, 68, 0.1)',

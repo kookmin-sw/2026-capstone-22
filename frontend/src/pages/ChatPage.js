@@ -514,7 +514,7 @@ export default function ChatPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#09090B' }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F8FAFC' }}>
       {/* Main Content */}
       <Box
         sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
@@ -569,7 +569,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            borderBottom: '1px solid rgba(0,0,0,0.04)',
             bgcolor: 'transparent',
             display: 'flex',
             alignItems: 'center',
@@ -608,12 +608,12 @@ export default function ChatPage() {
                   px: 1.5,
                   py: 0.75,
                   borderRadius: 2,
-                  bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(255,255,255,0.03)',
+                  bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.1)' : 'rgba(0,0,0,0.03)',
                   border: webSearchEnabled ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid rgba(255,255,255,0.1)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(255,255,255,0.05)',
+                    bgcolor: webSearchEnabled ? 'rgba(102, 126, 234, 0.15)' : 'rgba(0,0,0,0.04)',
                   },
                 }}
                 onClick={() => setWebSearchEnabled(!webSearchEnabled)}
@@ -686,7 +686,7 @@ export default function ChatPage() {
               width: '6px',
             },
             '&::-webkit-scrollbar-track': {
-              background: 'rgba(255,255,255,0.03)',
+              background: 'rgba(0,0,0,0.03)',
             },
             '&::-webkit-scrollbar-thumb': {
               background: 'rgba(167, 139, 250, 0.2)',
@@ -773,7 +773,7 @@ export default function ChatPage() {
                         py: 2,
                         minWidth: 160,
                         borderRadius: 3,
-                        bgcolor: 'rgba(255,255,255,0.03)',
+                        bgcolor: 'rgba(0,0,0,0.03)',
                         border: '1px solid rgba(167, 139, 250, 0.2)',
                         color: 'white',
                         textTransform: 'none',
@@ -1746,7 +1746,7 @@ export default function ChatPage() {
             width: '100%',
             maxWidth: 900,
             p: 1.5,
-            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderTop: '1px solid rgba(0,0,0,0.04)',
             bgcolor: 'transparent',
           }}
         >
@@ -1788,7 +1788,7 @@ export default function ChatPage() {
               py: 1.5,
               borderRadius: 5,
               position: 'relative',
-              bgcolor: 'rgba(255,255,255,0.03)',
+              bgcolor: 'rgba(0,0,0,0.03)',
               transition: 'background-image 0.3s ease', // box-shadow 제외하여 글로우 즉시 적용
               // 항상 1.5px 테두리 공간 유지 (활성화 시에는 투명하게)
               border: '1.5px solid transparent',
@@ -1872,7 +1872,7 @@ export default function ChatPage() {
                   sx={{
                     color: 'rgba(255,255,255,0.4)',
                     '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.05)',
+                      bgcolor: 'rgba(0,0,0,0.04)',
                       color: '#a78bfa',
                     },
                   }}
@@ -1898,7 +1898,7 @@ export default function ChatPage() {
                       },
                     },
                     '&:hover': {
-                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.05)',
+                      bgcolor: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.04)',
                       color: isListening ? '#ef4444' : '#a78bfa',
                     },
                   }}
