@@ -775,7 +775,7 @@ export default function ChatPage() {
                         borderRadius: 3,
                         bgcolor: 'rgba(0,0,0,0.03)',
                         border: '1px solid rgba(167, 139, 250, 0.2)',
-                        color: 'white',
+                        color: '#1E293B',
                         textTransform: 'none',
                         transition: 'all 0.3s ease',
                         '&:hover': {
@@ -785,7 +785,7 @@ export default function ChatPage() {
                           boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)',
                         },
                         '&:disabled': {
-                          color: 'rgba(255,255,255,0.3)',
+                          color: 'rgba(0,0,0,0.3)',
                           borderColor: 'rgba(0,0,0,0.1)',
                         },
                       }}
