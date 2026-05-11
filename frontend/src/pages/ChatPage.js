@@ -1989,11 +1989,11 @@ export default function ChatPage() {
           }}
           PaperProps={{
             sx: {
-              bgcolor: '#111113',
-              border: '1px solid rgba(255,255,255,0.15)',
+              bgcolor: '#FFFFFF',
+              border: '1px solid rgba(0,0,0,0.12)',
               borderRadius: 2,
               minWidth: 220,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
               mt: 0.5,
             },
           }}
@@ -2082,7 +2082,7 @@ export default function ChatPage() {
                 />
               }
               label={
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#475569' }}>
                   대화 내역도 함께 전송합니다 (더 정확한 피드백 분석을 위해)
                 </Typography>
               }
@@ -2105,7 +2105,7 @@ export default function ChatPage() {
               sx={{
                 bgcolor: '#a78bfa',
                 '&:hover': { bgcolor: '#8b5cf6' },
-                '&.Mui-disabled': { bgcolor: 'rgba(167, 139, 250, 0.3)', color: 'rgba(255,255,255,0.3)' },
+                '&.Mui-disabled': { bgcolor: 'rgba(167, 139, 250, 0.2)', color: 'rgba(0,0,0,0.3)' },
               }}
             >
               {feedbackLoading ? '전송 중...' : '보내기'}
