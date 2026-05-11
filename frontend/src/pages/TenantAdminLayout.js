@@ -166,7 +166,7 @@ export default function TenantAdminLayout() {
         flexDirection: 'column',
         height: '100%',
         bgcolor: '#FFFFFF',
-        borderRight: '1px solid rgba(0,0,0,0.14)',
+        borderRight: '1px solid rgba(0,0,0,0.10)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
@@ -194,10 +194,10 @@ export default function TenantAdminLayout() {
               '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
             }}
           >
-            <ArrowBackIcon sx={{ fontSize: 16, color: '#4B4450' }} />
+            <ArrowBackIcon sx={{ fontSize: 16, color: '#64748B' }} />
             <Typography
               sx={{
-                color: '#4B4450',
+                color: '#64748B',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -238,7 +238,7 @@ export default function TenantAdminLayout() {
             px: 1.5,
             py: 1,
             bgcolor: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(0,0,0,0.14)',
+            border: '1px solid rgba(0,0,0,0.10)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -262,7 +262,7 @@ export default function TenantAdminLayout() {
             }}
             sx={{
               '& .MuiInputBase-input': {
-                color: '#1F1A1F',
+                color: '#111827',
                 fontSize: '0.8125rem',
                 fontWeight: 400,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -390,7 +390,7 @@ export default function TenantAdminLayout() {
           <>
             <Typography
               sx={{
-                color: '#4B4450',
+                color: '#64748B',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -468,7 +468,7 @@ export default function TenantAdminLayout() {
 
       {/* User info */}
       <Box>
-        <Divider sx={{ borderColor: 'rgba(0,0,0,0.12)' }} />
+        <Divider sx={{ borderColor: 'rgba(0,0,0,0.08)' }} />
         <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
             sx={{
@@ -487,7 +487,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#4B4450',
+                color: '#64748B',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',
@@ -521,7 +521,7 @@ export default function TenantAdminLayout() {
         flexDirection: 'column',
         height: '100%',
         bgcolor: '#FFFFFF',
-        borderRight: '1px solid rgba(0,0,0,0.14)',
+        borderRight: '1px solid rgba(0,0,0,0.10)',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
@@ -547,7 +547,7 @@ export default function TenantAdminLayout() {
         <Typography
           sx={{
             fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: '#1F1A1F',
+            color: '#111827',
             fontWeight: 800,
             fontSize: '1.1rem',
             letterSpacing: '-0.02em',
@@ -615,7 +615,7 @@ export default function TenantAdminLayout() {
             <Box key={section.label}>
               <Typography
                 sx={{
-                  color: '#4B4450',
+                  color: '#64748B',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -682,7 +682,7 @@ export default function TenantAdminLayout() {
 
       {/* User info */}
       <Box>
-        <Divider sx={{ borderColor: 'rgba(0,0,0,0.12)' }} />
+        <Divider sx={{ borderColor: 'rgba(0,0,0,0.08)' }} />
         <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
             sx={{
@@ -701,7 +701,7 @@ export default function TenantAdminLayout() {
             <Typography
               variant="body2"
               sx={{
-                color: '#4B4450',
+                color: '#64748B',
                 fontSize: '0.8rem',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 overflow: 'hidden',
@@ -752,7 +752,7 @@ export default function TenantAdminLayout() {
         >
           <IconButton
             onClick={() => setMobileOpen(true)}
-            sx={{ color: '#1F1A1F' }}
+            sx={{ color: '#111827' }}
           >
             <MenuIcon />
           </IconButton>
@@ -767,7 +767,7 @@ export default function TenantAdminLayout() {
           />
           <Typography
             sx={{
-              color: '#1F1A1F',
+              color: '#111827',
               fontWeight: 700,
               fontSize: '1rem',
               fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -791,7 +791,7 @@ export default function TenantAdminLayout() {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
               bgcolor: '#FFFFFF',
-              borderRight: '1px solid rgba(0,0,0,0.14)',
+              borderRight: '1px solid rgba(0,0,0,0.10)',
             },
           }}
         >
@@ -807,7 +807,7 @@ export default function TenantAdminLayout() {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
               bgcolor: '#FFFFFF',
-              borderRight: '1px solid rgba(0,0,0,0.14)',
+              borderRight: '1px solid rgba(0,0,0,0.10)',
             },
           }}
         >
@@ -822,7 +822,7 @@ export default function TenantAdminLayout() {
           flexGrow: 1,
           mt: isMobile ? '56px' : 0,
           minHeight: '100vh',
-          bgcolor: '#EEF2F5',
+          bgcolor: '#F5F7FA',
           position: 'relative',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}

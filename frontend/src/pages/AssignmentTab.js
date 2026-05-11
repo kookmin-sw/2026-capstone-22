@@ -50,7 +50,7 @@ import { assignmentAPI, studentAPI } from '../services/api';
 
 // ── 표시용 상태 (5종, display_status 기준) ─────────────────────────────────────
 export const SUBMISSION_STATUS = {
-  assigned:  { label: '부여됨',   color: '#4B4450', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
+  assigned:  { label: '부여됨',   color: '#64748B', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
   submitted: { label: '제출완료', color: '#15803D', bg: '#DCFCE7',  border: '#86EFAC'  },
   late:      { label: '지각제출', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
   missing:   { label: '미제출',   color: '#DC2626', bg: '#FEE2E2',   border: '#FCA5A5'   },
@@ -77,12 +77,12 @@ const inputSx = {
     bgcolor: 'rgba(0,0,0,0.02)',
     borderRadius: '10px',
     fontSize: '0.8125rem',
-    color: '#1F1A1F',
-    '& fieldset': { borderColor: 'rgba(0,0,0,0.12)' },
+    color: '#111827',
+    '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
     '&:hover fieldset': { borderColor: 'rgba(167,139,250,0.3)' },
     '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
   },
-  '& .MuiInputLabel-root': { color: '#4B4450', fontSize: '0.8125rem' },
+  '& .MuiInputLabel-root': { color: '#64748B', fontSize: '0.8125rem' },
   '& .MuiInputLabel-root.Mui-focused': { color: '#a78bfa' },
 };
 
@@ -90,11 +90,11 @@ const selectSx = {
   bgcolor: 'rgba(0,0,0,0.02)',
   borderRadius: '10px',
   fontSize: '0.8125rem',
-  color: '#1F1A1F',
-  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.12)' },
+  color: '#111827',
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.08)' },
   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(167,139,250,0.3)' },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#a78bfa' },
-  '& .MuiSvgIcon-root': { color: '#4B4450' },
+  '& .MuiSvgIcon-root': { color: '#64748B' },
 };
 
 const menuProps = {
@@ -105,7 +105,7 @@ const menuProps = {
       borderRadius: '10px',
       '& .MuiMenuItem-root': {
         fontSize: '0.8125rem',
-        color: '#332C32',
+        color: '#334155',
         '&:hover': { bgcolor: 'rgba(167,139,250,0.08)', color: '#a78bfa' },
         '&.Mui-selected': { bgcolor: 'rgba(167,139,250,0.12)', color: '#a78bfa' },
       },
@@ -440,10 +440,10 @@ export default function AssignmentTab() {
                 {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
               </Box>
               <Box>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#4B4450', fontWeight: 600, mb: 0.5 }}>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#64748B', fontWeight: 600, mb: 0.5 }}>
                   {item.label}
                 </Typography>
-                <Typography sx={{ fontSize: '1.75rem', fontWeight: 900, color: '#1F1A1F', lineHeight: 1 }}>
+                <Typography sx={{ fontSize: '1.75rem', fontWeight: 900, color: '#111827', lineHeight: 1 }}>
                   {item.value}
                 </Typography>
               </Box>
@@ -454,12 +454,12 @@ export default function AssignmentTab() {
 
       {/* ── 2. 필터 섹션 ── */}
       <Box sx={{
-        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
         p: 2.5, mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center'
       }}>
         {/* 과제 목록 필터 */}
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel sx={{ color: '#4B4450', fontSize: '0.8125rem' }}>분반 선택</InputLabel>
+          <InputLabel sx={{ color: '#64748B', fontSize: '0.8125rem' }}>분반 선택</InputLabel>
           <Select
             value={assignmentFilters.class_id}
             onChange={e => setAssignmentFilters(p => ({ ...p, class_id: e.target.value }))}
@@ -489,15 +489,15 @@ export default function AssignmentTab() {
           size="small" placeholder="과제명 검색"
           value={assignmentSearch}
           onChange={e => setAssignmentSearch(e.target.value)}
-          InputProps={{ startAdornment: <SearchIcon sx={{ color: '#4B4450', fontSize: 18, mr: 1 }} /> }}
+          InputProps={{ startAdornment: <SearchIcon sx={{ color: '#64748B', fontSize: 18, mr: 1 }} /> }}
           sx={{ ...inputSx, minWidth: 180 }}
         />
 
-        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.12)' }} />
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(0,0,0,0.08)' }} />
 
         {/* 제출 roster 필터 */}
         <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel sx={{ color: '#4B4450', fontSize: '0.8125rem' }}>제출 상태</InputLabel>
+          <InputLabel sx={{ color: '#64748B', fontSize: '0.8125rem' }}>제출 상태</InputLabel>
           <Select
             value={submissionFilters.display_status}
             onChange={e => setSubmissionFilters(p => ({ ...p, display_status: e.target.value }))}
@@ -514,7 +514,7 @@ export default function AssignmentTab() {
           size="small" placeholder="학생명 검색"
           value={submissionFilters.student_name}
           onChange={e => setSubmissionFilters(p => ({ ...p, student_name: e.target.value }))}
-          InputProps={{ startAdornment: <SearchIcon sx={{ color: '#4B4450', fontSize: 18, mr: 1 }} /> }}
+          InputProps={{ startAdornment: <SearchIcon sx={{ color: '#64748B', fontSize: 18, mr: 1 }} /> }}
           sx={{ ...inputSx, minWidth: 180 }}
         />
 
@@ -538,29 +538,29 @@ export default function AssignmentTab() {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
         {/* 상단: 과제 목록 테이블 */}
-        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AssignmentIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
-              <Typography sx={{ color: '#1F1A1F', fontWeight: 800, fontSize: '0.9375rem' }}>
+              <Typography sx={{ color: '#111827', fontWeight: 800, fontSize: '0.9375rem' }}>
                 과제 목록 {
                   quickFilter === 'ongoing' ? '(진행중)' :
                   quickFilter === 'dueToday' ? '(오늘 마감)' : ''
                 }
               </Typography>
             </Box>
-            <Typography sx={{ color: '#4B4450', fontSize: '0.75rem' }}>전체 {filteredAssignments.length}개</Typography>
+            <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>전체 {filteredAssignments.length}개</Typography>
           </Box>
           <Box sx={{ maxHeight: 320, overflowY: 'auto' }}>
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>과제명</TableCell>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>대상 분반</TableCell>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>부여일</TableCell>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>마감일</TableCell>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="center">제출률</TableCell>
-                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="right">액션</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>과제명</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>대상 분반</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>부여일</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>마감일</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="center">제출률</TableCell>
+                  <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }} align="right">액션</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -572,7 +572,7 @@ export default function AssignmentTab() {
                     sx={{
                       cursor: 'pointer',
                       bgcolor: selectedAssignmentId === a.id ? 'rgba(167,139,250,0.06)' : 'transparent',
-                      '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#4B4450' },
+                      '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#64748B' },
                       '&:hover td': { bgcolor: selectedAssignmentId === a.id ? 'rgba(167,139,250,0.08)' : 'rgba(0,0,0,0.02)' }
                     }}
                   >
@@ -589,8 +589,8 @@ export default function AssignmentTab() {
                       </Box>
                     </TableCell>
                     <TableCell align="right" onClick={e => e.stopPropagation()}>
-                      <IconButton size="small" onClick={(e) => handleOpenEditAssignment(e, a)} sx={{ color: '#4B4450', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" onClick={(e) => handleDeleteClick(e, a)} sx={{ color: '#4B4450', '&:hover': { color: '#DC2626' } }}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={(e) => handleOpenEditAssignment(e, a)} sx={{ color: '#64748B', '&:hover': { color: '#a78bfa' } }}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={(e) => handleDeleteClick(e, a)} sx={{ color: '#64748B', '&:hover': { color: '#DC2626' } }}><DeleteIcon fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -600,16 +600,16 @@ export default function AssignmentTab() {
         </Box>
 
         {/* 하단: 학생별 제출 상태 */}
-        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+        <Box sx={{ bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
           <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <PeopleIcon sx={{ color: '#a78bfa', fontSize: 20 }} />
               <Box>
-                <Typography sx={{ color: '#1F1A1F', fontWeight: 800, fontSize: '0.9375rem' }}>
+                <Typography sx={{ color: '#111827', fontWeight: 800, fontSize: '0.9375rem' }}>
                   학생별 제출 상태 {selectedAssignment ? `[${selectedAssignment.title}]` : ''}
                 </Typography>
                 {selectedAssignment && (
-                  <Typography sx={{ color: '#4B4450', fontSize: '0.75rem' }}>
+                  <Typography sx={{ color: '#64748B', fontSize: '0.75rem' }}>
                     {selectedAssignment.class_name} · 마감일: {selectedAssignment.due_date}
                   </Typography>
                 )}
@@ -635,14 +635,14 @@ export default function AssignmentTab() {
             {!selectedAssignmentId ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
                 <InfoIcon sx={{ fontSize: 48, color: '#8A8190', mb: 2 }} />
-                <Typography sx={{ color: '#4B4450', fontSize: '0.9375rem', fontWeight: 500 }}>
+                <Typography sx={{ color: '#64748B', fontSize: '0.9375rem', fontWeight: 500 }}>
                   상단 목록에서 과제를 선택해주세요
                 </Typography>
               </Box>
             ) : currentSubmissions.length === 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
                 <SearchIcon sx={{ fontSize: 48, color: '#8A8190', mb: 2 }} />
-                <Typography sx={{ color: '#4B4450', fontSize: '0.9375rem', fontWeight: 500 }}>
+                <Typography sx={{ color: '#64748B', fontSize: '0.9375rem', fontWeight: 500 }}>
                   조건에 맞는 학생이 없습니다
                 </Typography>
               </Box>
@@ -650,23 +650,23 @@ export default function AssignmentTab() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>학생명</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>분반</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>표시 상태</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>저장 상태</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>제출 일시</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>점수</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>피드백</TableCell>
-                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#4B4450', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>메모</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>학생명</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>분반</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>표시 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>저장 상태</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>제출 일시</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>점수</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>피드백</TableCell>
+                    <TableCell sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 800, fontSize: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>메모</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {currentSubmissions.map((item) => (
-                    <TableRow key={item.student_id} sx={{ '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#4B4450', py: 1.5 } }}>
+                    <TableRow key={item.student_id} sx={{ '& td': { borderBottom: '1px solid rgba(0,0,0,0.06)', color: '#64748B', py: 1.5 } }}>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.8125rem', fontWeight: 800 }}>{item.student_name[0]}</Avatar>
-                          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#1F1A1F' }}>{item.student_name}</Typography>
+                          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>{item.student_name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>{item.class_name}</TableCell>
@@ -705,10 +705,10 @@ export default function AssignmentTab() {
                             '& .MuiOutlinedInput-root': {
                               bgcolor: 'rgba(0,0,0,0.02)',
                               fontSize: '0.75rem',
-                              color: '#1F1A1F',
+                              color: '#111827',
                               '& fieldset': { borderColor: 'rgba(0,0,0,0.06)' },
                             },
-                            '& .MuiOutlinedInput-input': { p: 0.5, colorScheme: 'light', WebkitTextFillColor: '#1F1A1F' }
+                            '& .MuiOutlinedInput-input': { p: 0.5, colorScheme: 'light', WebkitTextFillColor: '#111827' }
                           }}
                         />
                       </TableCell>
@@ -741,7 +741,7 @@ export default function AssignmentTab() {
                             '& .MuiOutlinedInput-root': {
                               bgcolor: 'rgba(0,0,0,0.02)',
                               fontSize: '0.75rem',
-                              color: '#1F1A1F',
+                              color: '#111827',
                               '& fieldset': { borderColor: 'rgba(0,0,0,0.06)' },
                             },
                             '& .MuiOutlinedInput-input': {
@@ -761,7 +761,7 @@ export default function AssignmentTab() {
                             '& .MuiOutlinedInput-root': {
                               bgcolor: 'rgba(0,0,0,0.02)',
                               fontSize: '0.75rem',
-                              color: '#1F1A1F',
+                              color: '#111827',
                               '& fieldset': { borderColor: 'rgba(0,0,0,0.06)' },
                             },
                             '& .MuiOutlinedInput-input': {
@@ -786,9 +786,9 @@ export default function AssignmentTab() {
         onClose={() => setAssignmentDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '20px' } }}
       >
-        <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 900, pb: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <DialogTitle sx={{ color: '#111827', fontWeight: 900, pb: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           {editingAssignment ? '과제 정보 수정' : '새 과제 등록'}
         </DialogTitle>
         <DialogContent
@@ -809,7 +809,7 @@ export default function AssignmentTab() {
               sx={inputSx}
             />
             <FormControl size="small" fullWidth>
-              <InputLabel sx={{ color: '#4B4450' }}>대상 분반 *</InputLabel>
+              <InputLabel sx={{ color: '#64748B' }}>대상 분반 *</InputLabel>
               <Select
                 value={assignmentForm.class_id}
                 onChange={e => setAssignmentForm(p => ({ ...p, class_id: e.target.value }))}
@@ -842,7 +842,7 @@ export default function AssignmentTab() {
           />
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button onClick={() => setAssignmentDialogOpen(false)} sx={{ color: '#4B4450', fontWeight: 700, textTransform: 'none' }}>취소</Button>
+          <Button onClick={() => setAssignmentDialogOpen(false)} sx={{ color: '#64748B', fontWeight: 700, textTransform: 'none' }}>취소</Button>
           <Button
             variant="contained" onClick={handleSaveAssignment}
             sx={{
@@ -859,16 +859,16 @@ export default function AssignmentTab() {
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
-        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '16px' } }}
+        PaperProps={{ sx: { bgcolor: '#FFFFFF', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '16px' } }}
       >
-        <DialogTitle sx={{ color: '#1F1A1F', fontWeight: 800 }}>과제 삭제</DialogTitle>
+        <DialogTitle sx={{ color: '#111827', fontWeight: 800 }}>과제 삭제</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: '#4B4450', fontSize: '0.875rem' }}>
+          <Typography sx={{ color: '#64748B', fontSize: '0.875rem' }}>
             정말로 이 과제를 삭제하시겠습니까? 관련 제출 데이터도 함께 삭제됩니다.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#4B4450', textTransform: 'none' }}>취소</Button>
+          <Button onClick={() => setDeleteConfirmOpen(false)} sx={{ color: '#64748B', textTransform: 'none' }}>취소</Button>
           <Button
             onClick={handleConfirmDelete}
             sx={{ bgcolor: '#FEE2E2', color: '#DC2626', fontWeight: 700, px: 2, '&:hover': { bgcolor: 'rgba(239,68,68,0.2)' } }}
