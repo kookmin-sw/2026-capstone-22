@@ -623,7 +623,7 @@ function ChatbotSettingsPanel() {
                   background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)',
                 },
                 '&.Mui-disabled': {
-                  background: 'rgba(0,0,0,0.06)',
+                  background: 'rgba(0,0,0,0.12)',
                   color: '#8A8190',
                 },
               }}
@@ -1093,7 +1093,7 @@ function HITLPanel() {
       {items.length === 0 ? (
         <Paper sx={{
           p: 8, textAlign: 'center', bgcolor: '#FFFFFF', borderRadius: '20px',
-          border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+          border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
         }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'rgba(0,0,0,0.12)', mb: 2 }} />
           <Typography sx={{ color: '#334155', fontSize: '1rem', fontWeight: 500 }}>
@@ -1580,7 +1580,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
               </Box>
             )}
             {classes.map((cls, idx) => (
-              <Box key={cls.id} sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.6, borderBottom: idx < classes.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+              <Box key={cls.id} sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 60px 80px 90px', px: 2.5, py: 1.6, borderBottom: idx < classes.length - 1 ? '1px solid rgba(0,0,0,0.12)' : 'none', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                 <Box>
                   <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{cls.name}</Typography>
                   <Typography sx={{ fontSize: '0.7rem', color: '#64748B', fontFamily: 'JetBrains Mono, monospace' }}>{cls.code}</Typography>
@@ -1674,12 +1674,12 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                         ))}
                       </Box>
                       {clsStudents.length === 0 && (
-                        <Box sx={{ py: 4, textAlign: 'center', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                        <Box sx={{ py: 4, textAlign: 'center', borderTop: '1px solid rgba(0,0,0,0.12)' }}>
                           <Typography sx={{ color: '#64748B', fontSize: '0.8125rem' }}>조건에 맞는 학생이 없습니다.</Typography>
                         </Box>
                       )}
                       {clsStudents.map((stu) => (
-                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.06)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.12)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(167,139,250,0.15)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
                             <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{stu.name}</Typography>
@@ -1731,7 +1731,7 @@ function StudentManagementPanel({ initialSubTab = 0 }) {
                         ))}
                       </Box>
                       {unassigned.map(stu => (
-                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.06)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <Box key={stu.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 70px 90px 80px', px: 2.5, py: 1.6, borderTop: '1px solid rgba(0,0,0,0.12)', alignItems: 'center', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar sx={{ width: 26, height: 26, bgcolor: 'rgba(113,113,122,0.15)', color: '#64748B', fontSize: '0.65rem', fontWeight: 700 }}>{stu.name[0]}</Avatar>
                             <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{stu.name}</Typography>
@@ -3094,7 +3094,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         {/* Stats row */}
                         <Box sx={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          pt: 1, borderTop: '1px solid rgba(0,0,0,0.06)',
+                          pt: 1, borderTop: '1px solid rgba(0,0,0,0.12)',
                         }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -3163,7 +3163,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
                         {/* Action buttons - always visible */}
                         <Box sx={{
-                          display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.06)',
+                          display: 'flex', gap: 1, pt: 1.5, borderTop: '1px solid rgba(0,0,0,0.12)',
                         }}>
                           <Box
                             onClick={(e) => { e.stopPropagation(); setSelectedCorpusForPermission(corpus); setPermissionDialogOpen(true); }}
@@ -3411,7 +3411,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                   {/* Header Row */}
                   <Box sx={{
                     display: 'grid', gridTemplateColumns: '40px 1fr 90px 100px 32px',
-                    px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)',
+                    px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.12)',
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Checkbox size="small"
@@ -3693,7 +3693,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
             {/* Grid Header */}
             <Box sx={{
               display: 'grid', gridTemplateColumns: '1fr 160px 40px 180px 60px', gap: 1,
-              px: 3, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)',
+              px: 3, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.12)',
               bgcolor: 'rgba(0,0,0,0.01)',
             }}>
               <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748B', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>USER</Typography>
@@ -3877,7 +3877,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     {/* Header */}
                     <Box sx={{
                       display: 'grid', gridTemplateColumns: '40px 1fr 1fr 80px 80px',
-                      gap: 2, px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)',
+                      gap: 2, px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.12)',
                     }}>
                       <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748B' }}></Typography>
                       <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748B' }}>Title</Typography>
@@ -3978,7 +3978,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     <Box sx={{
                       maxWidth: '75%', px: 2.5, py: 2, borderRadius: '14px',
                       bgcolor: msg.role === 'user' ? 'rgba(167,139,250,0.1)' : 'rgba(0,0,0,0.03)',
-                      border: msg.role === 'user' ? '1px solid rgba(167,139,250,0.2)' : '1px solid rgba(0,0,0,0.06)',
+                      border: msg.role === 'user' ? '1px solid rgba(167,139,250,0.2)' : '1px solid rgba(0,0,0,0.12)',
                     }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                         <Avatar sx={{
@@ -4155,7 +4155,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
 
                 {/* Pagination */}
                 {chatSessionsTotal > 20 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid rgba(0,0,0,0.12)' }}>
                     <Pagination
                       count={Math.ceil(chatSessionsTotal / 20)}
                       page={chatSessionsPage}
@@ -4343,7 +4343,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
           {selectedCorpusForPermission && groups.length > 0 ? (
             <Box sx={{ bgcolor: '#F8FAFC', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.10)' }}>
               {/* Grid Header */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 200px', px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 200px', px: 2.5, py: 1.2, borderBottom: '1px solid rgba(0,0,0,0.12)' }}>
                 <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748B' }}>Group</Typography>
                 <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748B' }}>Access</Typography>
               </Box>
