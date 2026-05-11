@@ -89,8 +89,8 @@ function SortableTemplateRow({ template, index, isLast, getTemplateIcon, openTem
         alignItems: 'center',
         transition: 'background 0.15s',
         bgcolor: isDragging ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
-        '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' },
-        borderBottom: !isLast ? '1px solid rgba(255,255,255,0.03)' : 'none',
+        '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' },
+        borderBottom: !isLast ? '1px solid rgba(0,0,0,0.05)' : 'none',
       }}
     >
       {/* 드래그 핸들 */}
@@ -105,7 +105,7 @@ function SortableTemplateRow({ template, index, isLast, getTemplateIcon, openTem
           '&:active': { cursor: 'grabbing' },
         }}
       >
-        <DragIndicator sx={{ fontSize: 18, color: 'rgba(255,255,255,0.3)' }} />
+        <DragIndicator sx={{ fontSize: 18, color: '#94A3B8' }} />
       </Box>
 
       {/* 제목 + 아이콘 */}
@@ -624,7 +624,7 @@ function ChatbotSettingsPanel() {
                 },
                 '&.Mui-disabled': {
                   background: 'rgba(255,255,255,0.06)',
-                  color: 'rgba(255,255,255,0.3)',
+                  color: '#94A3B8',
                 },
               }}
             >
@@ -3290,7 +3290,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                         color: 'white', fontWeight: 700, fontSize: '0.75rem',
                         px: 2.5, borderRadius: '10px', textTransform: 'none',
                         '&:hover': { background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)' },
-                        '&:disabled': { background: 'rgba(167,139,250,0.2)', color: 'rgba(255,255,255,0.3)' },
+                        '&:disabled': { background: 'rgba(167,139,250,0.2)', color: '#94A3B8' },
                       }}
                     >
                       {uploading ? `업로드 중 (${uploadProgress.current}/${uploadProgress.total})` : '업로드'}
@@ -4260,7 +4260,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', boxShadow: '0 0 20px rgba(167,139,250,0.25)',
               color: 'white', fontWeight: 700, px: 3, borderRadius: '10px', textTransform: 'none',
               '&:hover': { background: 'linear-gradient(135deg, #9370f0 0%, #6d28d9 100%)' },
-              '&.Mui-disabled': { background: 'rgba(167,139,250,0.2)', color: 'rgba(255,255,255,0.3)' },
+              '&.Mui-disabled': { background: 'rgba(167,139,250,0.2)', color: '#94A3B8' },
             }}
           >{creatingCorpus ? '생성 중...' : '생성'}</Button>
         </DialogActions>
@@ -4454,7 +4454,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
               background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
               color: 'white', fontWeight: 700, px: 3, borderRadius: '10px', textTransform: 'none',
               '&:hover': { background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)' },
-              '&.Mui-disabled': { background: 'rgba(239,68,68,0.2)', color: 'rgba(255,255,255,0.3)' },
+              '&.Mui-disabled': { background: 'rgba(239,68,68,0.2)', color: '#94A3B8' },
             }}
           >{deletingCorpus ? '삭제 중...' : '삭제'}</Button>
         </DialogActions>
