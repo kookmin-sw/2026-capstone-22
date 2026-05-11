@@ -3746,7 +3746,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                     position: 'relative', display: 'inline-flex', alignItems: 'center',
                     borderRadius: '8px', height: 32, minWidth: 100,
                     border: user.is_admin ? '1px solid rgba(167,139,250,0.2)' : '1px solid rgba(0,0,0,0.08)',
-                    backgroundColor: user.is_admin ? 'rgba(167,139,250,0.06)' : '#0C0C0D',
+                    backgroundColor: user.is_admin ? 'rgba(167,139,250,0.06)' : '#F8FAFC',
                     overflow: 'hidden',
                   }}>
                     <Security sx={{
@@ -4381,7 +4381,7 @@ export default function AdminPage({ section = 'stores', initialStudentSubTab = 0
                           paddingLeft: '12px', paddingRight: '30px', paddingTop: '6px', paddingBottom: '6px',
                           fontSize: '0.7rem', fontWeight: 600, borderRadius: '8px',
                           border: hasAccess ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(0,0,0,0.08)',
-                          backgroundColor: hasAccess ? 'rgba(34,197,94,0.08)' : '#0C0C0D',
+                          backgroundColor: hasAccess ? 'rgba(34,197,94,0.08)' : '#F8FAFC',
                           color: hasAccess ? '#15803d' : '#52525B', cursor: 'pointer', outline: 'none',
                         }}
                       >
