@@ -1,4 +1,6 @@
-# 🎓 캡스톤 22조 결과물 소개: ReadyTalk for Academy
+# 🎓 산학 캡스톤 22조 : ReadyTalk for Academy
+
+**※ 본 프로젝트는 산학협력으로 진행되어 기업과의 협약에 따라 현재 레포지토리 및 소스 코드는 외부에 공개하기 어려운 점 양해 부탁드립니다.**
 
 ## 1. 프로젝트 소개
 **ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 에이전트 시스템입니다. 
@@ -51,9 +53,9 @@
 
 ---
 
-# ReadyTalk KMU
+# ReadyTalk for Academy
 
-Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼 (국민대 해커톤)
+Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼
 
 ## Architecture Overview
 
@@ -117,27 +119,27 @@ graph TB
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 · MUI · React Router v6 · Axios |
-| Backend | FastAPI · SQLAlchemy · Alembic · Gunicorn + Uvicorn |
-| Database | PostgreSQL 15 |
+| Layer     | Technology                                           |
+| --------- | ---------------------------------------------------- |
+| Frontend  | React 18 · MUI · React Router v6 · Axios             |
+| Backend   | FastAPI · SQLAlchemy · Alembic · Gunicorn + Uvicorn  |
+| Database  | PostgreSQL 15                                        |
 | AI/Search | Vertex AI RAG Engine · Vertex AI Search · Gemini API |
-| Vector DB | Weaviate (RAG Engine 백엔드) |
-| Storage | Google Cloud Storage |
-| Calendar | Google Calendar API (OAuth 2.0) |
-| Infra | Docker Compose · Nginx · GCP Compute Engine |
-| Auth | JWT (python-jose) |
-| Messaging | KakaoTalk Open Builder |
+| Vector DB | Weaviate (RAG Engine 백엔드)                         |
+| Storage   | Google Cloud Storage                                 |
+| Calendar  | Google Calendar API (OAuth 2.0)                      |
+| Infra     | Docker Compose · Nginx · GCP Compute Engine          |
+| Auth      | JWT (python-jose)                                    |
+| Messaging | KakaoTalk Open Builder                               |
 
 ## 검색 엔진 이중 지원
 
 테넌트별로 검색 엔진을 선택할 수 있습니다:
 
-| 엔진 | 서비스 | 리소스 구조 | 용도 |
-|------|--------|------------|------|
-| **RAG Engine** (기본) | `rag_service.py` | ragCorpora → ragFiles | Weaviate 하이브리드 검색 |
-| **Vertex AI Search** | `search_service.py` | dataStores → engines | Google 관리형 검색 |
+| 엔진                  | 서비스              | 리소스 구조           | 용도                     |
+| --------------------- | ------------------- | --------------------- | ------------------------ |
+| **RAG Engine** (기본) | `rag_service.py`    | ragCorpora → ragFiles | Weaviate 하이브리드 검색 |
+| **Vertex AI Search**  | `search_service.py` | dataStores → engines  | Google 관리형 검색       |
 
 ```python
 # tenant.search_backend 필드로 선택
@@ -264,17 +266,17 @@ DB 저장 (messages 테이블) → 응답 반환
 
 ### Platform Settings
 
-| 키 | 설명 |
-|----|------|
-| `VERTEX_AI_PROJECT_ID` | GCP 프로젝트 ID |
-| `VERTEX_AI_LOCATION` | Vertex AI 리전 |
-| `GCP_CREDENTIALS_PATH` | 서비스 계정 JSON 경로 |
-| `GCS_BUCKET_NAME` | GCS 버킷명 |
-| `GEMINI_API_KEY` | Gemini API 키 |
-| `DEFAULT_MODEL` | 기본 AI 모델 |
-| `WEAVIATE_HTTP_ENDPOINT` | Weaviate 엔드포인트 |
-| `WEAVIATE_COLLECTION_NAME` | Weaviate 컬렉션명 |
-| `WEAVIATE_API_KEY_SECRET` | Secret Manager 시크릿 경로 |
+| 키                         | 설명                       |
+| -------------------------- | -------------------------- |
+| `VERTEX_AI_PROJECT_ID`     | GCP 프로젝트 ID            |
+| `VERTEX_AI_LOCATION`       | Vertex AI 리전             |
+| `GCP_CREDENTIALS_PATH`     | 서비스 계정 JSON 경로      |
+| `GCS_BUCKET_NAME`          | GCS 버킷명                 |
+| `GEMINI_API_KEY`           | Gemini API 키              |
+| `DEFAULT_MODEL`            | 기본 AI 모델               |
+| `WEAVIATE_HTTP_ENDPOINT`   | Weaviate 엔드포인트        |
+| `WEAVIATE_COLLECTION_NAME` | Weaviate 컬렉션명          |
+| `WEAVIATE_API_KEY_SECRET`  | Secret Manager 시크릿 경로 |
 
 ### Tenant Lifecycle
 
@@ -391,11 +393,11 @@ docker-compose up -d --build
 
 ### 4. 접속
 
-| URL | 설명 |
-|-----|------|
-| http://localhost:8888 | 메인 |
-| http://localhost:8888/superadmin | 슈퍼어드민 |
-| http://localhost:8888/{slug}/chat | 테넌트별 채팅 |
+| URL                                | 설명            |
+| ---------------------------------- | --------------- |
+| http://localhost:8888              | 메인            |
+| http://localhost:8888/superadmin   | 슈퍼어드민      |
+| http://localhost:8888/{slug}/chat  | 테넌트별 채팅   |
 | http://localhost:8888/{slug}/admin | 테넌트별 어드민 |
 
 ### 5. 초기 설정 순서
@@ -406,30 +408,3 @@ docker-compose up -d --build
 4. 테넌트 생성 (검색 엔진 선택: RAG Engine 또는 Vertex AI Search)
 5. 테넌트 어드민 → 문서저장소 생성 → 파일 업로드
 
-## Deployment
-
-### 개발계 (academy.ready.talk)
-
-GitHub Actions (`deploy.yml`)로 main 브랜치 push 시 자동 배포:
-- Self-hosted runner: `readytalk-kmu-dev`
-- VM: `34.64.204.33` (GCP asia-northeast3-a)
-
-### DNS
-
-| 도메인 | IP | 용도 |
-|--------|-----|------|
-| `academy.ready.talk` | 34.64.204.33 | 메인 앱 |
-| `weaviate-kmu.ready.talk` | 34.64.204.33 | Weaviate 프록시 |
-
-## Nginx Rate Limiting
-
-| 경로 | 제한 | Timeout |
-|------|------|---------|
-| `/api/chat` | 5 req/s, burst 10 | 120s |
-| `/api/corpus` | 10 req/s, burst 20 | 300s |
-| `/api/*` (기타) | 10 req/s, burst 20 | 60s |
-| `/api/kakao` | 제한 없음 | 60s |
-
-## License
-
-MIT License
