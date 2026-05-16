@@ -10,7 +10,7 @@
 
 
 ## 1. 서비스 소개
-**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 시스템입니다.  
+**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 챗봇입니다.  
 비인증 사용자에게는 학원 매뉴얼 기반 상담과 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 과제 현황 등 개인화된 서비스를 제공합니다. 또한, 인증된 사용자는 AI 분류된 유형별 문제를 제공받을 수 있습니다.  
 학원 관리자에게는 직관적인 인터페이스를 통한 학생 관리와 AI를 기출 문제 유형 자동 분류를 통해 문제 분석에 소요되는 업무 시간을 단축해 드립니다.
 
@@ -60,10 +60,6 @@
 </table>
 
 ---
-
-# ReadyTalk for Academy
-
-Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼
 
 ## Architecture Overview
 
@@ -297,33 +293,56 @@ DB 저장 (messages 테이블) → 응답 반환
 ## Project Structure
 
 ```
-readytalk-kmu/
+2026-capstone-22/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── config.py
 │   │   ├── database.py
+│   │   ├── llm_tools/
+│   │   │   ├── assignment.py          # 과제 관련 LLM 도구
+│   │   │   ├── attendance.py          # 출결 관련 LLM 도구
+│   │   │   ├── exam.py                # 시험 관련 LLM 도구
+│   │   │   ├── question_bank.py       # 문제 은행 LLM 도구
+│   │   │   └── student.py             # 학생 관련 LLM 도구
 │   │   ├── models/
 │   │   │   ├── tenant.py              # Tenant, GcpConfig, KakaoConfig, CalendarConfig
 │   │   │   ├── user.py
 │   │   │   ├── group.py
+│   │   │   ├── student.py             # 학생 정보
+│   │   │   ├── attendance.py          # 출결
+│   │   │   ├── assignment.py          # 과제
+│   │   │   ├── exam.py                # 시험
+│   │   │   ├── exam_paper.py          # 시험지
 │   │   │   ├── chat.py
 │   │   │   ├── corpus.py
 │   │   │   ├── chatbot_settings.py
 │   │   │   ├── prompt_template.py
 │   │   │   ├── platform_setting.py
+│   │   │   ├── hitl_request.py        # Human-in-the-loop 요청
+│   │   │   ├── student_access_link.py
+│   │   │   ├── usage.py
+│   │   │   ├── verification_challenge.py
 │   │   │   └── store_permission.py
 │   │   ├── routers/
-│   │   │   ├── superadmin.py          # 테넌트 CRUD, 플랫폼 설정
+│   │   │   ├── superadmin.py          # 플랫폼 관리
 │   │   │   ├── auth.py                # 로그인, 회원가입, JWT
 │   │   │   ├── chat.py                # 스마트 쿼리 (Function Calling)
-│   │   │   ├── corpus.py              # 문서저장소 CRUD (검색엔진 분기)
+│   │   │   ├── corpus.py              # 문서저장소 CRUD
 │   │   │   ├── calendar.py            # Google Calendar OAuth
 │   │   │   ├── kakao.py               # 카카오톡 webhook
 │   │   │   ├── chatbot_settings.py    # 챗봇 설정
 │   │   │   ├── prompt_templates.py    # 프롬프트 템플릿
-│   │   │   ├── models.py             # Gemini 모델 목록
-│   │   │   └── admin.py              # 테넌트 어드민
+│   │   │   ├── models.py              # Gemini 모델 목록
+│   │   │   ├── admin.py               # 테넌트 어드민
+│   │   │   ├── students.py            # 학생 관리
+│   │   │   ├── attendance.py          # 출결 관리
+│   │   │   ├── assignments.py         # 과제 관리
+│   │   │   ├── exams.py               # 시험 관리
+│   │   │   ├── question_bank.py       # 문제 은행
+│   │   │   ├── hitl.py                # Human-in-the-loop
+│   │   │   ├── tenants.py
+│   │   │   └── verification.py        # 학생 본인 인증
 │   │   ├── services/
 │   │   │   ├── rag_service.py         # Vertex AI RAG + Weaviate
 │   │   │   ├── search_service.py      # Vertex AI Search
@@ -331,6 +350,17 @@ readytalk-kmu/
 │   │   │   ├── gemini_client.py       # Gemini API 클라이언트
 │   │   │   ├── gcs_service.py         # GCS 파일 관리
 │   │   │   ├── calendar_service.py    # Google Calendar 연동
+│   │   │   ├── ocr_service.py         # OCR (시험지 처리)
+│   │   │   ├── question_bank_service.py
+│   │   │   ├── question_preview_service.py
+│   │   │   ├── question_split_service.py
+│   │   │   ├── text_cleaning_service.py
+│   │   │   ├── text_extraction_service.py
+│   │   │   ├── attendance_queries.py
+│   │   │   ├── assignment_queries.py
+│   │   │   ├── exam_queries.py
+│   │   │   ├── policy_service.py
+│   │   │   ├── verification_service.py
 │   │   │   ├── tenant_provisioning.py # 테넌트 프로비저닝
 │   │   │   └── usage_service.py       # 사용량 추적
 │   │   ├── schemas/
@@ -338,10 +368,18 @@ readytalk-kmu/
 │   │       ├── dependencies.py        # 인증 미들웨어
 │   │       ├── security.py            # JWT, 비밀번호 해싱
 │   │       ├── init_data.py           # 초기 데이터 (superadmin)
-│   │       └── store_access.py        # 문서저장소 접근 권한
+│   │       ├── store_access.py        # 문서저장소 접근 권한
+│   │       ├── chat_history.py
+│   │       ├── email.py
+│   │       ├── external_auth.py
+│   │       ├── pii_filter.py
+│   │       ├── pricing.py
+│   │       └── retry.py
 │   ├── credentials/                   # GCP 서비스 계정 JSON (gitignore)
 │   ├── migrations/                    # Alembic DB 마이그레이션
-│   └── Dockerfile
+│   ├── alembic.ini
+│   ├── Dockerfile
+│   └── Dockerfile.batch
 ├── frontend/
 │   ├── src/
 │   │   ├── App.js                     # 라우팅 (slug 기반 테넌트 분기)
@@ -349,17 +387,32 @@ readytalk-kmu/
 │   │   │   ├── ChatPage.js            # 채팅 UI
 │   │   │   ├── AdminPage.js           # 테넌트 어드민
 │   │   │   ├── CalendarPage.js        # 캘린더 UI
+│   │   │   ├── AttendanceTab.js       # 출결 탭
+│   │   │   ├── AssignmentTab.js       # 과제 탭
+│   │   │   ├── ExamTab.js             # 시험 탭
+│   │   │   ├── ExamAnalysisPage.js    # 시험 분석 (문제 은행)
+│   │   │   ├── TenantAdminLayout.js
+│   │   │   ├── VerifyPage.js          # 학생 본인 인증
 │   │   │   └── superadmin/            # 슈퍼어드민 페이지들
+│   │   ├── components/
+│   │   │   ├── Auth/                  # 로그인, 회원가입
+│   │   │   └── superadmin/
 │   │   ├── services/api.js            # Axios API 클라이언트
 │   │   └── context/
 │   │       ├── AuthContext.js
-│   │       └── TenantContext.js
-│   └── Dockerfile
+│   │       ├── TenantContext.js
+│   │       └── UploadContext.js
+│   ├── public/
+│   ├── Dockerfile
+│   └── Dockerfile.prod
 ├── nginx/
 │   └── backend.conf                   # Nginx 설정
+├── imgs/                              # README 이미지
+├── assets/                            # GitHub Pages 이미지
 ├── docker-compose.yml                 # 로컬 개발용
 ├── docker-compose.dev.yml             # 개발계 (GCP VM)
 ├── docker-compose.prod.yml            # 운영계
+├── chatbot.service                    # systemd 서비스 파일
 ├── .env                               # 로컬 환경변수 (gitignore)
 └── .env.production                    # 운영 환경변수 (gitignore)
 ```
