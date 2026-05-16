@@ -9,15 +9,17 @@
 
 
 
-## 1. 서비스 소개
+## 서비스 소개
 **ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 챗봇입니다.  
 비인증 사용자에게는 학원 매뉴얼 기반 상담과 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 과제 현황 등 개인화된 서비스를 제공합니다. 또한, 인증된 사용자는 AI 분류된 유형별 문제를 제공받을 수 있습니다.  
 학원 관리자에게는 직관적인 인터페이스를 통한 학생 관리와 AI를 기출 문제 유형 자동 분류를 통해 문제 분석에 소요되는 업무 시간을 단축해 드립니다.
 
-## 2. 소개 영상
+## 소개 영상
 [▶ ReadyTalk KMU 소개 영상 보기](https://drive.google.com/file/d/18CfrjWVct1oWHmwp9qi_mw5pkovg0pPO/view?usp=sharing)
 
-## 3. 팀 소개
+  
+
+## 팀 소개  
 
 <table>
   <tr>
@@ -127,6 +129,12 @@ graph TB
 
 ![AI 문제 은행 구조](imgs/AI-exam-sort-arch.png)
 
+## 사용자 시나리오
+
+![사용자 시나리오 - 잠개고객, 학생/학부모](imgs/user-flow1.png)
+
+![사용자 시나리오 - 관리자](imgs/user-flow-admin.png)
+
 ## Tech Stack
 
 | Layer     | Technology                                           |
@@ -211,10 +219,8 @@ Superadmin (tenant_id=NULL, is_superadmin=True)
 │  플랫폼 전체 관리: 테넌트 CRUD, GCP 설정, 기본 모델 설정
 │
 ├── Tenant Admin (is_admin=True)
-│   │  테넌트 내 관리: 문서저장소, 문서 업로드/삭제, 사용자 관리
+│   │  테넌트 내 관리: 문서저장소, 문서 업로드/삭제, 학생 관리, 사용자 관리, 문제 유형 분류
 │   │
-│   ├── Regular User (그룹: 관리자/일반)
-│   │     채팅, 파일 업로드, 세션 관리
 │   │
 │   └── Guest User (auth_provider=guest)
 │         채팅만 가능, 파일 업로드 불가
@@ -465,4 +471,4 @@ docker-compose up -d --build
 
 ---
 
-<sub>📄 [최종발표 PPT](https://drive.google.com/file/d/10IoydXdpVATsOhA0DWK2qrbZhtkCjW5e/view?usp=drive_link)</sub>
+📄 [최종발표 PPT](https://drive.google.com/file/d/10IoydXdpVATsOhA0DWK2qrbZhtkCjW5e/view?usp=drive_link)
