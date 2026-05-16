@@ -1,6 +1,5 @@
 <p align="center">
-    <img src="./assets/main-banner.PNG" width="80%" alt="ReadyTalk for Academy 배너"/>
-  </a>
+  <img src="./assets/main-banner.PNG" width="80%" alt="ReadyTalk for Academy 배너"/>
 </p>
 
 <p align="center">
@@ -118,7 +117,7 @@
 </table>
 
 ---
-s
+
 # 4. 기술 스택
 <p align="center">
   <img src="./assets/stack.png" alt="ReadyTalk 기술 스택"/>
