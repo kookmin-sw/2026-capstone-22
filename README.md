@@ -7,50 +7,51 @@
 
 
 ## 1. 프로젝트 소개
-**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 에이전트 시스템입니다. 
-비인증 사용자에게는 상담 매뉴얼 기반 안내와 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 리포트 등 개인화된 서비스를 제공합니다. 또한 기출 문제 유형 분류 및 유사 문제 생성을 통해 학습을 지원하며, 관리자는 상담 내용을 저장·요약하여 운영 효율을 높일 수 있습니다.
+**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 시스템입니다. 
+비인증 사용자에게는 학원 매뉴얼 기반 상담과 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 과제 현황 등 개인화된 서비스를 제공합니다. 또한, 인증된 사용자는 AI 분류된 유형별 문제를 제공받을 수 있습니다.
+학원 관리자에게는 직관적인 인터페이스를 통한 학생 관리와 AI를 기출 문제 유형 자동 분류를 통해 문제 분석에 소요되는 업무 시간을 단축해 드립니다.
 
 ## 2. 소개 영상
-<!-- 프로젝트를 소개하는 영상을 여기에 추가하세요 (YouTube 링크 등) -->
-[![ReadyTalk KMU 소개 영상]]
+[▶ ReadyTalk KMU 소개 영상 보기](https://drive.google.com/file/d/18CfrjWVct1oWHmwp9qi_mw5pkovg0pPO/view?usp=sharing)
 
 ## 3. 팀 소개
+
 <table>
   <tr>
-    <td align="center">
+    <td align="center" width="160">
       <a href="https://github.com/yangjiwoong1">
-        <img src="https://github.com/yangjiwoong1.png" width="100px;" alt=""/><br />
-        <sub><b>양지웅</b></sub>
+        <img src="https://github.com/yangjiwoong1.png" width="100" height="100" alt="양지웅" /><br />
+        <b>양지웅</b>
       </a><br />
-      <sub>팀장, 백엔드</sub>
+      <sub>팀장 · Backend</sub>
     </td>
-    <td align="center">
+    <td align="center" width="160">
       <a href="https://github.com/ume24">
-        <img src="https://github.com/ume24.png" width="100px;" alt=""/><br />
-        <sub><b>정유미</b></sub>
+        <img src="https://github.com/ume24.png" width="100" height="100" alt="정유미" /><br />
+        <b>정유미</b>
       </a><br />
-      <sub>AI Agent 개발<br>프론트엔드</sub>
+      <sub>AI Agent · Frontend</sub>
     </td>
-    <td align="center">
+    <td align="center" width="160">
       <a href="https://github.com/yunseo1011">
-        <img src="https://github.com/yunseo1011.png" width="100px;" alt=""/><br />
-        <sub><b>이윤서</b></sub>
+        <img src="https://github.com/yunseo1011.png" width="100" height="100" alt="이윤서" /><br />
+        <b>이윤서</b>
       </a><br />
-      <sub>AI Agent 개발</sub>
+      <sub>AI Agent · Frontend</sub>
     </td>
-    <td align="center">
+    <td align="center" width="160">
       <a href="https://github.com/seungil0909">
-        <img src="https://github.com/seungil0909.png" width="100px;" alt=""/><br />
-        <sub><b>양승일</b></sub>
+        <img src="https://github.com/seungil0909.png" width="100" height="100" alt="양승일" /><br />
+        <b>양승일</b>
       </a><br />
-      <sub>문서 정리<br>개발 보조</sub>
+      <sub>문서 정리 · 데이터셋</sub>
     </td>
-    <td align="center">
+    <td align="center" width="160">
       <a href="https://github.com/hyeforest7">
-        <img src="https://github.com/hyeforest7.png" width="100px;" alt=""/><br />
-        <sub><b>유혜성</b></sub>
+        <img src="https://github.com/hyeforest7.png" width="100" height="100" alt="유혜성" /><br />
+        <b>유혜성</b>
       </a><br />
-      <sub>AI Agent QA</sub>
+      <sub>QA · Frontend 보조</sub>
     </td>
   </tr>
 </table>
@@ -62,6 +63,8 @@
 Vertex AI 기반 멀티테넌트 AI 챗봇 플랫폼
 
 ## Architecture Overview
+
+![System Architecture](imgs/system_architecture.jpg)
 
 ```mermaid
 graph TB
@@ -125,16 +128,15 @@ graph TB
 
 | Layer     | Technology                                           |
 | --------- | ---------------------------------------------------- |
-| Frontend  | React 18 · MUI · React Router v6 · Axios             |
-| Backend   | FastAPI · SQLAlchemy · Alembic · Gunicorn + Uvicorn  |
-| Database  | PostgreSQL 15                                        |
-| AI/Search | Vertex AI RAG Engine · Vertex AI Search · Gemini API |
+| Frontend  | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![MaterialUI](https://img.shields.io/badge/Material%20UI-%23FFFFFF.svg?style=for-the-badge&logo=MUI&logoColor=#007FFF) ![React Router](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white) Axios             |
+| Backend   | ![FastAPI](https://img.shields.io/badge/FastAPI-005571.svg?style=for-the-badge&logo=fastapi) ![SQLAlchemy](https://img.shields.io/badge/sqlalchemy-%23D71F00.svg?style=for-the-badge&logo=sqlalchemy&logoColor=white) Alembic ![Gunicorn](https://img.shields.io/badge/gunicorn-%298729.svg?style=for-the-badge&logo=gunicorn&logoColor=white) + Uvicorn  |
+| Database  | ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)15                                        |
+| AI/Search | Vertex AI RAG Engine · Vertex AI Search · ![Google Gemini](https://img.shields.io/badge/google%20gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white) |
 | Vector DB | Weaviate (RAG Engine 백엔드)                         |
-| Storage   | Google Cloud Storage                                 |
-| Calendar  | Google Calendar API (OAuth 2.0)                      |
-| Infra     | Docker Compose · Nginx · GCP Compute Engine          |
-| Auth      | JWT (python-jose)                                    |
-| Messaging | KakaoTalk Open Builder                               |
+| Storage   | ![Google Cloud](https://img.shields.io/badge/GoogleCloud-%234285F4.svg?style=for-the-badge&logo=google-cloud&logoColor=white)                                 |
+| Infra     | ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) ![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white) GCP Compute Engine          |
+| Auth      | ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens) (python-jose)                                    |
+| Messaging | ![KakaoTalk](https://img.shields.io/badge/kakaotalk-ffcd00.svg?style=for-the-badge&logo=kakaotalk&logoColor=000000) Open Builder                               |
 
 ## 검색 엔진 이중 지원
 
