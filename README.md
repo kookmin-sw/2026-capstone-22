@@ -129,11 +129,11 @@ graph TB
 
 ![AI 문제 은행 구조](imgs/AI-exam-sort-arch.png)
 
-## 사용자 시나리오
+## User Flow
 
-![사용자 시나리오 - 잠개고객, 학생/학부모](imgs/user-flow1.png)
+![User Flow - 잠재고객, 학생/학부모](imgs/user-flow1.png)
 
-![사용자 시나리오 - 관리자](imgs/user-flow-admin.png)
+![User Flow - 관리자](imgs/user-flow-admin.png)
 
 ## Tech Stack
 
