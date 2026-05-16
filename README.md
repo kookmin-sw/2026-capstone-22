@@ -2,13 +2,16 @@
 
 **※ 본 프로젝트는 산학협력으로 진행되어 기업과의 협약에 따라 현재 레포지토리 및 소스 코드는 외부에 공개하기 어려운 점 양해 부탁드립니다.**
 
+🔗 **[서비스 바로가기](https://academy.ready.talk/kookmin-language-institute/login)**
+<sub>로그인이 필요합니다.</sub>
+
 ![2026-capstone-22-poster](imgs/2026-capstone-22-poster.jpg)
 
 
 
-## 1. 프로젝트 소개
-**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 시스템입니다. 
-비인증 사용자에게는 학원 매뉴얼 기반 상담과 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 과제 현황 등 개인화된 서비스를 제공합니다. 또한, 인증된 사용자는 AI 분류된 유형별 문제를 제공받을 수 있습니다.
+## 1. 서비스 소개
+**ReadyTalk for Academy**는 학원 운영을 효율화하고 사용자 맞춤형 상담을 제공하기 위한 AI 기반 멀티 에이전트 시스템입니다.  
+비인증 사용자에게는 학원 매뉴얼 기반 상담과 행동 유도를 제공하고, 인증된 사용자에게는 출결 관리, 수업 일정, 과제 현황 등 개인화된 서비스를 제공합니다. 또한, 인증된 사용자는 AI 분류된 유형별 문제를 제공받을 수 있습니다.  
 학원 관리자에게는 직관적인 인터페이스를 통한 학생 관리와 AI를 기출 문제 유형 자동 분류를 통해 문제 분석에 소요되는 업무 시간을 단축해 드립니다.
 
 ## 2. 소개 영상
@@ -123,6 +126,10 @@ graph TB
     BE --> GCAL
     RAG --> WEAVIATE
 ```
+
+## AI 문제 은행 구조
+
+![AI 문제 은행 구조](imgs/AI-exam-sort-arch.png)
 
 ## Tech Stack
 
@@ -245,17 +252,6 @@ query_smart() — Gemini Function Calling
     ▼
 DB 저장 (messages 테이블) → 응답 반환
 ```
-
-## Google Calendar 연동
-
-테넌트별 Google Calendar OAuth 연동:
-
-1. 테넌트 어드민이 캘린더 연동 (OAuth 2.0)
-2. 챗봇에서 자연어로 일정 관리 (Function Calling)
-   - "이번 주 일정 알려줘" → `list_calendar_events`
-   - "내일 3시에 미팅 잡아줘" → `create_calendar_event`
-   - "회의 시간 변경해줘" → `update_calendar_event`
-   - "미팅 취소해줘" → `delete_calendar_event`
 
 ## KakaoTalk Integration
 
@@ -414,3 +410,6 @@ docker-compose up -d --build
 4. 테넌트 생성 (검색 엔진 선택: RAG Engine 또는 Vertex AI Search)
 5. 테넌트 어드민 → 문서저장소 생성 → 파일 업로드
 
+---
+
+<sub>📄 [최종발표 PPT](https://drive.google.com/file/d/10IoydXdpVATsOhA0DWK2qrbZhtkCjW5e/view?usp=drive_link)</sub>
