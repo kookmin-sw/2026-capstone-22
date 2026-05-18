@@ -65,7 +65,7 @@
 
 ## Architecture Overview
 
-![System Architecture](imgs/system_architecture.jpg)
+![System Architecture](imgs/system_architecture.png)
 
 ```mermaid
 graph TB
